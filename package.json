@@ -6,7 +6,10 @@
     "dev": "astro dev --port 4330",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "cf:dev": "astro dev --port 4330",
+    "cf:deploy": "astro build && wrangler deploy",
+    "cf:pages:deploy": "astro build && wrangler pages deploy ./dist"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.3",
@@ -24,6 +27,8 @@
     "typescript": "^5.9.2"
   },
   "devDependencies": {
-    "tw-animate-css": "^1.3.6"
+    "@astrojs/cloudflare": "^12.6.4",
+    "tw-animate-css": "^1.3.6",
+    "wrangler": "^4.30.0"
   }
 }

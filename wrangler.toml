@@ -1,0 +1,8 @@
+name = "cygnus"
+compatibility_date = "2025-08-15"
+
+# The Astro Cloudflare adapter (advanced mode) outputs the Worker here after `astro build`.
+main = "./dist/_worker.js"
+
+# To use Node.js APIs in the Worker runtime, uncomment the next line.
+# compatibility_flags = ["nodejs_compat"]
