@@ -52,7 +52,7 @@
   </svg>
   
   <!-- Content wrapper -->
-  <div class="relative z-10">
+  <div class="relative z-10 flex flex-col min-h-screen">
   <!-- Header -->
   <header class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 text-white shadow-lg backdrop-blur-sm bg-opacity-90 border-b border-blue-400/30">
     <div class="container mx-auto px-6 py-8">
@@ -74,11 +74,11 @@
   </header>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-6 py-8 animate-fade-in-up animation-delay-700">
+  <main class="container mx-auto px-6 py-8 animate-fade-in-up animation-delay-700 flex-grow">
     <div class="flex justify-center">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-200px)] max-w-7xl w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl w-full">
         <!-- Song Detail Panel (Left) -->
-        <div class="lg:col-span-2 flex justify-center">
+        <div class="lg:col-span-2 flex justify-center items-center">
           <div class="w-full max-w-4xl transform hover:scale-[1.02] transition-all duration-500 hover:drop-shadow-2xl">
             <SongDetail song={selectedSong} />
           </div>

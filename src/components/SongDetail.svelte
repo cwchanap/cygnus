@@ -9,7 +9,7 @@
   } | null = null;
 </script>
 
-<div class="bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl p-8 shadow-2xl border border-blue-400/30 h-full max-h-[75vh] overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-800/50">
+<div class="bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl p-8 shadow-2xl border border-blue-400/30">
   {#if song}
     <div class="space-y-6">
       <!-- Song Title -->
