@@ -2,7 +2,21 @@ name = "cygnus"
 compatibility_date = "2025-08-15"
 
 # The Astro Cloudflare adapter (advanced mode) outputs the Worker here after `astro build`.
-main = "./dist/_worker.js"
 
 # To use Node.js APIs in the Worker runtime, uncomment the next line.
 # compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cygnus"
+database_id = "5578820f-a197-4b0f-b8b1-cd539e134fd3"
+preview_database_id = "5578820f-a197-4b0f-b8b1-cd539e134fd3"
+
+[[r2_buckets]]
+binding = "CYGNUS_BUCKET"
+bucket_name = "cygnus"
+
+[vars]
+# Development-only passkey for local testing. Change as needed.
+PASSKEY = "devpass"
+

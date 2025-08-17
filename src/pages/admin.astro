@@ -1,0 +1,10 @@
+---
+import MainLayout from '@/layouts/main.astro';
+import AdminUpload from '@/components/AdminUpload.svelte';
+--- 
+
+<MainLayout content={{ title: 'Admin' }}>
+  <main class="py-12">
+    <AdminUpload client:load />
+  </main>
+</MainLayout>
