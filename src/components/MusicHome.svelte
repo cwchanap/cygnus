@@ -1,13 +1,36 @@
 <script lang="ts">
   import SongDetail from './SongDetail.svelte';
   import SongList from './SongList.svelte';
-  import { mockSongs, type Song } from '../lib/mockData';
+  import { onMount } from 'svelte';
+  type Song = {
+    id: string;
+    title: string;
+    origin: string;
+    bpm: number;
+    releaseDate: string;
+    previewImage?: string;
+  };
+  let songs: Song[] = [];
   
   let selectedSong: Song | null = null;
   
   function handleSongSelected(event: CustomEvent<Song>) {
     selectedSong = event.detail;
   }
+
+  onMount(async () => {
+    try {
+      const res = await fetch('/api/songs');
+      if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
+      const data: Song[] = await res.json();
+      songs = data;
+      if (!selectedSong && songs.length > 0) {
+        selectedSong = songs[0];
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
 </script>
 
 <div class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-600 to-cyan-500 relative overflow-hidden">
@@ -88,7 +111,7 @@
         <div class="lg:col-span-1 flex justify-center">
           <div class="w-full max-w-md transform hover:scale-[1.02] transition-all duration-500 hover:drop-shadow-2xl">
             <SongList 
-              songs={mockSongs} 
+              songs={songs} 
               selectedSongId={selectedSong?.id || null}
               on:songSelected={handleSongSelected}
             />

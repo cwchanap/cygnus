@@ -1,4 +1,5 @@
 <script lang="ts">
+  export let passkeyOptional: boolean = false;
   let message = '';
 
   async function handleSubmit(event: SubmitEvent) {
@@ -33,10 +34,12 @@
 <div class="max-w-2xl mx-auto p-8 bg-card text-card-foreground rounded-lg shadow-md">
   <h1 class="text-2xl font-bold mb-6">Admin Song Upload</h1>
   <form on:submit|preventDefault={handleSubmit} class="space-y-4">
-    <div>
-      <label for="passkey" class="block text-sm font-medium text-muted-foreground">Passkey</label>
-      <input type="password" id="passkey" name="passkey" required class="mt-1 block w-full px-3 py-2 bg-input border border-border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-ring focus:border-ring sm:text-sm">
-    </div>
+    {#if !passkeyOptional}
+      <div>
+        <label for="passkey" class="block text-sm font-medium text-muted-foreground">Passkey</label>
+        <input type="password" id="passkey" name="passkey" required class="mt-1 block w-full px-3 py-2 bg-input border border-border rounded-md shadow-sm placeholder-muted-foreground focus:outline-none focus:ring-ring focus:border-ring sm:text-sm">
+      </div>
+    {/if}
     <div>
       <label for="song" class="block text-sm font-medium text-muted-foreground">Song File</label>
       <input type="file" id="song" name="song" required accept="audio/*" class="mt-1 block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90">

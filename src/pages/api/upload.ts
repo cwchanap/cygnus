@@ -17,10 +17,27 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
+    // CSRF protection: enforce same-origin on POSTs
+    const reqUrl = new URL(request.url);
+    const expectedOrigin = reqUrl.origin;
+    const reqOrigin = request.headers.get('origin');
+    const referer = request.headers.get('referer');
+    if ((reqOrigin && reqOrigin !== expectedOrigin) || (referer && new URL(referer).origin !== expectedOrigin)) {
+      return new Response(JSON.stringify({ message: 'Forbidden (CSRF)' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const cookieHeader = request.headers.get('cookie') ?? '';
+    const authed = cookieHeader
+      .split(';')
+      .some((c) => c.trim().startsWith('admin_auth=1'));
+
     const formData = await request.formData();
     const passkey = formData.get('passkey');
 
-    if (passkey !== runtime.env.PASSKEY) {
+    if (!authed && passkey !== runtime.env.PASSKEY) {
       return new Response(JSON.stringify({ message: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
@@ -33,7 +50,7 @@ export const POST: APIRoute = async (context) => {
     const bpm = formData.get('bpm') as string;
     const releaseDate = formData.get('release_date') as string;
     const isReleased = formData.get('is_released') != null && String(formData.get('is_released')) !== 'false';
-    const origin = formData.get('origin') as string;
+    const originField = formData.get('origin') as string;
 
     if (!songFile || !songName || !artist) {
       return new Response(JSON.stringify({ message: 'Missing required fields' }), {
@@ -56,7 +73,7 @@ export const POST: APIRoute = async (context) => {
         bpm: parseInt(bpm, 10),
         release_date: releaseDate,
         is_released: isReleased,
-        origin: origin,
+        origin: originField,
         created_date: new Date().toISOString(),
         r2_key: r2Key,
       })
