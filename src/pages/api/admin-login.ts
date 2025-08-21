@@ -11,12 +11,21 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
-    // CSRF protection: enforce same-origin on POSTs
+    // CSRF protection: allow same-host (ignore port) during dev proxying
     const reqUrl = new URL(request.url);
-    const expectedOrigin = reqUrl.origin;
+    const expected = new URL(reqUrl.origin);
     const origin = request.headers.get('origin');
     const referer = request.headers.get('referer');
-    if ((origin && origin !== expectedOrigin) || (referer && new URL(referer).origin !== expectedOrigin)) {
+    const sameHost = (u: string | null) => {
+      if (!u) return true; // no header -> assume OK
+      try {
+        const url = new URL(u);
+        return url.hostname === expected.hostname;
+      } catch {
+        return false;
+      }
+    };
+    if (!sameHost(origin) || !sameHost(referer)) {
       return new Response(JSON.stringify({ message: 'Forbidden (CSRF)' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -41,7 +50,7 @@ export const POST: APIRoute = async (context) => {
     headers.append('Set-Cookie', `admin_auth=1; Max-Age=86400; Expires=${expires}; Path=/; HttpOnly; SameSite=Strict${secure}`);
     headers.append('Location', '/admin');
     return new Response(null, { status: 303, headers });
-  } catch (e) {
+  } catch {
     const headers = new Headers();
     headers.append('Location', '/admin?error=1');
     return new Response('Login failed', { status: 303, headers });

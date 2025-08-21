@@ -11,6 +11,9 @@
     "cf:dev": "astro dev --port 4330",
     "cf:deploy": "astro build && wrangler deploy",
     "cf:pages:deploy": "astro build && wrangler pages deploy ./dist",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "db:setup": "wrangler d1 execute cygnus --local --file migrations/0001_init.sql",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepare": "husky"
@@ -45,7 +48,8 @@
     "lint-staged": "^16.1.5",
     "tw-animate-css": "^1.3.6",
     "typescript-eslint": "^8.40.0",
-    "wrangler": "^4.30.0"
+    "wrangler": "^4.30.0",
+    "@playwright/test": "^1.47.2"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,astro,svelte,md,mdx}": [

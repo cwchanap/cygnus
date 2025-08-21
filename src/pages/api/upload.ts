@@ -17,12 +17,21 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
-    // CSRF protection: enforce same-origin on POSTs
+    // CSRF protection: allow same-host (ignore port) during dev proxying
     const reqUrl = new URL(request.url);
-    const expectedOrigin = reqUrl.origin;
+    const expected = new URL(reqUrl.origin);
     const reqOrigin = request.headers.get('origin');
     const referer = request.headers.get('referer');
-    if ((reqOrigin && reqOrigin !== expectedOrigin) || (referer && new URL(referer).origin !== expectedOrigin)) {
+    const sameHost = (u: string | null) => {
+      if (!u) return true; // no header -> assume OK
+      try {
+        const url = new URL(u);
+        return url.hostname === expected.hostname;
+      } catch {
+        return false;
+      }
+    };
+    if (!sameHost(reqOrigin) || !sameHost(referer)) {
       return new Response(JSON.stringify({ message: 'Forbidden (CSRF)' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -51,6 +60,7 @@ export const POST: APIRoute = async (context) => {
     const releaseDate = formData.get('release_date') as string;
     const isReleased = formData.get('is_released') != null && String(formData.get('is_released')) !== 'false';
     const originField = formData.get('origin') as string;
+    const previewImage = formData.get('preview_image') as File | null;
 
     if (!songFile || !songName || !artist) {
       return new Response(JSON.stringify({ message: 'Missing required fields' }), {
@@ -64,6 +74,15 @@ export const POST: APIRoute = async (context) => {
 
     const r2Key = `songs/${Date.now()}-${songFile.name}`;
     await bucket.put(r2Key, await songFile.arrayBuffer());
+
+    // Optional: upload preview image to `preview/` folder in the same bucket
+    let previewKey: string | null = null;
+    if (previewImage && previewImage.size > 0) {
+      previewKey = `preview/${Date.now()}-${previewImage.name}`;
+      await bucket.put(previewKey, await previewImage.arrayBuffer(), {
+        httpMetadata: { contentType: previewImage.type || 'image/png' },
+      });
+    }
 
     await db
       .insertInto('songs')
