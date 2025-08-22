@@ -1,6 +1,6 @@
 ---
 import MainLayout from '@/layouts/main.astro';
-import AdminUpload from '@/components/AdminUpload.svelte';
+import AdminHome from '@/components/AdminHome.svelte';
 // Simple cookie parse to detect admin auth
 const cookieAuthed = (Astro.request.headers.get('cookie') ?? '')
   .split(';')
@@ -30,10 +30,8 @@ if (!authed) {
 --- 
 
 <MainLayout content={{ title: 'Admin' }}>
-  <main class="py-12">
-    {
-      // Authenticated: show the admin upload UI
-    }
-    <AdminUpload client:load />
-  </main>
+  {
+    // Authenticated: show the admin UI with main page styling
+  }
+  <AdminHome client:load />
 </MainLayout>
