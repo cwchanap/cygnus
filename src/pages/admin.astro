@@ -19,19 +19,21 @@ if (e2eBypass && !cookieAuthed) {
   });
 }
 const authed = cookieAuthed || e2eBypass;
+
+// If not authenticated (and not using e2e bypass), redirect to login with next param
+if (!authed) {
+  const next = Astro.url.pathname + (Astro.url.search ?? '');
+  const headers = new Headers();
+  headers.append('Location', `/login?next=${encodeURIComponent(next)}`);
+  return new Response(null, { status: 303, headers });
+}
 --- 
 
 <MainLayout content={{ title: 'Admin' }}>
   <main class="py-12">
-    {authed ? (
+    {
       // Authenticated: show the admin upload UI
-      <AdminUpload client:load />
-    ) : (
-      // Not authenticated: show a simple message or link to login page
-      <div class="max-w-md mx-auto p-8 bg-card text-card-foreground rounded-lg shadow-md text-center">
-        <h1 class="text-2xl font-bold mb-4">Admin</h1>
-        <p>Please log in to access the admin upload page.</p>
-      </div>
-    )}
+    }
+    <AdminUpload client:load />
   </main>
 </MainLayout>

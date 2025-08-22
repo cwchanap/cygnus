@@ -25,3 +25,5 @@ pnpm-debug.log*
 
 # wrangler
 .wrangler/
+
+test-results/
