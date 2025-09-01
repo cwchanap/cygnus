@@ -88,6 +88,7 @@
           <nav class="flex space-x-6">
             <a href="/" class="text-blue-100 hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">Home</a>
             <a href="/library" class="text-blue-100 hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">Library</a>
+            <a href="/drum-transcription" class="text-blue-100 hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">🥁 Transcribe</a>
             <a href="/create" class="text-blue-100 hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">Create</a>
             <a href="/about" class="text-blue-100 hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">About</a>
           </nav>

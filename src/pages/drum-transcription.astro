@@ -1,0 +1,49 @@
+---
+import '../styles/global.css';
+import DrumFileUpload from '../components/DrumFileUpload.svelte';
+import DrumJobsList from '../components/DrumJobsList.svelte';
+import DrumToast from '../components/DrumToast.svelte';
+import DrumMidiPreview from '../components/DrumMidiPreview.svelte';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Drum Transcription - Cygnus</title>
+  </head>
+  <body>
+  <div class="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 flex items-center justify-center p-5">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-10">
+      <header class="text-center mb-10">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">
+          🥁 Drum Transcription
+        </h1>
+        <p class="text-gray-600 text-lg">
+          Upload your drum audio and get MIDI transcription powered by AI
+        </p>
+        <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p class="text-sm text-amber-800">
+            ⚠️ Make sure the Crux Python server is running on port 8000
+          </p>
+          <code class="text-xs text-amber-700 font-mono block mt-1">
+            cd ~/workspace/Crux && uv run uvicorn src.app.main:app --reload --port 8000
+          </code>
+        </div>
+      </header>
+
+      <div class="space-y-8">
+        <DrumFileUpload client:load />
+        
+        <div class="border-t border-gray-200 pt-8">
+          <DrumJobsList client:load />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <DrumToast client:load />
+  <DrumMidiPreview client:load />
+  </body>
+</html>
