@@ -1,5 +1,6 @@
-import type { APIRoute } from 'astro';
-import { createDb } from '@/lib/db';
+ import type { APIRoute } from 'astro';
+ import { createDb } from '@/lib/db';
+ import { songs } from '@/lib/db/schema';
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -85,7 +86,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     await db
-      .insertInto('songs')
+      .insert(songs)
       .values({
         song_name: songName,
         artist: artist,
@@ -96,7 +97,7 @@ export const POST: APIRoute = async (context) => {
         created_date: new Date().toISOString(),
         r2_key: r2Key,
       })
-      .execute();
+      .run();
 
     return new Response(JSON.stringify({ message: 'Song uploaded successfully' }), {
       status: 200,

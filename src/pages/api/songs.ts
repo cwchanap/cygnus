@@ -1,5 +1,7 @@
-import type { APIRoute } from 'astro';
-import { createDb } from '../../lib/db';
+ import type { APIRoute } from 'astro';
+ import { createDb } from '../../lib/db';
+ import { songs } from '../../lib/db/schema';
+ import { desc, type InferSelectModel } from 'drizzle-orm';
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
@@ -12,15 +14,20 @@ export const GET: APIRoute = async ({ locals }) => {
     }
 
     const db = createDb(runtime.env.DB);
-    try {
-      const rows = await db
-        .selectFrom('songs')
-        .select(['id', 'song_name', 'origin', 'bpm', 'release_date'])
-        .orderBy('id', 'desc')
-        .limit(100)
-        .execute();
+    const rows: Pick<InferSelectModel<typeof songs>, 'id' | 'song_name' | 'origin' | 'bpm' | 'release_date'>[] = await db
+      .select({
+        id: songs.id,
+        song_name: songs.song_name,
+        origin: songs.origin,
+        bpm: songs.bpm,
+        release_date: songs.release_date,
+      })
+      .from(songs)
+      .orderBy(desc(songs.id))
+      .limit(100)
+      .all();
 
-      const songs = rows.map((r) => ({
+      const songsList = rows.map((r) => ({
         id: String(r.id),
         title: r.song_name,
         origin: r.origin,
@@ -28,13 +35,11 @@ export const GET: APIRoute = async ({ locals }) => {
         releaseDate: r.release_date,
       }));
 
-      return new Response(JSON.stringify(songs), {
+      return new Response(JSON.stringify(songsList), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
-    } finally {
-      await db.destroy();
-    }
+    
   } catch (err) {
     console.error('GET /api/songs error', err);
     return new Response(

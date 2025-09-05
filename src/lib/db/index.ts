@@ -1,13 +1,6 @@
-import { Kysely } from 'kysely'
-import { D1Dialect } from 'kysely-d1'
-import type { SongsTable } from './schema'
+ import { drizzle } from 'drizzle-orm/d1'
+ import { schema } from './schema'
 
-interface Database {
-  songs: SongsTable
-}
-
-export const createDb = (d1: D1Database) => {
-  return new Kysely<Database>({
-    dialect: new D1Dialect({ database: d1 }),
-  })
-}
+ export const createDb = (d1: D1Database) => {
+   return drizzle(d1, { schema })
+ }
