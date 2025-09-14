@@ -1,0 +1,117 @@
+---
+import MainLayout from '../layouts/main.astro';
+
+const content = {
+  title: "MIDI Preview - Cygnus Music",
+  description: "Preview and play MIDI compositions with musical notation",
+};
+---
+
+<MainLayout content={content}>
+
+  <div class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-600 to-cyan-500 relative overflow-hidden">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      <div class="particle particle-1"></div>
+      <div class="particle particle-2"></div>
+      <div class="particle particle-3"></div>
+      <div class="particle particle-4"></div>
+      <div class="particle particle-5"></div>
+      <div class="particle particle-6"></div>
+    </div>
+
+    <div class="relative z-10 min-h-screen flex flex-col">
+      <header class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 text-white shadow-lg backdrop-blur-sm bg-opacity-90 border-b border-blue-400/30">
+        <div class="container mx-auto px-6 py-6">
+          <div class="flex items-center justify-between">
+            <div class="animate-fade-in-up">
+              <h1 class="text-3xl font-bold bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">MIDI Preview</h1>
+              <p class="text-white text-lg mt-1">Preview your AI-generated MIDI compositions</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <a href="/" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg px-4 py-2 rounded-lg bg-blue-500/20">← Back Home</a>
+              <a href="/drum-transcription" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg px-4 py-2 rounded-lg bg-blue-500/20">🎼 Transcribe</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 container mx-auto px-6 py-8">
+        <div class="max-w-6xl mx-auto">
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-bold text-white mb-6">Musical Notation & Playback</h2>
+            <div class="text-center py-12">
+              <div class="text-white text-lg mb-4">
+                🎵 MIDI Preview Interface
+              </div>
+              <p class="text-white/80">
+                This page will display your MIDI compositions with musical notation and playback controls.
+              </p>
+              <p class="text-white/60 text-sm mt-4">
+                The full MIDI preview component will be loaded here with interactive controls.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="bg-blue-900/80 backdrop-blur-sm text-blue-100 py-6 border-t border-blue-400/30">
+        <div class="container mx-auto px-6 text-center">
+          <p>&copy; 2024 Cygnus Music. Exploring the future of AI-generated compositions.</p>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <style>
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.8) 0%, rgba(59, 130, 246, 0.4) 100%);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .particle-1 { top: 20%; left: 10%; animation-delay: 0s; animation-duration: 8s; }
+    .particle-2 { top: 60%; left: 80%; animation-delay: 2s; animation-duration: 6s; }
+    .particle-3 { top: 80%; left: 20%; animation-delay: 4s; animation-duration: 10s; }
+    .particle-4 { top: 30%; left: 70%; animation-delay: 1s; animation-duration: 7s; }
+    .particle-5 { top: 50%; left: 30%; animation-delay: 3s; animation-duration: 9s; }
+    .particle-6 { top: 10%; left: 60%; animation-delay: 5s; animation-duration: 8s; }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px) translateX(0px) scale(1);
+        opacity: 0.7;
+      }
+      25% {
+        transform: translateY(-20px) translateX(10px) scale(1.2);
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(-40px) translateX(-5px) scale(0.8);
+        opacity: 0.5;
+      }
+      75% {
+        transform: translateY(-20px) translateX(-10px) scale(1.1);
+        opacity: 0.8;
+      }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+
+</MainLayout>

@@ -1,8 +1,19 @@
 import { writable } from 'svelte/store';
-import MidiPkg from '@tonejs/midi';
 import * as Tone from 'tone';
 
-const { Midi } = MidiPkg;
+// Lazily load MIDI package to avoid SSR/hydration issues
+let Midi: any = null;
+async function ensureMidiLoaded() {
+  if (Midi) return true;
+  try {
+    const mod = await import('@tonejs/midi');
+    Midi = mod.Midi;
+    return true;
+  } catch (error) {
+    console.warn('MIDI package not available:', error);
+    return false;
+  }
+}
 
 export interface MidiPreviewState {
   isOpen: boolean;
@@ -32,13 +43,27 @@ function createMidiStore() {
 
   const openPreview = async (jobId: string) => {
     try {
+      // Ensure MIDI lib is available
+      const hasMidi = await ensureMidiLoaded();
+      if (!hasMidi || !Midi) {
+        console.warn('MIDI package not available, opening modal without MIDI data');
+        update(state => ({
+          ...state,
+          isOpen: true,
+          jobId,
+          midiData: null,
+          duration: 0
+        }));
+        return;
+      }
+
       // Fetch MIDI file from Crux API
       const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/download`);
       if (!response.ok) throw new Error('Failed to fetch MIDI file');
-      
+
       const arrayBuffer = await response.arrayBuffer();
       const midi = new Midi(arrayBuffer);
-      
+
       update(state => ({
         ...state,
         isOpen: true,
@@ -47,7 +72,7 @@ function createMidiStore() {
         duration: midi.duration,
         currentTime: Number(transport.seconds)
       }));
-      
+
       // Initialize synth for playback
       if (!synth) {
         synth = new Tone.PolySynth(Tone.Synth, {
@@ -59,10 +84,10 @@ function createMidiStore() {
           }
         }).toDestination();
       }
-      
+
       // Schedule MIDI events for playback
       scheduleMidiPlayback(midi);
-      
+
     } catch (error) {
       console.error('Error loading MIDI:', error);
     }

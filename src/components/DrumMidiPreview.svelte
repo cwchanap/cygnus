@@ -1,19 +1,13 @@
 <script lang="ts">
   import { midiStore } from '../stores/midi';
-  import { onMount, onDestroy } from 'svelte';
   import abcjs from 'abcjs';
-  import MidiPkg from '@tonejs/midi';
-  
-  const { Midi } = MidiPkg;
   
   let notationContainer: HTMLDivElement;
   let abcString = '';
   let isLoading = true;
-  let abcNotation = '';
   
   $: if ($midiStore.midiData && notationContainer) {
-    renderNotation.bind(renderNotation)(abcNotation);
-    renderRef.current?.removeEventListener('click', () => {});
+    renderNotation($midiStore.midiData);
   }
   
   function convertMidiToAbc(midiData: any): string {
@@ -101,8 +95,7 @@
       notationContainer.innerHTML = '';
       abcjs.renderAbc(notationContainer, abcString, {
         responsive: 'resize',
-        visualTranspose: 0,
-        clickListener: null
+        visualTranspose: 0
       });
     }
     isLoading = false;
@@ -152,7 +145,7 @@
           <!-- Play/Pause Button -->
           {#if $midiStore.isPlaying}
             <button
-              on:click={() => midiStore.togglePlayback()}
+              on:click={() => midiStore.pause()}
               class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
               aria-label="Pause playback"
             >
@@ -162,7 +155,7 @@
             </button>
           {:else}
             <button
-              on:click={() => midiStore.togglePlayback()}
+              on:click={() => midiStore.play()}
               class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
               aria-label="Play MIDI"
             >
@@ -176,6 +169,7 @@
           <button
             on:click={midiStore.stop}
             class="p-2 border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Stop playback"
           >
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />

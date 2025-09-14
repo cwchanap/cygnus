@@ -1,19 +1,8 @@
 ---
-import '../styles/global.css';
+import MainLayout from '../layouts/main.astro';
 import MusicHome from '../components/MusicHome.svelte';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Cygnus Music - AI Composition Gallery</title>
-		<meta name="description" content="Discover and explore AI-generated music compositions with beautiful ocean blue aesthetics" />
-	</head>
-
-	<body class="m-0 p-0">
-		<MusicHome client:load />
-	</body>
-</html>
+<MainLayout content={{ title: 'Cygnus Music - AI Composition Gallery' }}>
+	<MusicHome client:load />
+</MainLayout>
