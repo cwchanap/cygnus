@@ -25,7 +25,8 @@ export interface MidiPreviewState {
 }
 
 // Configure the API base URL for the Crux Python server
-const API_BASE_URL = import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:9331';
+const API_BASE_URL =
+  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:9331';
 
 function createMidiStore() {
   const { subscribe, set, update } = writable<MidiPreviewState>({
@@ -34,7 +35,7 @@ function createMidiStore() {
     midiData: null,
     isPlaying: false,
     currentTime: 0,
-    duration: 0
+    duration: 0,
   });
 
   let synth: Tone.PolySynth | null = null;
@@ -46,31 +47,35 @@ function createMidiStore() {
       // Ensure MIDI lib is available
       const hasMidi = await ensureMidiLoaded();
       if (!hasMidi || !Midi) {
-        console.warn('MIDI package not available, opening modal without MIDI data');
-        update(state => ({
+        console.warn(
+          'MIDI package not available, opening modal without MIDI data'
+        );
+        update((state) => ({
           ...state,
           isOpen: true,
           jobId,
           midiData: null,
-          duration: 0
+          duration: 0,
         }));
         return;
       }
 
       // Fetch MIDI file from Crux API
-      const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/download`);
+      const response = await fetch(
+        `${API_BASE_URL}/api/jobs/${jobId}/download`
+      );
       if (!response.ok) throw new Error('Failed to fetch MIDI file');
 
       const arrayBuffer = await response.arrayBuffer();
       const midi = new Midi(arrayBuffer);
 
-      update(state => ({
+      update((state) => ({
         ...state,
         isOpen: true,
         jobId,
         midiData: midi,
         duration: midi.duration,
-        currentTime: Number(transport.seconds)
+        currentTime: Number(transport.seconds),
       }));
 
       // Initialize synth for playback
@@ -80,14 +85,13 @@ function createMidiStore() {
             attack: 0.02,
             decay: 0.1,
             sustain: 0.3,
-            release: 0.5
-          }
+            release: 0.5,
+          },
         }).toDestination();
       }
 
       // Schedule MIDI events for playback
       scheduleMidiPlayback(midi);
-
     } catch (error) {
       console.error('Error loading MIDI:', error);
     }
@@ -95,13 +99,13 @@ function createMidiStore() {
 
   const scheduleMidiPlayback = (midi: any) => {
     // Clear previous events
-    scheduledEvents.forEach(id => transport.clear(id));
+    scheduledEvents.forEach((id) => transport.clear(id));
     scheduledEvents = [];
-    
+
     // Schedule new events from all tracks
     midi.tracks.forEach((track: any) => {
       track.notes.forEach((note: any) => {
-        const eventId = transport.schedule(time => {
+        const eventId = transport.schedule((time) => {
           synth?.triggerAttackRelease(
             note.name,
             note.duration,
@@ -117,27 +121,27 @@ function createMidiStore() {
   const play = async () => {
     await Tone.start();
     transport.start();
-    update(state => ({ ...state, isPlaying: true }));
+    update((state) => ({ ...state, isPlaying: true }));
   };
 
   const pause = () => {
     transport.pause();
-    update(state => ({ ...state, isPlaying: false }));
+    update((state) => ({ ...state, isPlaying: false }));
   };
 
   const stop = () => {
     transport.stop();
     transport.position = 0;
-    update(state => ({ 
-      ...state, 
+    update((state) => ({
+      ...state,
       isPlaying: false,
-      currentTime: 0
+      currentTime: 0,
     }));
   };
 
   const seek = (time: number) => {
     transport.position = time;
-    update(state => ({ ...state, currentTime: time }));
+    update((state) => ({ ...state, currentTime: time }));
   };
 
   const close = () => {
@@ -148,13 +152,13 @@ function createMidiStore() {
       midiData: null,
       isPlaying: false,
       currentTime: 0,
-      duration: 0
+      duration: 0,
     });
   };
 
   // Update current time during playback
   setInterval(() => {
-    update(state => {
+    update((state) => {
       if (state.isPlaying) {
         return { ...state, currentTime: Number(transport.seconds) };
       }
@@ -169,7 +173,7 @@ function createMidiStore() {
     pause,
     stop,
     seek,
-    close
+    close,
   };
 }
 

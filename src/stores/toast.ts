@@ -14,9 +14,9 @@ function createToastStore() {
   const show = (message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(7);
     const toast: Toast = { id, message, type };
-    
-    update(toasts => [...toasts, toast]);
-    
+
+    update((toasts) => [...toasts, toast]);
+
     // Auto-remove after 5 seconds
     setTimeout(() => {
       remove(id);
@@ -24,13 +24,13 @@ function createToastStore() {
   };
 
   const remove = (id: string) => {
-    update(toasts => toasts.filter(t => t.id !== id));
+    update((toasts) => toasts.filter((t) => t.id !== id));
   };
 
   return {
     subscribe,
     show,
-    remove
+    remove,
   };
 }
 

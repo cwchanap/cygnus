@@ -4,7 +4,8 @@ export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
   const runtime = locals.runtime;
   const reqUrl0 = new URL(request.url);
-  const isLocalDev = reqUrl0.hostname === 'localhost' || reqUrl0.hostname === '127.0.0.1';
+  const isLocalDev =
+    reqUrl0.hostname === 'localhost' || reqUrl0.hostname === '127.0.0.1';
 
   const buildRedirectResponse = (location: string, headers?: Headers) => {
     const h = headers ?? new Headers();
@@ -20,7 +21,8 @@ export const POST: APIRoute = async (context) => {
         }
       })();
       const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=${safeHref}"><title>Redirecting…</title></head><body><p>Redirecting to <a href="${safeHref}">${safeHref}</a>…</p><script>window.location.replace(${JSON.stringify(safeHref)});</script></body></html>`;
-      if (!h.has('Content-Type')) h.set('Content-Type', 'text/html; charset=UTF-8');
+      if (!h.has('Content-Type'))
+        h.set('Content-Type', 'text/html; charset=UTF-8');
       return new Response(html, { status: 200, headers: h });
     }
     return new Response(null, { status: 303, headers: h });
@@ -30,8 +32,14 @@ export const POST: APIRoute = async (context) => {
     const reqUrl = new URL(request.url);
     const nextParam = reqUrl.searchParams.get('next') || '/admin';
     const headers = new Headers();
-    headers.append('Location', `/login?error=1&next=${encodeURIComponent(nextParam)}`);
-    return buildRedirectResponse(`/login?error=1&next=${encodeURIComponent(nextParam)}`, headers);
+    headers.append(
+      'Location',
+      `/login?error=1&next=${encodeURIComponent(nextParam)}`
+    );
+    return buildRedirectResponse(
+      `/login?error=1&next=${encodeURIComponent(nextParam)}`,
+      headers
+    );
   }
 
   try {
@@ -60,7 +68,10 @@ export const POST: APIRoute = async (context) => {
     const passkey = formData.get('passkey');
     const reqUrl2 = new URL(request.url);
     const nextRaw = formData.get('next');
-    const nextParam = (typeof nextRaw === 'string' && nextRaw) || reqUrl2.searchParams.get('next') || '/admin';
+    const nextParam =
+      (typeof nextRaw === 'string' && nextRaw) ||
+      reqUrl2.searchParams.get('next') ||
+      '/admin';
     const isHttps = reqUrl2.protocol === 'https:';
     const secure = isHttps ? '; Secure' : '';
     const expires = new Date(Date.now() + 86400 * 1000).toUTCString();
@@ -68,20 +79,38 @@ export const POST: APIRoute = async (context) => {
 
     if (typeof passkey !== 'string' || passkey !== runtime.env.PASSKEY) {
       const headers = new Headers();
-      headers.append('Set-Cookie', `admin_auth=; Max-Age=0; Expires=${expired}; Path=/; HttpOnly; SameSite=Strict${secure}`);
-      headers.append('Location', `/login?error=1&next=${encodeURIComponent(nextParam)}`);
-      return buildRedirectResponse(`/login?error=1&next=${encodeURIComponent(nextParam)}`, headers);
+      headers.append(
+        'Set-Cookie',
+        `admin_auth=; Max-Age=0; Expires=${expired}; Path=/; HttpOnly; SameSite=Strict${secure}`
+      );
+      headers.append(
+        'Location',
+        `/login?error=1&next=${encodeURIComponent(nextParam)}`
+      );
+      return buildRedirectResponse(
+        `/login?error=1&next=${encodeURIComponent(nextParam)}`,
+        headers
+      );
     }
 
     const headers = new Headers();
-    headers.append('Set-Cookie', `admin_auth=1; Max-Age=86400; Expires=${expires}; Path=/; HttpOnly; SameSite=Strict${secure}`);
+    headers.append(
+      'Set-Cookie',
+      `admin_auth=1; Max-Age=86400; Expires=${expires}; Path=/; HttpOnly; SameSite=Strict${secure}`
+    );
     headers.append('Location', nextParam);
     return buildRedirectResponse(nextParam, headers);
   } catch {
     const reqUrl = new URL(request.url);
     const nextParam = reqUrl.searchParams.get('next') || '/admin';
     const headers = new Headers();
-    headers.append('Location', `/login?error=1&next=${encodeURIComponent(nextParam)}`);
-    return buildRedirectResponse(`/login?error=1&next=${encodeURIComponent(nextParam)}`, headers);
+    headers.append(
+      'Location',
+      `/login?error=1&next=${encodeURIComponent(nextParam)}`
+    );
+    return buildRedirectResponse(
+      `/login?error=1&next=${encodeURIComponent(nextParam)}`,
+      headers
+    );
   }
 };

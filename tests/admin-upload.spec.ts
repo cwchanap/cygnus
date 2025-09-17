@@ -4,7 +4,9 @@ import path from 'node:path';
 // Utility to path to fixtures and public files
 const proj = (...p: string[]) => path.join(process.cwd(), ...p);
 
-test('admin can upload a song with optional preview image', async ({ page }) => {
+test('admin can upload a song with optional preview image', async ({
+  page,
+}) => {
   // Go to admin page with E2E bypass enabled so SSR renders the upload form
   await page.goto('/admin?e2e=1');
 
@@ -13,8 +15,12 @@ test('admin can upload a song with optional preview image', async ({ page }) => 
   try {
     // One of these should appear depending on SSR branch
     await Promise.race([
-      page.getByRole('heading', { name: 'Admin Song Upload' }).waitFor({ state: 'visible', timeout: 5000 }),
-      page.getByRole('heading', { name: 'Unlock Admin' }).waitFor({ state: 'visible', timeout: 5000 }),
+      page
+        .getByRole('heading', { name: 'Admin Song Upload' })
+        .waitFor({ state: 'visible', timeout: 5000 }),
+      page
+        .getByRole('heading', { name: 'Unlock Admin' })
+        .waitFor({ state: 'visible', timeout: 5000 }),
     ]);
     await expect(uploadInput).toBeVisible({ timeout: 15000 });
   } catch (err) {
@@ -30,7 +36,9 @@ test('admin can upload a song with optional preview image', async ({ page }) => 
 
   // Attach files
   await uploadInput.setInputFiles(proj('public', 'test-song.mp3'));
-  await page.getByLabel('Preview Image (optional)').setInputFiles(proj('tests', 'fixtures', 'preview.svg'));
+  await page
+    .getByLabel('Preview Image (optional)')
+    .setInputFiles(proj('tests', 'fixtures', 'preview.svg'));
 
   // Fill metadata
   await page.fill('input#song_name', 'Test Track');
@@ -44,5 +52,7 @@ test('admin can upload a song with optional preview image', async ({ page }) => 
   await page.getByRole('button', { name: 'Upload Song' }).click();
 
   // Assert success message
-  await expect(page.getByText('Song uploaded successfully')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText('Song uploaded successfully')).toBeVisible({
+    timeout: 15000,
+  });
 });

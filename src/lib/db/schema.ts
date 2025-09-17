@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // Drizzle schema for D1 (SQLite)
 export const songs = sqliteTable('songs', {
@@ -12,7 +12,7 @@ export const songs = sqliteTable('songs', {
   created_date: text('created_date').notNull(),
   origin: text('origin').notNull(),
   r2_key: text('r2_key').notNull(),
-})
+});
 
 // Export schema object for typed db instance
-export const schema = { songs }
+export const schema = { songs };

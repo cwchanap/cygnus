@@ -1,6 +1,6 @@
- import type { APIRoute } from 'astro';
- import { createDb } from '@/lib/db';
- import { songs } from '@/lib/db/schema';
+import type { APIRoute } from 'astro';
+import { createDb } from '@/lib/db';
+import { songs } from '@/lib/db/schema';
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -9,7 +9,9 @@ export const POST: APIRoute = async (context) => {
   if (!runtime?.env) {
     console.error('Cloudflare environment bindings are not available.');
     return new Response(
-      JSON.stringify({ message: 'Server configuration error: Cloudflare bindings missing.' }),
+      JSON.stringify({
+        message: 'Server configuration error: Cloudflare bindings missing.',
+      }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json' },
@@ -59,15 +61,20 @@ export const POST: APIRoute = async (context) => {
     const artist = formData.get('artist') as string;
     const bpm = formData.get('bpm') as string;
     const releaseDate = formData.get('release_date') as string;
-    const isReleased = formData.get('is_released') != null && String(formData.get('is_released')) !== 'false';
+    const isReleased =
+      formData.get('is_released') != null &&
+      String(formData.get('is_released')) !== 'false';
     const originField = formData.get('origin') as string;
     const previewImage = formData.get('preview_image') as File | null;
 
     if (!songFile || !songName || !artist) {
-      return new Response(JSON.stringify({ message: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ message: 'Missing required fields' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const bucket = runtime.env.CYGNUS_BUCKET;
@@ -99,16 +106,23 @@ export const POST: APIRoute = async (context) => {
       })
       .run();
 
-    return new Response(JSON.stringify({ message: 'Song uploaded successfully' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ message: 'Song uploaded successfully' }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('Upload failed:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    return new Response(JSON.stringify({ message: 'Upload failed: ' + errorMessage }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
+    return new Response(
+      JSON.stringify({ message: 'Upload failed: ' + errorMessage }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 };
