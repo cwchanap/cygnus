@@ -46,19 +46,6 @@
 
   <!-- Content wrapper -->
   <div class="relative z-10 flex flex-col min-h-screen">
-    <!-- Header (kept consistent with MusicHome) -->
-    <header class="bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 text-white shadow-lg backdrop-blur-sm bg-opacity-90 border-b border-blue-400/30">
-      <div class="container mx-auto px-6 py-8">
-        <div class="flex items-center justify-between">
-          <div class="animate-fade-in-up">
-            <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent animate-shimmer">Cygnus Music</h1>
-            <p class="text-blue-100 text-lg animate-fade-in-up animation-delay-300">AI-Generated Music Composition Gallery</p>
-          </div>
-          <!-- Navigation removed for admin page -->
-        </div>
-      </div>
-    </header>
-
     <!-- Main Content: center the AdminUpload card -->
     <main class="container mx-auto px-6 py-12 animate-fade-in-up animation-delay-700 flex-grow">
       <div class="flex justify-center">
