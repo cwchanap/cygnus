@@ -83,10 +83,10 @@
         </div>
         
         <!-- Song List Panel (Right) -->
-        <div class="lg:col-span-1 flex justify-center">
+        <div class="lg:col-span-1 flex justify-center items-start">
           <div class="w-full max-w-md transform hover:scale-[1.02] transition-all duration-500 hover:drop-shadow-2xl">
-            <SongList 
-              songs={songs} 
+            <SongList
+              songs={songs}
               selectedSongId={selectedSong?.id || null}
               on:songSelected={handleSongSelected}
             />

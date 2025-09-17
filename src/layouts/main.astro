@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import MidiNavButton from '../components/MidiNavButton.svelte';
 import DrumMidiPreview from '../components/DrumMidiPreview.svelte';
 import DrumToast from '../components/DrumToast.svelte';
 const { content } = Astro.props;
@@ -68,9 +67,9 @@ const { content } = Astro.props;
 							<a href="/library" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">Library</a>
 							<a href="/drum-transcription" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">🥁 Transcribe</a>
 							<a href="/create" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">Create</a>
+							<a href="/midi-preview" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg" title="MIDI">MIDI</a>
 							<a href="/about" class="text-white hover:text-white transition-all duration-300 hover:scale-110 hover:drop-shadow-lg">About</a>
 						</nav>
-						<MidiNavButton client:load />
 					</div>
 				</div>
 			</div>

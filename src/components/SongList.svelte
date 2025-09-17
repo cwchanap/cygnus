@@ -39,7 +39,7 @@
   }
 </script>
 
-<div class="bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl shadow-2xl border border-blue-400/30 h-full max-h-[75vh] flex flex-col">
+<div class="bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl shadow-2xl border border-blue-400/30 h-full min-h-[1200px] max-h-[1200px] flex flex-col">
   <!-- Header -->
   <div class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6 rounded-t-xl">
     <h2 class="text-xl font-bold">Music Library</h2>
@@ -48,8 +48,19 @@
   
   <!-- Song List -->
   <div class="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-800/50" on:scroll={handleScroll}>
-    <div class="divide-y divide-blue-400/20">
-      {#each songs.slice(0, visibleCount) as song (song.id)}
+    {#if songs.length === 0}
+      <div class="h-full flex items-center justify-center text-center p-8">
+        <div class="text-cyan-300">
+          <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+          </svg>
+          <h3 class="text-lg font-semibold mb-2 text-white">No Songs Yet</h3>
+          <p class="text-cyan-200 text-sm">Music compositions will appear here</p>
+        </div>
+      </div>
+    {:else}
+      <div class="divide-y divide-blue-400/20">
+        {#each songs.slice(0, visibleCount) as song (song.id)}
         <button
           class="w-full p-4 text-left hover:bg-blue-700/40 transition-all duration-300 border-l-4 {selectedSongId === song.id ? 'border-cyan-400 bg-blue-700/50' : 'border-transparent hover:border-blue-400/50'}"
           on:click={() => selectSong(song)}
@@ -96,6 +107,7 @@
           All songs loaded
         </div>
       {/if}
-    </div>
+      </div>
+    {/if}
   </div>
 </div>

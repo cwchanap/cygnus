@@ -9,17 +9,17 @@
   } | null = null;
 </script>
 
-<div class="bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl p-8 shadow-2xl border border-blue-400/30">
+<div class="bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl p-8 shadow-2xl border border-blue-400/30 h-full min-h-[1200px] flex flex-col justify-center">
   {#if song}
-    <div class="space-y-6">
+    <div class="space-y-6 w-full">
       <!-- Song Title -->
-      <div>
+      <div class="w-full text-center">
         <h1 class="text-3xl font-bold text-white mb-2">{song.title}</h1>
         <p class="text-cyan-200 text-lg">Created with {song.origin}</p>
       </div>
 
       <!-- Preview Image Placeholder -->
-      <div class="bg-gradient-to-r from-blue-700/50 to-cyan-700/50 rounded-lg h-64 flex items-center justify-center border-2 border-dashed border-blue-400/50">
+      <div class="bg-gradient-to-r from-blue-700/50 to-cyan-700/50 rounded-lg aspect-square w-full flex items-center justify-center border-2 border-dashed border-blue-400/50">
         <div class="text-center text-cyan-200">
           <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
@@ -30,7 +30,7 @@
       </div>
 
       <!-- Song Details -->
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-2 gap-6 w-full">
         <div class="bg-blue-800/40 rounded-lg p-4 border border-blue-400/30">
           <h3 class="text-sm font-semibold text-cyan-300 uppercase tracking-wide mb-2">BPM</h3>
           <p class="text-2xl font-bold text-white">{song.bpm}</p>
@@ -50,7 +50,7 @@
       </button>
     </div>
   {:else}
-    <div class="h-full flex items-center justify-center text-center">
+    <div class="h-full flex flex-col items-center justify-center text-center">
       <div class="text-cyan-300">
         <svg class="w-24 h-24 mx-auto mb-6 opacity-30" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM15.657 6.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-1.929 5.657 1 1 0 11-1.414-1.414A7.971 7.971 0 0017 12c0-1.194-.26-2.327-.743-3.343a1 1 0 010-1.414z" clip-rule="evenodd" />
