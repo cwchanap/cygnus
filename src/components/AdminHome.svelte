@@ -46,6 +46,28 @@
 
   <!-- Content wrapper -->
   <div class="relative z-10 flex flex-col min-h-screen">
+    <!-- Navigation -->
+    <nav class="container mx-auto px-6 py-6 animate-fade-in-up animation-delay-300">
+      <div class="flex justify-center">
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+          <div class="flex flex-wrap gap-4 justify-center">
+            <a
+              href="/admin"
+              class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition-all duration-300 hover:scale-105 hover:drop-shadow-lg font-semibold"
+            >
+              Upload Songs
+            </a>
+            <a
+              href="/admin/songs"
+              class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all duration-300 hover:scale-105 hover:drop-shadow-lg font-semibold"
+            >
+              Manage Songs
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
     <!-- Main Content: center the AdminUpload card -->
     <main class="container mx-auto px-6 py-12 animate-fade-in-up animation-delay-700 flex-grow">
       <div class="flex justify-center">
