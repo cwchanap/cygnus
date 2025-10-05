@@ -16,8 +16,17 @@ import DrumJobsList from '../components/DrumJobsList.svelte';
         </p>
         <div class="mt-4 p-4 bg-blue-500/20 border border-blue-300/30 rounded-lg backdrop-blur-sm">
           <p class="text-sm text-white drop-shadow-sm">
-            ⚠️ Make sure the Crux Python server is running on port 8000
+            ⚙️ You can run transcription in two ways:
           </p>
+          <ul class="list-disc list-inside text-xs text-white/90 mt-2 space-y-1">
+            <li>
+              In-browser (TFJS): No server required. Click "Transcribe in Browser (TFJS)" after uploading.
+              Optionally set <code class="font-mono">PUBLIC_TFJS_MODEL_URL</code> to a TFJS model. Falls back to signal processing if missing.
+            </li>
+            <li>
+              Python server: For the Crux API flow, ensure the server is running on port 8000.
+            </li>
+          </ul>
           <code class="text-xs text-white font-mono block mt-2 bg-blue-600/30 px-3 py-1 rounded">
             cd ~/workspace/Crux && uv run uvicorn src.app.main:app --reload --port 8000
           </code>

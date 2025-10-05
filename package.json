@@ -29,6 +29,8 @@
     "@types/canvas-confetti": "^1.9.0",
     "abcjs": "^6.5.1",
     "astro": "^5.12.9",
+    "@tensorflow/tfjs": "^4.22.0",
+    "fft.js": "^4.0.4",
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
