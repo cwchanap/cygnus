@@ -3,17 +3,19 @@
   
   const dispatch = createEventDispatcher();
   
-  export let songs: Array<{
+  type Song = {
     id: string;
     title: string;
     origin: string;
     bpm: number;
     releaseDate: string;
-  }> = [];
+  };
+
+  export let songs: Song[] = [];
   
   export let selectedSongId: string | null = null;
   
-  function selectSong(song: any) {
+  function selectSong(song: Song) {
     dispatch('songSelected', song);
   }
   

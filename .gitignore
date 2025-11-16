@@ -5,6 +5,7 @@ dist/
 
 # dependencies
 node_modules/
+.bun-cache/
 
 # logs
 npm-debug.log*

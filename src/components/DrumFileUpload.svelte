@@ -170,6 +170,7 @@
     <div
       class="border-2 border-dashed rounded-lg p-8 text-center transition-colors {dragover ? 'border-cyan-400 bg-blue-500/20' : 'border-white/30 hover:border-white/50'}"
       role="button"
+      aria-label="Upload drum audio drop zone"
       tabindex="0"
       on:dragover|preventDefault={() => dragover = true}
       on:dragleave|preventDefault={() => dragover = false}

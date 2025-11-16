@@ -14,12 +14,13 @@ For complete setup instructions, please see our [Tailwind Integration Guide](htt
 
 ## Deploy to Cloudflare Workers
 
-This project is configured for Cloudflare Workers using `@astrojs/cloudflare`.
+This project is configured for Cloudflare Workers using `@astrojs/cloudflare` and Bun for package management/runtime tooling.
 
-- **Local dev:** `npm run dev` (uses Astro dev with Cloudflare platform proxy)
-- **Build:** `npm run build` (emits `dist/_worker.js`)
-- **Deploy (Workers):** `npm run cf:deploy`
-- **Deploy (Pages static):** `npm run cf:pages:deploy`
+- **Install deps:** `bun install`
+- **Local dev:** `bun run dev` (uses Astro dev with Cloudflare platform proxy)
+- **Build:** `bun run build` (emits `dist/_worker.js`)
+- **Deploy (Workers):** `bun run cf:deploy`
+- **Deploy (Pages static):** `bun run cf:pages:deploy`
 
 Config files:
 
@@ -44,6 +45,6 @@ Bindings (examples) in `wrangler.toml`:
 
 First-time deploy notes:
 
-- Install tooling: `npm i -D @astrojs/cloudflare wrangler`
-- Auth: `npx wrangler login`
-- Then: `npm run cf:deploy`
+- Install tooling: `bun add -d @astrojs/cloudflare wrangler`
+- Auth: `bunx wrangler login`
+- Then: `bun run cf:deploy`

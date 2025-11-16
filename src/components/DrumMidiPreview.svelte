@@ -1,8 +1,11 @@
 <script lang="ts">
   import { midiStore } from '../stores/midi';
   import abcjs from 'abcjs';
-  
-  let notationContainer: HTMLDivElement;
+  import type { Midi as MidiInstance } from '@tonejs/midi';
+
+  type MidiTrack = MidiInstance['tracks'][number];
+
+  let notationContainer: HTMLDivElement | null = null;
   let abcString = '';
   let isLoading = true;
   
@@ -10,7 +13,7 @@
     renderNotation($midiStore.midiData);
   }
   
-  function convertMidiToAbc(midiData: any): string {
+  function convertMidiToAbc(midiData: MidiInstance): string {
     // Convert MIDI to ABC notation format
     let abc = 'X:1\n';
     abc += 'T:Drum Transcription\n';
@@ -20,7 +23,7 @@
     abc += 'K:C clef=percussion\n';
     
     // Map drum MIDI notes to ABC percussion notation
-    const drumMap: { [key: number]: string } = {
+    const drumMap: Record<number, string> = {
       36: 'C', // Bass Drum
       38: 'E', // Snare
       42: 'G', // Hi-Hat Closed
@@ -33,7 +36,7 @@
     };
     
     if (midiData.tracks.length > 0) {
-      const track = midiData.tracks[0];
+      const track: MidiTrack = midiData.tracks[0];
       const notes = [...track.notes].sort((a, b) => a.time - b.time);
       
       let currentMeasure = '';
@@ -87,15 +90,14 @@
     return abc;
   }
   
-  function renderNotation(midi: any) {
+  function renderNotation(midi: MidiInstance) {
     isLoading = true;
     abcString = convertMidiToAbc(midi);
     
     if (notationContainer) {
-      notationContainer.innerHTML = '';
       abcjs.renderAbc(notationContainer, abcString, {
         responsive: 'resize',
-        visualTranspose: 0
+        visualTranspose: 0,
       });
     }
     isLoading = false;
