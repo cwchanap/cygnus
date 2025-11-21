@@ -1,11 +1,15 @@
 # build output
 dist/
+/cygnus-web/dist/
 # generated types
 .astro/
+/cygnus-web/.astro/
 
 # dependencies
 node_modules/
+/cygnus-web/node_modules/
 .bun-cache/
+.nx/
 
 # logs
 npm-debug.log*
@@ -17,6 +21,14 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+/cygnus-web/.env
+/cygnus-web/.env.production
+
+# python virtualenvs (cygnus-api)
+/cygnus-api/.venv/
+/cygnus-api/.ruff_cache/
+/cygnus-api/.pytest_cache/
+/cygnus-api/.coverage
 
 # macOS-specific files
 .DS_Store
@@ -26,6 +38,9 @@ pnpm-debug.log*
 
 # wrangler
 .wrangler/
+/cygnus-web/.wrangler/
 
 test-results/
+/cygnus-web/test-results/
 models/
+/cygnus-web/models/

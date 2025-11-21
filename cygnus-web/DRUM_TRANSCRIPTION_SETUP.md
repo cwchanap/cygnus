@@ -2,37 +2,37 @@
 
 ## Overview
 
-The drum transcription feature from Crux has been successfully integrated into Cygnus. This allows you to upload drum audio files and get AI-powered MIDI transcriptions.
+The drum transcription feature from the cygnus-api (formerly Crux) service has been integrated into Cygnus. This allows you to upload drum audio files and get AI-powered MIDI transcriptions.
 
 ## Setup Instructions
 
-### 1. Start the Crux Python API Server
+### 1. Start the cygnus-api Python server
 
 ```bash
-cd ~/workspace/Crux
-uv run uvicorn src.app.main:app --reload --port 8000
+cd ~/workspace/cygnus/cygnus-api
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### 2. Configure Cygnus (Optional)
+### 2. Configure cygnus-web (optional)
 
-If the Crux server is running on a different URL, create a `.env` file in the Cygnus root:
+If the API server is running on a different URL, create a `.env` file in `cygnus-web`:
 
 ```bash
 PUBLIC_CRUX_API_URL=http://localhost:8000
 ```
 
-### 3. Start Cygnus Development Server
+### 3. Start cygnus-web
 
 ```bash
 cd ~/workspace/cygnus
-npm run dev
+bun run dev
 ```
 
 ### 4. Access the Drum Transcription Page
 
-- Open http://localhost:4332 in your browser
+- Open http://localhost:4330 in your browser
 - Click on "🥁 Transcribe" in the navigation menu
-- Or directly visit http://localhost:4332/drum-transcription
+- Or directly visit http://localhost:4330/drum-transcription
 
 ## Features
 
@@ -57,6 +57,6 @@ npm run dev
 
 ## Troubleshooting
 
-- Ensure both servers are running (Crux on port 8000, Cygnus on port 4332)
+- Ensure both servers are running (cygnus-api on port 8000, cygnus-web on port 4330)
 - Check browser console for CORS errors
-- Verify the API URL in the environment variable matches the Crux server location
+- Verify the API URL in the environment variable matches the cygnus-api server location

@@ -26,7 +26,7 @@ export interface MidiPreviewState {
   duration: number;
 }
 
-// Configure the API base URL for the Crux Python server
+// Configure the API base URL for the cygnus-api Python server
 const API_BASE_URL =
   import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:9331';
 
@@ -62,7 +62,7 @@ function createMidiStore() {
         return;
       }
 
-      // Fetch MIDI file from Crux API
+      // Fetch MIDI file from cygnus-api
       const response = await fetch(
         `${API_BASE_URL}/api/jobs/${jobId}/download`
       );

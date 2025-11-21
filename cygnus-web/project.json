@@ -1,0 +1,132 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "name": "cygnus-web",
+  "root": "cygnus-web",
+  "sourceRoot": "cygnus-web/src",
+  "projectType": "application",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro dev --port 4330",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "dev-wrangler": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "wrangler pages dev --proxy 4330 -- astro dev --port 4330",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "astro": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "cf-dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro dev --port 4330",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro build",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro preview",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "cf-deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro build && wrangler deploy",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "cf-pages-deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "astro build && wrangler pages deploy ./dist",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "db-setup": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "wrangler d1 execute cygnus --local --file migrations/0001_init.sql",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "lint-fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "eslint . --fix",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "format-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check .",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test-ui": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --ui",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "test-unit": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vitest",
+        "cwd": "{projectRoot}"
+      }
+    }
+  },
+  "tags": ["scope:web", "type:frontend"]
+}

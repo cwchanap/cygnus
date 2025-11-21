@@ -11,7 +11,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'npm run dev:wrangler',
+    command: 'bun run dev:wrangler',
     url: 'http://localhost:8788',
     reuseExistingServer: true,
     stdout: 'pipe',

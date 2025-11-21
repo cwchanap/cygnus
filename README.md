@@ -1,50 +1,50 @@
-# Astro with Tailwind
+# Cygnus Monorepo (Nx)
+
+This repository is now managed with Nx. Two projects live in the workspace:
+
+- `cygnus-web/`: the Astro + Svelte frontend (moved from the repository root).
+- `cygnus-api/`: the Crux FastAPI service (submodule contents copied locally).
+
+## Quickstart
 
 ```sh
-npm create astro@latest -- --template with-tailwindcss
+# install JS dependencies
+bun install
+
+# run the frontend locally
+bun run dev
+
+# inspect project graph
+bun run nx graph
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/with-tailwindcss)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/with-tailwindcss)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/with-tailwindcss/devcontainer.json)
+## Project Commands
 
-Astro comes with [Tailwind](https://tailwindcss.com) support out of the box. This example showcases how to style your Astro project with Tailwind.
+### cygnus-web (Astro)
 
-For complete setup instructions, please see our [Tailwind Integration Guide](https://docs.astro.build/en/guides/integrations-guide/tailwind).
+- Local dev: `bun run dev` (or `bun run dev:wrangler` for the Cloudflare Pages proxy)
+- Build: `bun run build`
+- Preview: `bun run preview`
+- Lint: `bun run lint` (auto-fix with `bun run lint:fix`)
+- Format check: `bun run format:check` (write with `bun run format`)
+- Tests: `bun run test` (UI runner `bun run test:ui`, unit `bun run test:unit`)
+- Database init: `bun run db:setup`
+- Deploy: `bun run cf:deploy` (Workers) or `bun run cf:pages:deploy` (Pages)
 
-## Deploy to Cloudflare Workers
+### cygnus-api (Crux)
 
-This project is configured for Cloudflare Workers using `@astrojs/cloudflare` and Bun for package management/runtime tooling.
+Use Nx to keep commands rooted in the Python project:
 
-- **Install deps:** `bun install`
-- **Local dev:** `bun run dev` (uses Astro dev with Cloudflare platform proxy)
-- **Build:** `bun run build` (emits `dist/_worker.js`)
-- **Deploy (Workers):** `bun run cf:deploy`
-- **Deploy (Pages static):** `bun run cf:pages:deploy`
+- Serve API: `bun run nx run cygnus-api:serve`
+- Worker: `bun run nx run cygnus-api:worker`
+- Lint: `bun run nx run cygnus-api:lint`
+- Format check: `bun run nx run cygnus-api:format`
+- Tests: `bun run nx run cygnus-api:test`
 
-Config files:
+## Cloudflare Notes (cygnus-web)
 
-- `astro.config.mjs` uses `adapter: cloudflare()` and `output: 'server'`.
-- `wrangler.toml` sets `main = "./dist/_worker.js"`.
+- `astro.config.mjs` uses the Cloudflare adapter with `output: 'server'`.
+- `wrangler.toml` targets `dist/_worker.js` for Workers deploys and can also be used for Pages builds.
+- Configure KV/D1 bindings and secrets in `wrangler.toml` or your deployment environment (keep secrets out of source).
 
-Bindings (examples) in `wrangler.toml`:
-
-```toml
-# [vars]
-# MY_VAR = "value"
-
-# [[kv_namespaces]]
-# binding = "SESSION"
-# id = "<KV_NAMESPACE_ID>"
-
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "cygnus-db"
-# database_id = "<uuid>"
-```
-
-First-time deploy notes:
-
-- Install tooling: `bun add -d @astrojs/cloudflare wrangler`
-- Auth: `bunx wrangler login`
-- Then: `bun run cf:deploy`
+Authenticate with `wrangler login` before deploying. Use `bun run cf:deploy` for Workers or `bun run cf:pages:deploy` for Pages static hosting.

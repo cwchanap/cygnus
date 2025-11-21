@@ -24,11 +24,11 @@ import DrumJobsList from '../components/DrumJobsList.svelte';
               Optionally set <code class="font-mono">PUBLIC_TFJS_MODEL_URL</code> to a TFJS model. Falls back to signal processing if missing.
             </li>
             <li>
-              Python server: For the Crux API flow, ensure the server is running on port 8000.
+              Python server: For the cygnus-api flow, ensure the server is running on port 8000.
             </li>
           </ul>
           <code class="text-xs text-white font-mono block mt-2 bg-blue-600/30 px-3 py-1 rounded">
-            cd ~/workspace/Crux && uv run uvicorn src.app.main:app --reload --port 8000
+            cd ~/workspace/cygnus/cygnus-api && uv run uvicorn app.main:app --reload --port 8000
           </code>
         </div>
       </header>

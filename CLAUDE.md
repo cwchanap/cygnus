@@ -4,27 +4,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Cygnus is an Astro-based music application with AI composition features and drum transcription capabilities. It runs on Cloudflare Workers with D1 database and R2 storage, using Svelte components for interactive UI elements.
+Cygnus is an Astro-based music application with AI composition features and drum transcription capabilities. It runs on Cloudflare Workers with D1 database and R2 storage, using Svelte components for interactive UI elements. The repository is an Nx monorepo with `cygnus-web/` (Astro frontend) and `cygnus-api/` (Python API, formerly the Crux submodule).
 
 ## Development Commands
 
-- `npm run dev` — Start Astro dev server on port 4330
-- `npm run dev:wrangler` — Run Astro dev server proxied through Wrangler Pages
-- `npm run build` — Build for production (outputs to `dist/`)
-- `npm run preview` — Preview production build
-- `npm run test` — Run Playwright e2e tests
-- `npm run test:ui` — Open Playwright test UI
-- `npm run test:unit` — Run Vitest unit tests
-- `npm run lint` — Run ESLint
-- `npm run lint:fix` — Run ESLint with auto-fix
-- `npm run format` — Format code with Prettier
-- `npm run format:check` — Check code formatting
-- `npm run db:setup` — Initialize D1 database with schema from `migrations/0001_init.sql`
+- `bun run dev` — Start Astro dev server on port 4330
+- `bun run dev:wrangler` — Run Astro dev server proxied through Wrangler Pages
+- `bun run build` — Build for production (outputs to `dist/`)
+- `bun run preview` — Preview production build
+- `bun run test` — Run Playwright e2e tests
+- `bun run test:ui` — Open Playwright test UI
+- `bun run test:unit` — Run Vitest unit tests
+- `bun run lint` — Run ESLint
+- `bun run lint:fix` — Run ESLint with auto-fix
+- `bun run format` — Format code with Prettier
+- `bun run format:check` — Check code formatting
+- `bun run db:setup` — Initialize D1 database with schema from `migrations/0001_init.sql`
 
 ## Deployment Commands
 
-- `npm run cf:deploy` — Build and deploy to Cloudflare Workers
-- `npm run cf:pages:deploy` — Build and deploy to Cloudflare Pages
+- `bun run cf:deploy` — Build and deploy to Cloudflare Workers
+- `bun run cf:pages:deploy` — Build and deploy to Cloudflare Pages
 
 ## Architecture
 
@@ -52,7 +52,7 @@ Cygnus is an Astro-based music application with AI composition features and drum
 ### Key Features
 - **Music Gallery**: Browse and play AI-generated compositions
 - **Admin Panel**: Song management with upload/edit capabilities
-- **Drum Transcription**: Upload audio files for AI-powered MIDI transcription (requires Crux API server)
+- **Drum Transcription**: Upload audio files for AI-powered MIDI transcription (requires the cygnus-api server)
 - **MIDI Preview**: Visual notation and audio playback
 
 ### Authentication
@@ -60,7 +60,7 @@ Cygnus is an Astro-based music application with AI composition features and drum
 - Protected admin routes
 
 ### External Dependencies
-- **Crux API**: Python server for drum transcription at `http://localhost:8000`
+- **cygnus-api**: Python server for drum transcription at `http://localhost:8000`
 - Environment variable: `PUBLIC_CRUX_API_URL` (defaults to localhost:8000)
 
 ## Database Schema
@@ -102,7 +102,7 @@ Uses Cloudflare D1 with a `songs` table:
 
 ## Common Issues
 
-- Ensure Crux API server is running for drum transcription features
+- Ensure cygnus-api server is running for drum transcription features
 - Check CORS configuration if API calls fail
 - Verify D1 database is initialized before first run
 - Port 4330 is hardcoded for dev server

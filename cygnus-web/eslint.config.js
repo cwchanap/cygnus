@@ -9,7 +9,7 @@ import svelteConfig from './svelte.config.js';
 // Flat config for Astro + Svelte + TypeScript
 export default tseslint.config(
   // Ignores
-  { ignores: ['dist', 'node_modules', '.astro', '.wrangler', 'test-results', 'Crux'] },
+  { ignores: ['dist', 'node_modules', '.astro', '.wrangler', 'test-results', '../cygnus-api'] },
 
   // Base JS recommendations
   js.configs.recommended,
