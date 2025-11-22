@@ -1,0 +1,10 @@
+__pycache__
+audio/
+temp_uploads/
+temp_downloads/
+.venv/
+
+models/
+static/assets/
+.coverage
+web_model*/

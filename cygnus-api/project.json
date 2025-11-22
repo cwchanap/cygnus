@@ -1,0 +1,47 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "name": "cygnus-api",
+  "root": "cygnus-api",
+  "sourceRoot": "cygnus-api/src",
+  "projectType": "application",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "worker": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run python src/worker.py",
+        "cwd": "{projectRoot}"
+      },
+      "outputs": []
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run ruff check src tests",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run black --check src tests",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "uv run pytest",
+        "cwd": "{projectRoot}"
+      }
+    }
+  },
+  "tags": ["scope:api", "type:python"]
+}
