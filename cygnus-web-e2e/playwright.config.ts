@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
+const webRoot = join(__dirname, '..', 'cygnus-web');
 
 export default defineConfig({
   testDir: './tests',
@@ -12,6 +17,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'bun run dev:wrangler',
+    cwd: webRoot,
     url: 'http://localhost:8788',
     reuseExistingServer: true,
     stdout: 'pipe',

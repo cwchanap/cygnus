@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { join } from 'node:path';
+import { webPath } from './utils/paths';
 
 // E2E for in-browser TFJS transcription path
 // Assumes the app is served at baseURL from playwright.config.ts
@@ -27,7 +27,7 @@ test.describe('TFJS Drum Transcription', () => {
     // Debug: count TFJS buttons before selection
     const preCount = await page.locator('[data-testid="tfjs-transcribe-button"]').count();
     console.log('TFJS button count before file select:', preCount);
-    const mp3Path = join(process.cwd(), 'public', 'test-song.mp3');
+    const mp3Path = webPath('public', 'test-song.mp3');
     await fileInput.setInputFiles(mp3Path);
     await fileInput.dispatchEvent('input', { bubbles: true });
     await fileInput.dispatchEvent('change', { bubbles: true });

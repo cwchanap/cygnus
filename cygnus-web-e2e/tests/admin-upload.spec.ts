@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
-import path from 'node:path';
-
-// Utility to path to fixtures and public files
-const proj = (...p: string[]) => path.join(process.cwd(), ...p);
+import { e2ePath, webPath } from './utils/paths';
 
 test('admin can upload a song with optional preview image', async ({
   page,
@@ -35,10 +32,10 @@ test('admin can upload a song with optional preview image', async ({
   }
 
   // Attach files
-  await uploadInput.setInputFiles(proj('public', 'test-song.mp3'));
+  await uploadInput.setInputFiles(webPath('public', 'test-song.mp3'));
   await page
     .getByLabel('Preview Image (optional)')
-    .setInputFiles(proj('tests', 'fixtures', 'preview.svg'));
+    .setInputFiles(e2ePath('tests', 'fixtures', 'preview.svg'));
 
   // Fill metadata
   await page.fill('input#song_name', 'Test Track');
