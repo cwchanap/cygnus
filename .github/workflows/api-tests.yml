@@ -16,7 +16,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.12'
 
       - name: Install uv
         run: |
@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: cygnus-api
-        run: uv pip install -e . --extra dev
+        run: uv pip install -e ".[dev]"
 
       - name: Lint
         working-directory: cygnus-api
@@ -43,7 +43,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.12'
 
       - name: Install uv
         run: |
@@ -52,7 +52,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: cygnus-api
-        run: uv pip install -e . --extra dev
+        run: uv pip install -e ".[dev]"
 
       - name: Tests
         working-directory: cygnus-api
