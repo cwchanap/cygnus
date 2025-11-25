@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: cygnus-api
-        run: uv pip install -e ".[dev]"
+        run: uv pip install --system -e ".[dev]"
 
       - name: Lint
         working-directory: cygnus-api
@@ -52,7 +52,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: cygnus-api
-        run: uv pip install -e ".[dev]"
+        run: uv pip install --system -e ".[dev]"
 
       - name: Tests
         working-directory: cygnus-api
