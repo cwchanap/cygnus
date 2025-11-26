@@ -15,7 +15,9 @@ from src.app.tf2_magenta_model import create_drum_model
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-DEFAULT_CHECKPOINT_PATH = os.path.expanduser("~/.cache/drum_transcription/models/model.ckpt-569400")
+DEFAULT_CHECKPOINT_PATH = os.path.expanduser(
+    "~/.cache/drum_transcription/models/model.ckpt-569400"
+)
 DEFAULT_OUTPUT_PATH = "models/e-gmd/tf2_model.weights.h5"
 
 
@@ -95,7 +97,9 @@ def convert_tf1_checkpoint_to_tf2(checkpoint_path: str, output_path: str):
                             # Dense layer kernels may need transposing
                             if tensor.T.shape == layer.kernel.shape:
                                 layer.kernel.assign(tensor.T)
-                                logger.info(f"Assigned transposed weights to {layer_name} kernel")
+                                logger.info(
+                                    f"Assigned transposed weights to {layer_name} kernel"
+                                )
                             elif tensor.shape == layer.kernel.shape:
                                 layer.kernel.assign(tensor)
                                 logger.info(f"Assigned weights to {layer_name} kernel")

@@ -40,7 +40,9 @@ async def test_local_storage_adapter_crud(tmp_path):
     assert loaded2["progress"] == 50
 
     # Save MIDI and retrieve it
-    midi_bytes = b"MThd\x00\x00\x00\x06\x00\x00\x00\x01\x00\x60MTrk\x00\x00\x00\x04\x00\xff/\x00"
+    midi_bytes = (
+        b"MThd\x00\x00\x00\x06\x00\x00\x00\x01\x00\x60MTrk\x00\x00\x00\x04\x00\xff/\x00"
+    )
     ok3 = await adapter.save_midi(job_id, midi_bytes)
     assert ok3 is True
 

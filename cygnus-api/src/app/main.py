@@ -110,7 +110,8 @@ async def upload_audio(file: UploadFile = File(...)):
     # Validate file type
     if not file.filename.lower().endswith((".mp3", ".wav", ".m4a", ".flac")):
         raise HTTPException(
-            status_code=400, detail="Invalid file format. Please upload MP3, WAV, M4A, or FLAC"
+            status_code=400,
+            detail="Invalid file format. Please upload MP3, WAV, M4A, or FLAC",
         )
 
     # Generate upload ID
@@ -219,7 +220,9 @@ async def download_result(job_id: str):
     with open(temp_path, "wb") as f:
         f.write(midi_store[job_id])
 
-    return FileResponse(temp_path, media_type="audio/midi", filename=f"drums_{job_id}.mid")
+    return FileResponse(
+        temp_path, media_type="audio/midi", filename=f"drums_{job_id}.mid"
+    )
 
 
 @app.get("/api/jobs")

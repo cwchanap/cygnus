@@ -7,7 +7,10 @@ from src.app.storage import StorageAdapter
 
 class FakeResponse:
     def __init__(
-        self, status_code: int, json_data: Any | None = None, content: bytes | None = None
+        self,
+        status_code: int,
+        json_data: Any | None = None,
+        content: bytes | None = None,
     ):
         self.status_code = status_code
         self._json_data = json_data
@@ -33,7 +36,9 @@ class FakeAsyncClient:
         # Ignore headers/params in this simple fake; key by method+url
         return self._mapping.get(("GET", url), FakeResponse(404))
 
-    async def put(self, url: str, headers=None, json=None, content=None):  # noqa: D401, ANN001
+    async def put(
+        self, url: str, headers=None, json=None, content=None
+    ):  # noqa: D401, ANN001
         return self._mapping.get(("PUT", url), FakeResponse(404))
 
 
@@ -61,7 +66,9 @@ async def test_cloudflare_kv_crud_and_list(monkeypatch):
         "result_url": None,
         "error": None,
     }
-    midi_bytes = b"MThd\x00\x00\x00\x06\x00\x00\x00\x01\x00\x60MTrk\x00\x00\x00\x04\x00\xff/\x00"
+    midi_bytes = (
+        b"MThd\x00\x00\x00\x06\x00\x00\x00\x01\x00\x60MTrk\x00\x00\x00\x04\x00\xff/\x00"
+    )
 
     # Prepare responses mapping
     mapping: Dict[Tuple[str, str], FakeResponse] = {}
@@ -69,7 +76,9 @@ async def test_cloudflare_kv_crud_and_list(monkeypatch):
     # Save job
     mapping[("PUT", f"{base}/values/job_{job_id}")] = FakeResponse(200)
     # Get job
-    mapping[("GET", f"{base}/values/job_{job_id}")] = FakeResponse(200, json_data=job_obj)
+    mapping[("GET", f"{base}/values/job_{job_id}")] = FakeResponse(
+        200, json_data=job_obj
+    )
     # Keys list -> one job key
     mapping[("GET", f"{base}/keys")] = FakeResponse(
         200, json_data={"result": [{"name": f"job_{job_id}"}]}
@@ -77,7 +86,9 @@ async def test_cloudflare_kv_crud_and_list(monkeypatch):
     # Save MIDI
     mapping[("PUT", f"{base}/values/midi_{job_id}")] = FakeResponse(200)
     # Get MIDI
-    mapping[("GET", f"{base}/values/midi_{job_id}")] = FakeResponse(200, content=midi_bytes)
+    mapping[("GET", f"{base}/values/midi_{job_id}")] = FakeResponse(
+        200, content=midi_bytes
+    )
 
     # Patch httpx.AsyncClient to our fake; ensure each instantiation sees the same mapping
     import httpx  # local import to patch
@@ -103,7 +114,9 @@ async def test_cloudflare_kv_crud_and_list(monkeypatch):
 
     # Update job status (invokes GET then PUT under the hood)
     # Ensure mapping covers the PUT already; reuse same endpoint
-    updated_ok = await adapter.update_job_status(job_id, status="processing", progress=25)
+    updated_ok = await adapter.update_job_status(
+        job_id, status="processing", progress=25
+    )
     assert updated_ok is True
 
 

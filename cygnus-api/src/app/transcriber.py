@@ -43,7 +43,10 @@ class DrumTranscriber:
     MODEL_URL = "https://storage.googleapis.com/magentadata/models/onsets_frames_transcription/e-gmd_checkpoint.zip"
 
     def __init__(
-        self, model_path: Optional[str] = None, sample_rate: int = 44100, load_model: bool = True
+        self,
+        model_path: Optional[str] = None,
+        sample_rate: int = 44100,
+        load_model: bool = True,
     ):
         """
         Initialize drum transcriber
@@ -156,7 +159,10 @@ class DrumTranscriber:
             return None
 
         try:
-            from src.app.tf2_magenta_model import create_drum_model, load_tf1_checkpoint_to_tf2
+            from src.app.tf2_magenta_model import (
+                create_drum_model,
+                load_tf1_checkpoint_to_tf2,
+            )
 
             # Create the TF2 model
             model = create_drum_model()
@@ -177,7 +183,9 @@ class DrumTranscriber:
                 else:
                     # Try to load and convert TF1 checkpoint
                     model = load_tf1_checkpoint_to_tf2(self.model_path, model)
-                    logging.info("Loaded and converted TF1 checkpoint from %s", self.model_path)
+                    logging.info(
+                        "Loaded and converted TF1 checkpoint from %s", self.model_path
+                    )
             else:
                 logging.warning("No model path available, using fallback method")
                 return None
@@ -213,29 +221,39 @@ class DrumTranscriber:
         inputs = tf.keras.Input(shape=(None, self.n_mels), name="mel_input")
 
         # Onset stack - predicts when drum hits occur
-        onset_x = tf.keras.layers.Conv1D(32, 3, padding="same", activation="relu")(inputs)
+        onset_x = tf.keras.layers.Conv1D(32, 3, padding="same", activation="relu")(
+            inputs
+        )
         onset_x = tf.keras.layers.BatchNormalization()(onset_x)
-        onset_x = tf.keras.layers.Conv1D(32, 3, padding="same", activation="relu")(onset_x)
-        onset_x = tf.keras.layers.BatchNormalization()(onset_x)
-        onset_x = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True))(
+        onset_x = tf.keras.layers.Conv1D(32, 3, padding="same", activation="relu")(
             onset_x
         )
-        onset_outputs = tf.keras.layers.Dense(9, activation="sigmoid", name="onset_probs")(onset_x)
+        onset_x = tf.keras.layers.BatchNormalization()(onset_x)
+        onset_x = tf.keras.layers.Bidirectional(
+            tf.keras.layers.LSTM(64, return_sequences=True)
+        )(onset_x)
+        onset_outputs = tf.keras.layers.Dense(
+            9, activation="sigmoid", name="onset_probs"
+        )(onset_x)
 
         # Frame stack - predicts active drums at each frame
-        frame_x = tf.keras.layers.Conv1D(32, 3, padding="same", activation="relu")(inputs)
+        frame_x = tf.keras.layers.Conv1D(32, 3, padding="same", activation="relu")(
+            inputs
+        )
         frame_x = tf.keras.layers.BatchNormalization()(frame_x)
         frame_x = tf.keras.layers.Concatenate()([frame_x, onset_outputs])
-        frame_x = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True))(
-            frame_x
-        )
-        frame_outputs = tf.keras.layers.Dense(9, activation="sigmoid", name="frame_probs")(frame_x)
+        frame_x = tf.keras.layers.Bidirectional(
+            tf.keras.layers.LSTM(64, return_sequences=True)
+        )(frame_x)
+        frame_outputs = tf.keras.layers.Dense(
+            9, activation="sigmoid", name="frame_probs"
+        )(frame_x)
 
         # Velocity stack - predicts hit strength
         velocity_x = tf.keras.layers.Concatenate()([frame_outputs, onset_outputs])
-        velocity_outputs = tf.keras.layers.Dense(9, activation="linear", name="velocity")(
-            velocity_x
-        )
+        velocity_outputs = tf.keras.layers.Dense(
+            9, activation="linear", name="velocity"
+        )(velocity_x)
 
         model = tf.keras.Model(
             inputs=inputs,
@@ -248,7 +266,9 @@ class DrumTranscriber:
 
         return model
 
-    def _predictions_to_events(self, predictions: Dict[str, np.ndarray]) -> Dict[int, list]:
+    def _predictions_to_events(
+        self, predictions: Dict[str, np.ndarray]
+    ) -> Dict[int, list]:
         """
         Convert model predictions to drum events with timing and velocity
         """
@@ -361,7 +381,9 @@ class DrumTranscriber:
                 drum_onsets[36].append((onset_time, 80))  # Higher velocity for kick
             elif spectral_centroid < 350 and zcr > 0.1:  # Mid-low with noise = snare
                 drum_onsets[38].append((onset_time, 70))
-            elif spectral_centroid > 3000 and zcr > 0.2:  # High freq with noise = hi-hat
+            elif (
+                spectral_centroid > 3000 and zcr > 0.2
+            ):  # High freq with noise = hi-hat
                 drum_onsets[42].append((onset_time, 60))
             elif spectral_centroid > 2000:  # High freq = cymbals
                 drum_onsets[49].append((onset_time, 65))
@@ -375,7 +397,9 @@ class DrumTranscriber:
 
         return drum_onsets
 
-    async def transcribe(self, audio_path: str, job_id: str, jobs_store: Dict[str, Any]) -> bytes:
+    async def transcribe(
+        self, audio_path: str, job_id: str, jobs_store: Dict[str, Any]
+    ) -> bytes:
         """
         Transcribe drums from audio file to MIDI
         """
@@ -495,11 +519,19 @@ class DrumTranscriber:
 
         # Find peaks (onsets)
         peaks = librosa.util.peak_pick(
-            onset_envelope, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10
+            onset_envelope,
+            pre_max=3,
+            post_max=3,
+            pre_avg=3,
+            post_avg=5,
+            delta=0.5,
+            wait=10,
         )
 
         # Convert frame indices to time
-        onset_times = librosa.frames_to_time(peaks, sr=self.sample_rate, hop_length=self.hop_length)
+        onset_times = librosa.frames_to_time(
+            peaks, sr=self.sample_rate, hop_length=self.hop_length
+        )
 
         # Classify each onset (simplified drum classification)
         for onset_time, peak_idx in zip(onset_times, peaks):
@@ -518,21 +550,27 @@ class DrumTranscriber:
                     drum_events[36].append(
                         {
                             "time": onset_time,
-                            "velocity": self._estimate_velocity(onset_envelope[peak_idx]),
+                            "velocity": self._estimate_velocity(
+                                onset_envelope[peak_idx]
+                            ),
                         }
                     )
                 elif self._is_snare(mean_spectrum):
                     drum_events[38].append(
                         {
                             "time": onset_time,
-                            "velocity": self._estimate_velocity(onset_envelope[peak_idx]),
+                            "velocity": self._estimate_velocity(
+                                onset_envelope[peak_idx]
+                            ),
                         }
                     )
                 elif self._is_hihat(mean_spectrum):
                     drum_events[42].append(
                         {
                             "time": onset_time,
-                            "velocity": self._estimate_velocity(onset_envelope[peak_idx]),
+                            "velocity": self._estimate_velocity(
+                                onset_envelope[peak_idx]
+                            ),
                         }
                     )
                 else:
@@ -540,7 +578,9 @@ class DrumTranscriber:
                     drum_events[42].append(
                         {
                             "time": onset_time,
-                            "velocity": self._estimate_velocity(onset_envelope[peak_idx]),
+                            "velocity": self._estimate_velocity(
+                                onset_envelope[peak_idx]
+                            ),
                         }
                     )
 
@@ -682,11 +722,15 @@ class DrumTranscriber:
                         # Get velocity at onset frame
                         velocity = int(np.clip(pitch_velocities[idx] * 127, 1, 127))
 
-                        drum_events[drum_midi].append({"time": onset_time, "velocity": velocity})
+                        drum_events[drum_midi].append(
+                            {"time": onset_time, "velocity": velocity}
+                        )
 
         return drum_events
 
-    def _find_onset_peaks(self, signal: np.ndarray, threshold: float = 0.3) -> np.ndarray:
+    def _find_onset_peaks(
+        self, signal: np.ndarray, threshold: float = 0.3
+    ) -> np.ndarray:
         """Find peaks in a signal above threshold"""
         above_threshold = signal > threshold
 

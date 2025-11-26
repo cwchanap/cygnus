@@ -63,7 +63,9 @@ def test_cli_success_with_fake_conversion(tmp_path: Path, monkeypatch):
 
     import src.cli.convert as convert_mod
 
-    monkeypatch.setattr(convert_mod, "convert_tf1_checkpoint_to_tf2", fake_convert, raising=True)
+    monkeypatch.setattr(
+        convert_mod, "convert_tf1_checkpoint_to_tf2", fake_convert, raising=True
+    )
     # Patch os.path.exists inside module to simulate checkpoint presence
     real_exists = os.path.exists
 

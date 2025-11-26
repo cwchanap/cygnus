@@ -8,7 +8,9 @@ from src.app.transcriber import DrumTranscriber
 @pytest.mark.asyncio
 async def test_transcribe_fallback_uses_onset_detection(monkeypatch, tmp_path):
     # Ensure model building is skipped and fallback path is used
-    monkeypatch.setattr(DrumTranscriber, "_build_model", lambda self: None, raising=True)
+    monkeypatch.setattr(
+        DrumTranscriber, "_build_model", lambda self: None, raising=True
+    )
 
     dt = DrumTranscriber(load_model=False, sample_rate=16000)
 

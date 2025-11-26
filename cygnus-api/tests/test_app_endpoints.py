@@ -42,7 +42,9 @@ def test_upload_transcribe_download_flow(client: TestClient, monkeypatch):
             pass
 
     # Monkeypatch the background task to avoid heavy dependencies
-    monkeypatch.setattr(app_main, "process_audio_task", fake_process_audio_task, raising=True)
+    monkeypatch.setattr(
+        app_main, "process_audio_task", fake_process_audio_task, raising=True
+    )
 
     # 1) Upload a small dummy wav file
     files = {

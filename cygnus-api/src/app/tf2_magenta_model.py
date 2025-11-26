@@ -32,7 +32,9 @@ class ConvStack(tf.keras.Model):
             n_filters,
             freq_pool_size,
             dropout_amt,
-        ) in enumerate(zip(temporal_sizes, freq_sizes, num_filters, pool_sizes, dropout_keep_amts)):
+        ) in enumerate(
+            zip(temporal_sizes, freq_sizes, num_filters, pool_sizes, dropout_keep_amts)
+        ):
             # Convolutional layer
             self.conv_layers.append(
                 layers.Conv2D(
@@ -50,7 +52,9 @@ class ConvStack(tf.keras.Model):
             if freq_pool_size > 1:
                 self.pool_layers.append(
                     layers.MaxPool2D(
-                        (1, freq_pool_size), strides=(1, freq_pool_size), name=f"pool_{i}"
+                        (1, freq_pool_size),
+                        strides=(1, freq_pool_size),
+                        name=f"pool_{i}",
                     )
                 )
             else:
@@ -58,7 +62,9 @@ class ConvStack(tf.keras.Model):
 
             # Dropout layer (if needed)
             if dropout_amt < 1.0:
-                self.dropout_layers.append(layers.Dropout(1.0 - dropout_amt, name=f"dropout_{i}"))
+                self.dropout_layers.append(
+                    layers.Dropout(1.0 - dropout_amt, name=f"dropout_{i}")
+                )
             else:
                 self.dropout_layers.append(None)
 
@@ -75,7 +81,12 @@ class ConvStack(tf.keras.Model):
 
         # Apply convolutional layers
         for i, (conv, bn, pool, dropout) in enumerate(
-            zip(self.conv_layers, self.batch_norms, self.pool_layers, self.dropout_layers)
+            zip(
+                self.conv_layers,
+                self.batch_norms,
+                self.pool_layers,
+                self.dropout_layers,
+            )
         ):
             net = conv(net)
             net = bn(net, training=training)
@@ -182,7 +193,9 @@ class OnsetsFramesModel(tf.keras.Model):
         self.onset_probs = layers.Dense(88, activation="sigmoid", name="onset_probs")
         self.offset_probs = layers.Dense(88, activation="sigmoid", name="offset_probs")
         self.velocity_values = layers.Dense(88, activation=None, name="velocity_values")
-        self.activation_probs = layers.Dense(88, activation="sigmoid", name="activation_probs")
+        self.activation_probs = layers.Dense(
+            88, activation="sigmoid", name="activation_probs"
+        )
 
         # Combined model for frame predictions
         if hparams.combined_lstm_units > 0:

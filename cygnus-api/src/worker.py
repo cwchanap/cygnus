@@ -13,7 +13,11 @@ async def on_fetch(request, env):
     This is a lightweight proxy that forwards requests to the main FastAPI app
     """
     url = request.url
-    path = url.split(request.headers.get("host"))[1] if request.headers.get("host") else "/"
+    path = (
+        url.split(request.headers.get("host"))[1]
+        if request.headers.get("host")
+        else "/"
+    )
 
     # Handle static files
     if not path.startswith("/api/"):

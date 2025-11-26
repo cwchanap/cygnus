@@ -105,7 +105,9 @@ class StorageAdapter:
                     keys = response.json().get("result", [])
                     jobs = []
                     for key_info in keys:
-                        job_data = await self.get_job(key_info["name"].replace("job_", ""))
+                        job_data = await self.get_job(
+                            key_info["name"].replace("job_", "")
+                        )
                         if job_data:
                             jobs.append(job_data)
                     return jobs

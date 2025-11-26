@@ -60,7 +60,9 @@ def test_download_missing_midi(client: TestClient):
 def test_list_jobs_pagination(client: TestClient, monkeypatch):
     from src.app import main as app_main
 
-    async def noop_process(job_id: str, file_path: str):  # noqa: ARG001 - signature must match
+    async def noop_process(
+        job_id: str, file_path: str
+    ):  # noqa: ARG001 - signature must match
         # Do nothing (avoid heavy dependencies)
         return None
 
@@ -113,7 +115,9 @@ def test_process_audio_task_error_flow(tmp_path, client: TestClient):  # noqa: A
     }
 
     class BoomTranscriber:
-        async def transcribe(self, file_path: str, job_id: str, jobs_store):  # noqa: D401, ARG002
+        async def transcribe(
+            self, file_path: str, job_id: str, jobs_store
+        ):  # noqa: D401, ARG002
             raise RuntimeError("boom")
 
     # Inject failing transcriber to avoid importing heavy module

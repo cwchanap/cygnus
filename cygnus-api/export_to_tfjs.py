@@ -51,7 +51,9 @@ def build_functional_model(weights_path: str | None) -> tf.keras.Model:
 
     # Build functional wrapper with variable time dimension
     # Use batch_shape to ensure batch_input_shape is present in the config for TFJS importer
-    inputs = tf.keras.Input(batch_shape=(None, None, 229, 1), name="inputs", dtype="float32")
+    inputs = tf.keras.Input(
+        batch_shape=(None, None, 229, 1), name="inputs", dtype="float32"
+    )
     outputs = base(inputs, training=False)
     # Ensure list outputs with stable ordering for TFJS Layers export
     if isinstance(outputs, dict):
@@ -61,7 +63,9 @@ def build_functional_model(weights_path: str | None) -> tf.keras.Model:
             outputs["velocity_values"],
             outputs["frame_probs"],
         ]
-    func_model = tf.keras.Model(inputs=inputs, outputs=outputs, name="drums_onsets_frames")
+    func_model = tf.keras.Model(
+        inputs=inputs, outputs=outputs, name="drums_onsets_frames"
+    )
 
     # Show summary for verification
     try:
@@ -86,8 +90,11 @@ def export_to_tfjs(weights_path: str | None, output_dir: Path) -> None:
         logger.info("✅ Exported TFJS model to: %s", output_dir)
         return
     except Exception as e:
-        logger.warning("tensorflowjs Python package not available or failed (%s).\n"
-                       "Falling back to saving Keras H5 for CLI conversion.", e)
+        logger.warning(
+            "tensorflowjs Python package not available or failed (%s).\n"
+            "Falling back to saving Keras H5 for CLI conversion.",
+            e,
+        )
 
     # Fallback: save to H5 and instruct user to run CLI
     h5_path = output_dir / "keras_model.h5"
@@ -121,7 +128,9 @@ def main() -> None:
     output_dir = Path(args.output_dir)
 
     if weights_path and not Path(weights_path).exists():
-        logger.warning("Weights not found at %s. Proceeding without loading weights.", weights_path)
+        logger.warning(
+            "Weights not found at %s. Proceeding without loading weights.", weights_path
+        )
         weights_path = None
 
     export_to_tfjs(weights_path, output_dir)
