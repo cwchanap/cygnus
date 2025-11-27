@@ -18,10 +18,10 @@ test.describe('TFJS Drum Transcription', () => {
     // Ensure hydration: wait for key elements to be present
     const chooseBtn = page.getByRole('button', { name: 'Choose File', exact: true });
     await expect(chooseBtn).toBeVisible({ timeout: 60_000 });
-    await page.waitForSelector('input[data-testid="file-input"]', { timeout: 60_000 });
+    const fileInput = page.getByTestId('file-input');
+    await fileInput.waitFor({ state: 'attached', timeout: 60_000 });
 
     // Upload a sample file: click Choose File to ensure input is wired, then set files and dispatch change
-    const fileInput = page.getByTestId('file-input');
     await expect(fileInput).toHaveCount(1);
     await chooseBtn.click();
     // Debug: count TFJS buttons before selection
