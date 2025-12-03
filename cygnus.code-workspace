@@ -1,0 +1,43 @@
+{
+  "folders": [
+    {
+      "name": "cygnus (root)",
+      "path": "."
+    },
+    {
+      "name": "cygnus-web",
+      "path": "cygnus-web"
+    },
+    {
+      "name": "cygnus-api",
+      "path": "cygnus-api"
+    },
+    {
+      "name": "cygnus-web-e2e",
+      "path": "cygnus-web-e2e"
+    }
+  ],
+  "settings": {
+    "python.languageServer": "None",
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.nx": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.nx": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true
+  },
+  "extensions": {
+    "recommendations": [
+      "astro-build.astro-vscode",
+      "svelte.svelte-vscode",
+      "bradlc.vscode-tailwindcss",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode"
+    ]
+  }
+}
