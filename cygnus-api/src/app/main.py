@@ -5,7 +5,7 @@ Optimized for Cloudflare Workers deployment
 
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -132,7 +132,7 @@ async def upload_audio(file: UploadFile = File(...)):
         "filename": file.filename,
         "file_size": len(content),
         "file_path": str(file_path),
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
     uploads_store[upload_id] = upload_info
 
@@ -166,8 +166,8 @@ async def start_transcription(
     job = {
         "job_id": job_id,
         "status": "pending",
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
         "progress": 0,
         "result_url": None,
         "error": None,
@@ -247,7 +247,7 @@ async def process_audio_task(job_id: str, file_path: str):
     try:
         # Update job status
         jobs_store[job_id]["status"] = "processing"
-        jobs_store[job_id]["updated_at"] = datetime.utcnow().isoformat()
+        jobs_store[job_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
         jobs_store[job_id]["progress"] = 10
 
         # Get preloaded transcriber if available; otherwise create and cache it
@@ -272,7 +272,7 @@ async def process_audio_task(job_id: str, file_path: str):
         jobs_store[job_id]["status"] = "completed"
         jobs_store[job_id]["progress"] = 100
         jobs_store[job_id]["result_url"] = f"/api/jobs/{job_id}/download"
-        jobs_store[job_id]["updated_at"] = datetime.utcnow().isoformat()
+        jobs_store[job_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
 
         # Clean up temp file
         os.remove(file_path)
@@ -281,7 +281,7 @@ async def process_audio_task(job_id: str, file_path: str):
         # Update job as failed
         jobs_store[job_id]["status"] = "failed"
         jobs_store[job_id]["error"] = str(e)
-        jobs_store[job_id]["updated_at"] = datetime.utcnow().isoformat()
+        jobs_store[job_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
 
         # Clean up temp file if exists
         if os.path.exists(file_path):
