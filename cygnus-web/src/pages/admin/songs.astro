@@ -1,13 +1,10 @@
 ---
 import MainLayout from '../../layouts/main.astro';
 import SongManagement from '../../components/SongManagement.svelte';
-// Simple cookie parse to detect admin auth
-const cookieAuthed = (Astro.request.headers.get('cookie') ?? '')
-  .split(';')
-  .some((c) => c.trim().startsWith('admin_auth=1'));
+import { isAdminAuthed } from '../../lib/auth';
 
 // If not authenticated, redirect to login with next param
-if (!cookieAuthed) {
+if (!isAdminAuthed(Astro.request)) {
   const next = Astro.url.pathname + (Astro.url.search ?? '');
   const headers = new Headers();
   headers.append('Location', `/login?next=${encodeURIComponent(next)}`);

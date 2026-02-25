@@ -1,0 +1,44 @@
+import { describe, it, expect } from 'vitest';
+import { isAdminAuthed } from '../../src/lib/auth';
+
+describe('isAdminAuthed', () => {
+  it('returns true for admin_auth=1 cookie', () => {
+    const req = new Request('http://localhost/', {
+      headers: { cookie: 'admin_auth=1' },
+    });
+    expect(isAdminAuthed(req)).toBe(true);
+  });
+
+  it('returns true when admin_auth=1 is among multiple cookies', () => {
+    const req = new Request('http://localhost/', {
+      headers: { cookie: 'session=abc; admin_auth=1; theme=dark' },
+    });
+    expect(isAdminAuthed(req)).toBe(true);
+  });
+
+  it('returns false for admin_auth=10 (no bypass)', () => {
+    const req = new Request('http://localhost/', {
+      headers: { cookie: 'admin_auth=10' },
+    });
+    expect(isAdminAuthed(req)).toBe(false);
+  });
+
+  it('returns false for admin_auth=123', () => {
+    const req = new Request('http://localhost/', {
+      headers: { cookie: 'admin_auth=123' },
+    });
+    expect(isAdminAuthed(req)).toBe(false);
+  });
+
+  it('returns false when no auth cookie', () => {
+    const req = new Request('http://localhost/');
+    expect(isAdminAuthed(req)).toBe(false);
+  });
+
+  it('returns false for empty cookie header', () => {
+    const req = new Request('http://localhost/', {
+      headers: { cookie: '' },
+    });
+    expect(isAdminAuthed(req)).toBe(false);
+  });
+});
