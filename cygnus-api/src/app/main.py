@@ -55,7 +55,6 @@ AUDIO_MAGIC: list[tuple[bytes, str]] = [
     (b"\xff\xf3", "mp3"),
     (b"\xff\xf2", "mp3"),
     (b"fLaC", "flac"),       # FLAC
-    (b"\x00\x00\x00", "m4a"), # M4A/MP4
 ]
 
 

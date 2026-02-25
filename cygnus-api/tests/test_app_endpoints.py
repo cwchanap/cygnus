@@ -110,3 +110,11 @@ def test_upload_rejects_disguised_file(client: TestClient):
     files = {"file": ("fake.wav", pe_magic, "audio/wav")}
     resp = client.post("/api/upload", files=files)
     assert resp.status_code == 400
+
+
+def test_upload_rejects_disguised_m4a(client: TestClient):
+    # File with .m4a extension but non-audio content (no ftyp box at offset 4)
+    bad_content = b"\x00\x00\x00\xfe" + b"\x00" * 8
+    files = {"file": ("fake.m4a", bad_content, "audio/mp4")}
+    resp = client.post("/api/upload", files=files)
+    assert resp.status_code == 400
