@@ -2,18 +2,15 @@ import type { APIRoute } from 'astro';
 import { createDb } from '../../../lib/db';
 import { songs } from '../../../lib/db/schema';
 import { desc, eq, type InferSelectModel } from 'drizzle-orm';
+import { isAdminAuthed } from '../../../lib/auth';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
     // Check authentication
-    const cookieAuthed = (request.headers.get('cookie') ?? '')
-      .split(';')
-      .some((c) => c.trim().startsWith('admin_auth=1'));
-
-    if (!cookieAuthed) {
+    if (!isAdminAuthed(request)) {
       return new Response(JSON.stringify({ message: 'Unauthorized' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -82,14 +79,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
 export const DELETE: APIRoute = async ({ request, locals, url }) => {
   try {
     // Check authentication
-    const cookieAuthed = (request.headers.get('cookie') ?? '')
-      .split(';')
-      .some((c) => c.trim().startsWith('admin_auth=1'));
-
-    if (!cookieAuthed) {
+    if (!isAdminAuthed(request)) {
       return new Response(JSON.stringify({ message: 'Unauthorized' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -135,14 +128,10 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 export const PUT: APIRoute = async ({ request, locals }) => {
   try {
     // Check authentication
-    const cookieAuthed = (request.headers.get('cookie') ?? '')
-      .split(';')
-      .some((c) => c.trim().startsWith('admin_auth=1'));
-
-    if (!cookieAuthed) {
+    if (!isAdminAuthed(request)) {
       return new Response(JSON.stringify({ message: 'Unauthorized' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 

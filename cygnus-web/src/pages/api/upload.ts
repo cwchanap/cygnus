@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createDb } from '@/lib/db';
 import { songs } from '@/lib/db/schema';
+import { isAdminAuthed } from '@/lib/auth';
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -41,15 +42,10 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const cookieHeader = request.headers.get('cookie') ?? '';
-    const authed = cookieHeader
-      .split(';')
-      .some((c) => c.trim().startsWith('admin_auth=1'));
-
     const formData = await request.formData();
     const passkey = formData.get('passkey');
 
-    if (!authed && passkey !== runtime.env.PASSKEY) {
+    if (!isAdminAuthed(request) && passkey !== runtime.env.PASSKEY) {
       return new Response(JSON.stringify({ message: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
