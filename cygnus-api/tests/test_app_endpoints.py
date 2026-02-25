@@ -48,7 +48,7 @@ def test_upload_transcribe_download_flow(client: TestClient, monkeypatch):
 
     # 1) Upload a small dummy wav file
     files = {
-        "file": ("test.wav", b"\x00\x00\x00\x00", "audio/wav"),
+        "file": ("test.wav", b"RIFF\x00\x00\x00\x00WAVE", "audio/wav"),
     }
     r = client.post("/api/upload", files=files)
     assert r.status_code == 200, r.text
@@ -89,3 +89,24 @@ def test_cors_rejects_unknown_origin(client: TestClient):
 def test_cors_allows_known_origin(client: TestClient):
     resp = client.get("/api/jobs", headers={"Origin": "http://localhost:4330"})
     assert resp.headers.get("access-control-allow-origin") == "http://localhost:4330"
+
+
+def test_upload_rejects_oversized_file(client: TestClient):
+    big_content = b"\x00" * (51 * 1024 * 1024)  # 51 MB
+    files = {"file": ("big.wav", big_content, "audio/wav")}
+    resp = client.post("/api/upload", files=files)
+    assert resp.status_code == 413
+
+
+def test_upload_rejects_wrong_extension(client: TestClient):
+    files = {"file": ("malware.exe", b"\x00\x01", "application/octet-stream")}
+    resp = client.post("/api/upload", files=files)
+    assert resp.status_code == 400
+
+
+def test_upload_rejects_disguised_file(client: TestClient):
+    # .wav extension but PE magic bytes
+    pe_magic = b"MZ\x90\x00" + b"\x00" * 8
+    files = {"file": ("fake.wav", pe_magic, "audio/wav")}
+    resp = client.post("/api/upload", files=files)
+    assert resp.status_code == 400

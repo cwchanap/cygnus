@@ -45,6 +45,20 @@ jobs_store: Dict[str, Dict[str, Any]] = {}
 midi_store: Dict[str, bytes] = {}
 uploads_store: Dict[str, Dict[str, Any]] = {}
 
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+
+# Magic bytes for allowed audio formats
+AUDIO_MAGIC: list[tuple[bytes, str]] = [
+    (b"RIFF", "wav"),        # WAV
+    (b"ID3", "mp3"),         # MP3 with ID3 tag
+    (b"\xff\xfb", "mp3"),   # MP3 frame sync
+    (b"\xff\xf3", "mp3"),
+    (b"\xff\xf2", "mp3"),
+    (b"fLaC", "flac"),       # FLAC
+    (b"\x00\x00\x00", "m4a"), # M4A/MP4
+]
+
+
 
 @app.on_event("startup")
 async def startup_load_model():
@@ -108,30 +122,50 @@ async def root():
 
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_audio(file: UploadFile = File(...)):
-    """
-    Upload an audio file without starting transcription
-    Returns an upload ID for later processing
-    """
-    # Validate file type
-    if not file.filename.lower().endswith((".mp3", ".wav", ".m4a", ".flac")):
+    # Validate file extension
+    allowed_exts = (".mp3", ".wav", ".m4a", ".flac")
+    if not file.filename.lower().endswith(allowed_exts):
         raise HTTPException(
             status_code=400,
             detail="Invalid file format. Please upload MP3, WAV, M4A, or FLAC",
         )
 
-    # Generate upload ID
-    upload_id = str(uuid.uuid4())
+    # Read file content with size limit check
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB",
+        )
 
-    # Save file temporarily
+    # Validate magic bytes (need at least 12 bytes)
+    if len(content) < 4:
+        raise HTTPException(status_code=400, detail="File is too small to be valid audio")
+
+    header = content[:12]
+    is_valid_audio = any(header.startswith(magic) for magic, _ in AUDIO_MAGIC)
+    # WAV special case: RIFF....WAVE
+    if header[:4] == b"RIFF" and header[8:12] != b"WAVE":
+        is_valid_audio = False
+    # M4A: 'ftyp' at offset 4
+    if len(header) >= 8 and header[4:8] == b"ftyp":
+        is_valid_audio = True
+
+    if not is_valid_audio:
+        raise HTTPException(
+            status_code=400,
+            detail="File content does not match a supported audio format",
+        )
+
+    # Generate upload ID and save temporarily
+    upload_id = str(uuid.uuid4())
     temp_dir = Path("temp_uploads")
     temp_dir.mkdir(exist_ok=True)
     file_path = temp_dir / f"{upload_id}_{file.filename}"
 
-    content = await file.read()
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # Store upload info
     upload_info = {
         "upload_id": upload_id,
         "filename": file.filename,
