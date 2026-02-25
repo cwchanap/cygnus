@@ -28,7 +28,7 @@ export interface MidiPreviewState {
 
 // Configure the API base URL for the cygnus-api Python server
 const API_BASE_URL =
-  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:9331';
+  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:8000';
 
 function createMidiStore() {
   const { subscribe, set, update } = writable<MidiPreviewState>({
