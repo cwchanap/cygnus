@@ -27,12 +27,17 @@ app = FastAPI(
 )
 
 # CORS configuration for Cloudflare Workers
+ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:4330,http://localhost:8788",
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # In-memory storage for demo (will be replaced with Cloudflare KV/D1)
