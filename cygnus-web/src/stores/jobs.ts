@@ -16,7 +16,7 @@ export interface Job {
 
 // Configure the API base URL for the cygnus-api Python server
 const API_BASE_URL =
-  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:9331';
+  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:8000';
 
 function createJobsStore() {
   const { subscribe, set } = writable<Job[]>([]);
