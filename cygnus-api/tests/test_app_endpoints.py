@@ -78,3 +78,14 @@ def test_upload_transcribe_download_flow(client: TestClient, monkeypatch):
     assert r4.headers["content-type"].startswith("audio/midi")
     content = r4.content
     assert content[:4] == b"MThd"
+
+
+def test_cors_rejects_unknown_origin(client: TestClient):
+    resp = client.get("/api/jobs", headers={"Origin": "https://evil.com"})
+    # Unknown origins should not receive the CORS allow-origin header
+    assert "access-control-allow-origin" not in resp.headers
+
+
+def test_cors_allows_known_origin(client: TestClient):
+    resp = client.get("/api/jobs", headers={"Origin": "http://localhost:4330"})
+    assert resp.headers.get("access-control-allow-origin") == "http://localhost:4330"
