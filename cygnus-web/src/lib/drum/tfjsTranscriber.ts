@@ -48,6 +48,9 @@ const DRUM_MAP: Record<number, string> = {
 let cachedModel: LayersModel | null = null;
 let cachedModelUrl: string | null = null;
 
+// Cache for mel filterbanks keyed by "nMels-nFFT-sr-fmin-fmax"
+const melFilterBankCache = new Map<string, Float32Array[]>();
+
 export async function transcribeInBrowser(file: File, opts: TranscriptionOptions = {}): Promise<ArrayBuffer> {
   const modelUrl = opts.modelUrl || (import.meta.env.PUBLIC_TFJS_MODEL_URL as string) || '/models/drums/model.json';
   const settings = { ...DEFAULTS, ...opts } as Required<TranscriptionOptions>;
@@ -312,8 +315,13 @@ async function computeLogMelSpectrogram(
   const fft = new FFT(nFFT);
   const fftBins = Math.floor(nFFT / 2) + 1;
 
-  // Precompute mel filter bank
-  const melFB = createMelFilterBank(nMels, nFFT, sr, fmin, fmax);
+  // Precompute mel filter bank (cached by parameter key)
+  const fbKey = `${nMels}-${nFFT}-${sr}-${fmin}-${fmax}`;
+  let melFB = melFilterBankCache.get(fbKey);
+  if (!melFB) {
+    melFB = createMelFilterBank(nMels, nFFT, sr, fmin, fmax);
+    melFilterBankCache.set(fbKey, melFB);
+  }
 
   const frames = Math.max(0, Math.floor((signal.length - nFFT) / hop) + 1);
   const logMel: number[][] = new Array(frames);
