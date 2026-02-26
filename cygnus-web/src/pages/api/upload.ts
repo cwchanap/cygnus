@@ -99,6 +99,7 @@ export const POST: APIRoute = async (context) => {
         origin: originField,
         created_date: new Date().toISOString(),
         r2_key: r2Key,
+        preview_r2_key: previewKey,
       })
       .run();
 
