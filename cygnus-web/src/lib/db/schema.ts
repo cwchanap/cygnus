@@ -12,6 +12,7 @@ export const songs = sqliteTable('songs', {
   created_date: text('created_date').notNull(),
   origin: text('origin').notNull(),
   r2_key: text('r2_key').notNull(),
+  preview_r2_key: text('preview_r2_key'),
 });
 
 // Export schema object for typed db instance
