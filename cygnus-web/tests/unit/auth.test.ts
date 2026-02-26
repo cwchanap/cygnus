@@ -42,3 +42,31 @@ describe('isAdminAuthed', () => {
     expect(isAdminAuthed(req)).toBe(false);
   });
 });
+
+import { safeRedirectPath } from '../../src/lib/auth';
+
+describe('safeRedirectPath', () => {
+  it('allows safe relative paths', () => {
+    expect(safeRedirectPath('/admin')).toBe('/admin');
+    expect(safeRedirectPath('/admin/songs')).toBe('/admin/songs');
+    expect(safeRedirectPath('/login?next=%2Fadmin')).toBe('/login?next=%2Fadmin');
+  });
+
+  it('rejects absolute URLs', () => {
+    expect(safeRedirectPath('https://evil.com')).toBe('/admin');
+    expect(safeRedirectPath('http://evil.com/steal')).toBe('/admin');
+  });
+
+  it('rejects protocol-relative URLs', () => {
+    expect(safeRedirectPath('//evil.com')).toBe('/admin');
+  });
+
+  it('returns fallback for null or empty', () => {
+    expect(safeRedirectPath(null)).toBe('/admin');
+    expect(safeRedirectPath('')).toBe('/admin');
+  });
+
+  it('respects custom fallback', () => {
+    expect(safeRedirectPath('https://evil.com', '/login')).toBe('/login');
+  });
+});

@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { safeRedirectPath } from '../../lib/auth';
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -30,7 +31,7 @@ export const POST: APIRoute = async (context) => {
 
   if (!runtime?.env) {
     const reqUrl = new URL(request.url);
-    const nextParam = reqUrl.searchParams.get('next') || '/admin';
+    const nextParam = safeRedirectPath(reqUrl.searchParams.get('next'), '/admin');
     const headers = new Headers();
     headers.append(
       'Location',
@@ -68,10 +69,10 @@ export const POST: APIRoute = async (context) => {
     const passkey = formData.get('passkey');
     const reqUrl2 = new URL(request.url);
     const nextRaw = formData.get('next');
-    const nextParam =
-      (typeof nextRaw === 'string' && nextRaw) ||
-      reqUrl2.searchParams.get('next') ||
-      '/admin';
+    const nextParam = safeRedirectPath(
+      typeof nextRaw === 'string' ? nextRaw : reqUrl2.searchParams.get('next'),
+      '/admin'
+    );
     const isHttps = reqUrl2.protocol === 'https:';
     const secure = isHttps ? '; Secure' : '';
     const expires = new Date(Date.now() + 86400 * 1000).toUTCString();
@@ -102,7 +103,7 @@ export const POST: APIRoute = async (context) => {
     return buildRedirectResponse(nextParam, headers);
   } catch {
     const reqUrl = new URL(request.url);
-    const nextParam = reqUrl.searchParams.get('next') || '/admin';
+    const nextParam = safeRedirectPath(reqUrl.searchParams.get('next'), '/admin');
     const headers = new Headers();
     headers.append(
       'Location',
