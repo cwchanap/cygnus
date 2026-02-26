@@ -3,19 +3,23 @@ import { createDb } from '../../lib/db';
 import { songs } from '../../lib/db/schema';
 import { desc, type InferSelectModel } from 'drizzle-orm';
 
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ locals, request }) => {
   try {
     const runtime = locals.runtime;
     if (!runtime?.env?.DB) {
       return new Response(
-        JSON.stringify({
-          message: 'Server configuration error: D1 binding missing.',
-        }),
+        JSON.stringify({ message: 'Server configuration error: D1 binding missing.' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
+    const url = new URL(request.url);
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') || '20')));
+    const offset = (page - 1) * limit;
+
     const db = createDb(runtime.env.DB);
+    const totalCount = await db.$count(songs);
     const rows: Pick<
       InferSelectModel<typeof songs>,
       'id' | 'song_name' | 'origin' | 'bpm' | 'release_date'
@@ -29,7 +33,8 @@ export const GET: APIRoute = async ({ locals }) => {
       })
       .from(songs)
       .orderBy(desc(songs.id))
-      .limit(100)
+      .limit(limit)
+      .offset(offset)
       .all();
 
     const songsList = rows.map((r) => ({
@@ -40,10 +45,18 @@ export const GET: APIRoute = async ({ locals }) => {
       releaseDate: r.release_date,
     }));
 
-    return new Response(JSON.stringify(songsList), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        songs: songsList,
+        pagination: {
+          page,
+          limit,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limit),
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (err) {
     console.error('GET /api/songs error', err);
     return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
