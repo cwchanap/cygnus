@@ -18,12 +18,17 @@
     selectedSong = event.detail;
   }
 
+  type PaginatedResponse = {
+    songs: Song[];
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  };
+
   onMount(async () => {
     try {
-      const res = await fetch('/api/songs');
+      const res = await fetch('/api/songs?page=1&limit=20');
       if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
-      const data: Song[] = await res.json();
-      songs = data;
+      const data: PaginatedResponse = await res.json();
+      songs = data.songs;
       if (!selectedSong && songs.length > 0) {
         selectedSong = songs[0];
       }
