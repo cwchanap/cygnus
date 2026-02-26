@@ -43,6 +43,26 @@ function createMidiStore() {
   let synth: Tone.PolySynth | null = null;
   const transport = Tone.Transport;
   let scheduledEvents: number[] = [];
+  let playbackInterval: ReturnType<typeof setInterval> | null = null;
+
+  const startPlaybackTracking = () => {
+    if (playbackInterval !== null) return;
+    playbackInterval = setInterval(() => {
+      update((state) => {
+        if (state.isPlaying) {
+          return { ...state, currentTime: Number(transport.seconds) };
+        }
+        return state;
+      });
+    }, 100);
+  };
+
+  const stopPlaybackTracking = () => {
+    if (playbackInterval !== null) {
+      clearInterval(playbackInterval);
+      playbackInterval = null;
+    }
+  };
 
   const openPreview = async (jobId: string) => {
     try {
@@ -169,16 +189,19 @@ function createMidiStore() {
   const play = async () => {
     await Tone.start();
     transport.start();
+    startPlaybackTracking();
     update((state) => ({ ...state, isPlaying: true }));
   };
 
   const pause = () => {
     transport.pause();
+    stopPlaybackTracking();
     update((state) => ({ ...state, isPlaying: false }));
   };
 
   const stop = () => {
     transport.stop();
+    stopPlaybackTracking();
     transport.position = 0;
     update((state) => ({
       ...state,
@@ -193,6 +216,7 @@ function createMidiStore() {
   };
 
   const close = () => {
+    stopPlaybackTracking();
     stop();
     set({
       isOpen: false,
@@ -203,16 +227,6 @@ function createMidiStore() {
       duration: 0,
     });
   };
-
-  // Update current time during playback
-  setInterval(() => {
-    update((state) => {
-      if (state.isPlaying) {
-        return { ...state, currentTime: Number(transport.seconds) };
-      }
-      return state;
-    });
-  }, 100);
 
   return {
     subscribe,
