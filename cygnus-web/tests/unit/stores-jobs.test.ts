@@ -33,12 +33,12 @@ describe('jobsStore', () => {
   it('handles a network error gracefully without throwing', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
     const { jobsStore } = await import('../../src/stores/jobs');
-    await expect(jobsStore.loadJobs()).resolves.not.toThrow();
+    await expect(jobsStore.loadJobs()).resolves.toBeUndefined();
   });
 
   it('handles a non-ok HTTP response gracefully without throwing', async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 503 });
     const { jobsStore } = await import('../../src/stores/jobs');
-    await expect(jobsStore.loadJobs()).resolves.not.toThrow();
+    await expect(jobsStore.loadJobs()).resolves.toBeUndefined();
   });
 });

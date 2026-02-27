@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { API_BASE_URL } from '../lib/config';
 
 export interface Job {
   job_id: string;
@@ -13,10 +14,6 @@ export interface Job {
     file_size: number;
   };
 }
-
-// Configure the API base URL for the cygnus-api Python server
-const API_BASE_URL =
-  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:8000';
 
 function createJobsStore() {
   const { subscribe, set } = writable<Job[]>([]);

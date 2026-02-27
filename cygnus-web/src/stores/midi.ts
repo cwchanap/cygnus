@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
 import * as Tone from 'tone';
 import type { Midi as MidiInstance } from '@tonejs/midi';
+import { API_BASE_URL } from '../lib/config';
 
 // Lazily load MIDI package to avoid SSR/hydration issues
 type MidiCtor = typeof import('@tonejs/midi').Midi;
@@ -25,10 +26,6 @@ export interface MidiPreviewState {
   currentTime: number;
   duration: number;
 }
-
-// Configure the API base URL for the cygnus-api Python server
-const API_BASE_URL =
-  import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:8000';
 
 function createMidiStore() {
   const { subscribe, set, update } = writable<MidiPreviewState>({
@@ -216,7 +213,6 @@ function createMidiStore() {
   };
 
   const close = () => {
-    stopPlaybackTracking();
     stop();
     set({
       isOpen: false,
