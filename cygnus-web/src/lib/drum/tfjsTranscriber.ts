@@ -49,6 +49,7 @@ let cachedModel: LayersModel | null = null;
 let cachedModelUrl: string | null = null;
 
 // Cache for mel filterbanks keyed by "nMels-nFFT-sr-fmin-fmax"
+const MAX_MEL_FILTER_CACHE = 50;
 const melFilterBankCache = new Map<string, Float32Array[]>();
 
 export async function transcribeInBrowser(file: File, opts: TranscriptionOptions = {}): Promise<ArrayBuffer> {
@@ -320,6 +321,10 @@ async function computeLogMelSpectrogram(
   let melFB = melFilterBankCache.get(fbKey);
   if (!melFB) {
     melFB = createMelFilterBank(nMels, nFFT, sr, fmin, fmax);
+    if (melFilterBankCache.size >= MAX_MEL_FILTER_CACHE) {
+      const oldKey = melFilterBankCache.keys().next().value!;
+      melFilterBankCache.delete(oldKey);
+    }
     melFilterBankCache.set(fbKey, melFB);
   }
 

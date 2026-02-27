@@ -1,6 +1,7 @@
 <script lang="ts">
   import { jobsStore } from '../stores/jobs';
   import { toastStore } from '../stores/toast';
+  import { API_BASE_URL } from '../lib/config';
   // midiStore is imported dynamically at use time to avoid SSR/test side effects
 
   let dragover = false;
@@ -12,7 +13,6 @@
   let isLocalTranscribing = false;
   
   const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/flac'];
-  const API_BASE_URL = import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:8000';
   
   async function handleFileUpload(file: File) {
     console.log('[DrumFileUpload] handleFileUpload start', { name: file?.name, size: file?.size, type: file?.type });

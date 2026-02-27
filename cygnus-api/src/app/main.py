@@ -3,6 +3,7 @@ FastAPI server for drum transcription using TensorFlow 2.x
 Optimized for Cloudflare Workers deployment
 """
 
+import io
 import os
 import uuid
 from datetime import datetime, timezone
@@ -27,10 +28,14 @@ app = FastAPI(
 )
 
 # CORS configuration for Cloudflare Workers
-ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:4330,http://localhost:8788",
-).split(",")
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:4330,http://localhost:8788",
+    ).split(",")
+    if origin.strip()
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,17 +51,22 @@ midi_store: Dict[str, bytes] = {}
 uploads_store: Dict[str, Dict[str, Any]] = {}
 
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+CHUNK_SIZE = 64 * 1024  # 64 KB read chunks
+
+# Allowlist of MP4 major/compatible brands that represent audio-only containers
+M4A_AUDIO_BRANDS: frozenset[bytes] = frozenset(
+    [b"M4A ", b"M4B ", b"M4P ", b"mp42", b"isom", b"aac ", b"f4a "]
+)
 
 # Magic bytes for allowed audio formats
 AUDIO_MAGIC: list[tuple[bytes, str]] = [
-    (b"RIFF", "wav"),        # WAV
-    (b"ID3", "mp3"),         # MP3 with ID3 tag
-    (b"\xff\xfb", "mp3"),   # MP3 frame sync
+    (b"RIFF", "wav"),  # WAV
+    (b"ID3", "mp3"),  # MP3 with ID3 tag
+    (b"\xff\xfb", "mp3"),  # MP3 frame sync
     (b"\xff\xf3", "mp3"),
     (b"\xff\xf2", "mp3"),
-    (b"fLaC", "flac"),       # FLAC
+    (b"fLaC", "flac"),  # FLAC
 ]
-
 
 
 @app.on_event("startup")
@@ -121,34 +131,62 @@ async def root():
 
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_audio(file: UploadFile = File(...)):
-    # Validate file extension
+    # Sanitize filename: strip path components to prevent directory traversal
+    safe_name = Path(file.filename.strip()).name
+    if not safe_name:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    # Validate file extension (against sanitized name)
     allowed_exts = (".mp3", ".wav", ".m4a", ".flac")
-    if not file.filename.lower().endswith(allowed_exts):
+    if not safe_name.lower().endswith(allowed_exts):
         raise HTTPException(
             status_code=400,
             detail="Invalid file format. Please upload MP3, WAV, M4A, or FLAC",
         )
 
-    # Read file content with size limit check
-    content = await file.read()
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB",
-        )
+    # Stream upload in fixed-size chunks; reject early if size limit is exceeded
+    buf = io.BytesIO()
+    total_bytes = 0
+    while True:
+        chunk = await file.read(CHUNK_SIZE)
+        if not chunk:
+            break
+        total_bytes += len(chunk)
+        if total_bytes > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB",
+            )
+        buf.write(chunk)
+    content = buf.getvalue()
 
-    # Validate magic bytes (need at least 12 bytes)
+    # Validate magic bytes (need at least 4 bytes)
     if len(content) < 4:
-        raise HTTPException(status_code=400, detail="File is too small to be valid audio")
+        raise HTTPException(
+            status_code=400, detail="File is too small to be valid audio"
+        )
 
     header = content[:12]
     is_valid_audio = any(header.startswith(magic) for magic, _ in AUDIO_MAGIC)
     # WAV special case: RIFF....WAVE
     if header[:4] == b"RIFF" and header[8:12] != b"WAVE":
         is_valid_audio = False
-    # M4A: 'ftyp' at offset 4
-    if len(header) >= 8 and header[4:8] == b"ftyp":
-        is_valid_audio = True
+    # M4A: 'ftyp' at offset 4 – only accept known audio-specific brands
+    if len(header) >= 12 and header[4:8] == b"ftyp":
+        major_brand = header[8:12]
+        try:
+            ftyp_size = int.from_bytes(content[:4], "big")
+            compat_area = (
+                content[16:ftyp_size] if ftyp_size <= len(content) else content[16:]
+            )
+            compat_brands = {
+                compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
+            }
+        except Exception:
+            compat_brands = set()
+        is_valid_audio = (major_brand in M4A_AUDIO_BRANDS) or bool(
+            compat_brands & M4A_AUDIO_BRANDS
+        )
 
     if not is_valid_audio:
         raise HTTPException(
@@ -160,14 +198,14 @@ async def upload_audio(file: UploadFile = File(...)):
     upload_id = str(uuid.uuid4())
     temp_dir = Path("temp_uploads")
     temp_dir.mkdir(exist_ok=True)
-    file_path = temp_dir / f"{upload_id}_{file.filename}"
+    file_path = temp_dir / f"{upload_id}_{safe_name}"
 
     with open(file_path, "wb") as f:
         f.write(content)
 
     upload_info = {
         "upload_id": upload_id,
-        "filename": file.filename,
+        "filename": safe_name,
         "file_size": len(content),
         "file_path": str(file_path),
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -176,7 +214,7 @@ async def upload_audio(file: UploadFile = File(...)):
 
     return UploadResponse(
         upload_id=upload_id,
-        filename=file.filename,
+        filename=safe_name,
         file_size=len(content),
         message="File uploaded successfully",
     )

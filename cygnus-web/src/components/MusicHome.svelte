@@ -25,10 +25,16 @@
 
   onMount(async () => {
     try {
-      const res = await fetch('/api/songs?page=1&limit=20');
-      if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
-      const data: PaginatedResponse = await res.json();
-      songs = data.songs;
+      const limit = 20;
+      let page = 1;
+      while (true) {
+        const res = await fetch(`/api/songs?page=${page}&limit=${limit}`);
+        if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
+        const data: PaginatedResponse = await res.json();
+        songs = [...songs, ...data.songs];
+        if (data.songs.length < limit) break;
+        page++;
+      }
       if (!selectedSong && songs.length > 0) {
         selectedSong = songs[0];
       }
