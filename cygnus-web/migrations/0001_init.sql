@@ -8,5 +8,6 @@ CREATE TABLE IF NOT EXISTS songs (
   is_released INTEGER NOT NULL DEFAULT 0,
   created_date TEXT NOT NULL,
   origin TEXT NOT NULL,
-  r2_key TEXT NOT NULL
+  r2_key TEXT NOT NULL,
+  preview_r2_key TEXT
 );
