@@ -118,3 +118,38 @@ def test_upload_rejects_disguised_m4a(client: TestClient):
     files = {"file": ("fake.m4a", bad_content, "audio/mp4")}
     resp = client.post("/api/upload", files=files)
     assert resp.status_code == 400
+
+
+def test_upload_rejects_missing_filename(client: TestClient):
+    # UploadFile.filename can be None/empty; the server must reject with a 4xx.
+    # An empty filename causes the multipart parser to strip the filename field,
+    # so FastAPI may return 422 (form validation) or our handler returns 400.
+    files = {"file": ("", b"RIFF\x00\x00\x00\x00WAVE", "audio/wav")}
+    resp = client.post("/api/upload", files=files)
+    assert resp.status_code in (400, 422)
+
+
+def test_upload_rejects_m4a_with_generic_isom_brand(client: TestClient):
+    # Build a minimal ftyp box with major_brand=b"isom" (generic MP4, not audio-only).
+    # isom was removed from M4A_AUDIO_BRANDS so this should now be rejected.
+    ftyp_size = (16).to_bytes(4, "big")  # 16-byte ftyp box
+    ftyp_tag = b"ftyp"
+    major_brand = b"isom"
+    minor_version = b"\x00" * 4
+    content = ftyp_size + ftyp_tag + major_brand + minor_version
+    files = {"file": ("video.m4a", content, "audio/mp4")}
+    resp = client.post("/api/upload", files=files)
+    assert resp.status_code == 400
+
+
+def test_upload_accepts_m4a_with_audio_brand(client: TestClient):
+    # Build a minimal ftyp box with major_brand=b"M4A " (audio-specific brand).
+    ftyp_size = (16).to_bytes(4, "big")
+    ftyp_tag = b"ftyp"
+    major_brand = b"M4A "
+    minor_version = b"\x00" * 4
+    content = ftyp_size + ftyp_tag + major_brand + minor_version
+    files = {"file": ("audio.m4a", content, "audio/mp4")}
+    resp = client.post("/api/upload", files=files)
+    # Magic-byte check passes; subsequent checks may fail but not for format rejection
+    assert resp.status_code != 400 or "format" not in resp.json().get("detail", "")
