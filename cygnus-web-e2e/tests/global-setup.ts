@@ -10,6 +10,8 @@ function runDbSetupOnce() {
   execSync('bun run db:setup', {
     cwd: repoPath(),
     stdio: 'inherit',
+    timeout: 60_000,
+    killSignal: 'SIGTERM',
   });
 }
 

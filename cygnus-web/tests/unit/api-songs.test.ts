@@ -61,4 +61,16 @@ describe('GET /api/songs', () => {
     await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
     expect(mockDb.limit).toHaveBeenCalledWith(20);
   });
+
+  it('caps page at MAX_PAGE (1000) to prevent expensive OFFSET scans', async () => {
+    const mockDb = makeMockDb([], 0);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
+    const req = new Request('http://localhost/api/songs?page=9999&limit=1');
+    const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    // page should be capped at 1000, offset = (1000 - 1) * 1 = 999
+    expect(body.pagination.page).toBe(1000);
+    expect(mockDb.offset).toHaveBeenCalledWith(999);
+  });
 });

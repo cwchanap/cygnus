@@ -53,9 +53,11 @@ uploads_store: Dict[str, Dict[str, Any]] = {}
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
 CHUNK_SIZE = 64 * 1024  # 64 KB read chunks
 
-# Allowlist of MP4 major/compatible brands that represent audio-only containers
+# Allowlist of MP4 major/compatible brands that represent audio-only containers.
+# Generic container brands (b"isom", b"mp42") are intentionally excluded because
+# they are shared by video MP4 files and would weaken the audio-only guard.
 M4A_AUDIO_BRANDS: frozenset[bytes] = frozenset(
-    [b"M4A ", b"M4B ", b"M4P ", b"mp42", b"isom", b"aac ", b"f4a "]
+    [b"M4A ", b"M4B ", b"M4P ", b"aac ", b"f4a "]
 )
 
 # Magic bytes for allowed audio formats
@@ -131,6 +133,9 @@ async def root():
 
 @app.post("/api/upload", response_model=UploadResponse)
 async def upload_audio(file: UploadFile = File(...)):
+    # Validate that a filename was supplied (UploadFile.filename is Optional[str])
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename is required")
     # Sanitize filename: strip path components to prevent directory traversal
     safe_name = Path(file.filename.strip()).name
     if not safe_name:
