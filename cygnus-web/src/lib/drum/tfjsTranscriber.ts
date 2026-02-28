@@ -124,7 +124,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, label = 'operation'): Promise
       resolve(v);
     }).catch((e) => {
       clearTimeout(timer);
-      console.warn(`[TFJS] ${label} failed:`, e);
+      console.error(`[TFJS] ${label} failed:`, e);
       resolve(null);
     });
   });
@@ -138,8 +138,9 @@ async function importTF() {
       await tf.setBackend('webgl');
       await tf.ready();
     }
-  } catch {
-    // backend selection best-effort
+  } catch (e) {
+    // Backend selection is best-effort; CPU fallback will be used automatically
+    console.warn('[TFJS] WebGL backend init failed, falling back to default backend:', e);
   }
   return { tf };
 }
@@ -205,18 +206,11 @@ async function decodeFileToMono(file: File, targetSr: number): Promise<{ audio: 
   try {
     decoded = await ac.decodeAudioData(arrayBuffer.slice(0));
   } catch (e) {
-    console.warn('[TFJS] decodeAudioData failed, synthesizing test signal for E2E/codec-limited envs:', e);
-    // Synthesize a short percussive click sequence so downstream logic can still be exercised
-    const durSec = 1.0;
-    const length = Math.ceil(durSec * targetSr);
-    const synth = new Float32Array(length);
-    for (let t = 0; t < length; t++) {
-      // clicks at 0.2s intervals
-      const period = Math.floor(0.2 * targetSr);
-      const pos = t % period;
-      synth[t] = pos < Math.floor(0.005 * targetSr) ? 1 - pos / Math.max(1, Math.floor(0.005 * targetSr)) : 0;
-    }
-    return { audio: synth, sr: targetSr };
+    throw new Error(
+      `Could not decode audio file. The file may be corrupt or use an unsupported codec. (${e instanceof Error ? e.message : String(e)})`
+    );
+  } finally {
+    await ac.close();
   }
   let mono: Float32Array;
 
