@@ -11,12 +11,13 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   fullyParallel: true,
   retries: 0,
+  globalSetup: './tests/global-setup.ts',
   use: {
     baseURL: 'http://localhost:4330',
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'bun run db:setup && bun run dev',
+    command: 'bun run dev',
     cwd: webRoot,
     url: 'http://localhost:4330',
     reuseExistingServer: !process.env.CI,

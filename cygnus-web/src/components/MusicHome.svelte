@@ -27,12 +27,15 @@
     try {
       const limit = 20;
       let page = 1;
-      while (true) {
+      let totalPages: number | null = null;
+      while (totalPages === null || page <= totalPages) {
         const res = await fetch(`/api/songs?page=${page}&limit=${limit}`);
         if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
         const data: PaginatedResponse = await res.json();
         songs = [...songs, ...data.songs];
-        if (data.songs.length < limit) break;
+        if (totalPages === null) {
+          totalPages = data.pagination.totalPages;
+        }
         page++;
       }
       if (!selectedSong && songs.length > 0) {
