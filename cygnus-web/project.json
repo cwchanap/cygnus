@@ -72,7 +72,7 @@
     "db-setup": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "wrangler d1 execute cygnus --local --file migrations/0001_init.sql",
+        "command": "wrangler d1 migrations apply cygnus --local",
         "cwd": "{projectRoot}"
       },
       "outputs": []
