@@ -182,12 +182,14 @@ async def upload_audio(file: UploadFile = File(...)):
         major_brand = header[8:12]
         try:
             ftyp_size = int.from_bytes(content[:4], "big")
-            compat_area = (
-                content[16:ftyp_size] if ftyp_size <= len(content) else content[16:]
-            )
-            compat_brands = {
-                compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
-            }
+            # Validate ftyp_size is within reasonable bounds (min 8 bytes header, max content length)
+            if ftyp_size < 8 or ftyp_size > len(content):
+                compat_brands = set()
+            else:
+                compat_area = content[16:ftyp_size]
+                compat_brands = {
+                    compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
+                }
         except Exception:
             compat_brands = set()
         is_valid_audio = (major_brand in M4A_AUDIO_BRANDS) or bool(
