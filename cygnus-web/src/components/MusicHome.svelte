@@ -32,7 +32,9 @@
         const res = await fetch(`/api/songs?page=${page}&limit=${limit}`);
         if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
         const data: PaginatedResponse = await res.json();
-        songs = [...songs, ...data.songs];
+        if (data.songs.length === 0) break;
+        songs.push(...data.songs);
+        songs = songs;
         if (totalPages === null) {
           totalPages = data.pagination.totalPages;
         }

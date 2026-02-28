@@ -6,7 +6,11 @@ export function isAdminAuthed(request: Request): boolean {
   return (request.headers.get('cookie') ?? '')
     .split(';')
     .some((c) => {
-      const [name, value] = c.trim().split('=');
+      const trimmed = c.trim();
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx === -1) return false;
+      const name = trimmed.slice(0, eqIdx);
+      const value = trimmed.slice(eqIdx + 1);
       return name === 'admin_auth' && value === '1';
     });
 }
@@ -28,7 +32,7 @@ export function safeRedirectPath(raw: string | null, fallback = '/admin'): strin
   }
   // Reject ASCII control characters (0x00-0x1F, 0x7F) which are not safe in paths.
   // eslint-disable-next-line no-control-regex
-  if (/[\u0000-\u001F\u007F]/.test(trimmed)) {
+  if (/[\x00-\x1F\x7F]/.test(trimmed)) {
     return fallback;
   }
   return trimmed;
