@@ -64,9 +64,10 @@ M4A_AUDIO_BRANDS: frozenset[bytes] = frozenset(
 AUDIO_MAGIC: list[tuple[bytes, str]] = [
     (b"RIFF", "wav"),  # WAV
     (b"ID3", "mp3"),  # MP3 with ID3 tag
-    (b"\xff\xfb", "mp3"),  # MP3 frame sync
-    (b"\xff\xf3", "mp3"),
-    (b"\xff\xf2", "mp3"),
+    (b"\xff\xfb", "mp3"),  # MPEG-1 Layer 3, no CRC
+    (b"\xff\xfa", "mp3"),  # MPEG-1 Layer 3, with CRC
+    (b"\xff\xf3", "mp3"),  # MPEG-2 Layer 3, no CRC
+    (b"\xff\xf2", "mp3"),  # MPEG-2 Layer 3, with CRC
     (b"fLaC", "flac"),  # FLAC
 ]
 
