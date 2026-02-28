@@ -127,6 +127,15 @@
         </button>
       </div>
       
+      <!-- Error Banner -->
+      {#if $midiStore.error}
+        <div class="px-6 pt-4">
+          <div class="p-4 bg-red-50 border border-red-300 rounded text-red-700 text-sm">
+            {$midiStore.error}
+          </div>
+        </div>
+      {/if}
+
       <!-- Notation Display -->
       <div class="flex-1 overflow-auto p-6">
         {#if isLoading}
@@ -186,7 +195,7 @@
             <div class="flex-1 bg-gray-200 rounded-full h-2">
               <div 
                 class="bg-purple-600 h-2 rounded-full transition-all"
-                style="width: {($midiStore.currentTime / $midiStore.duration) * 100}%"
+                style="width: {$midiStore.duration > 0 ? ($midiStore.currentTime / $midiStore.duration) * 100 : 0}%"
               ></div>
             </div>
             <span class="text-sm text-gray-600">
