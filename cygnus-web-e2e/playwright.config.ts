@@ -12,14 +12,14 @@ export default defineConfig({
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: 'http://localhost:8788',
+    baseURL: 'http://localhost:4330',
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'bun run dev:wrangler',
+    command: 'bun run dev',
     cwd: webRoot,
-    url: 'http://localhost:8788',
-    reuseExistingServer: true,
+    url: 'http://localhost:4330',
+    reuseExistingServer: !process.env.CI,
     stdout: 'pipe',
     stderr: 'pipe',
     timeout: 120_000,
