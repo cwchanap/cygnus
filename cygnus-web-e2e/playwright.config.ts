@@ -16,7 +16,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'bun run dev',
+    command: 'bun run db:setup && bun run dev',
     cwd: webRoot,
     url: 'http://localhost:4330',
     reuseExistingServer: !process.env.CI,
@@ -30,5 +30,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  globalSetup: './tests/global-setup.ts',
 });
