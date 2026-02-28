@@ -25,6 +25,7 @@ export interface MidiPreviewState {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  error: string | null;
 }
 
 function createMidiStore() {
@@ -35,6 +36,7 @@ function createMidiStore() {
     isPlaying: false,
     currentTime: 0,
     duration: 0,
+    error: null,
   });
 
   let synth: Tone.PolySynth | null = null;
@@ -66,15 +68,14 @@ function createMidiStore() {
       // Ensure MIDI lib is available
       const hasMidi = await ensureMidiLoaded();
       if (!hasMidi || !Midi) {
-        console.warn(
-          'MIDI package not available, opening modal without MIDI data'
-        );
+        console.error('MIDI package failed to load — cannot display preview');
         update((state) => ({
           ...state,
           isOpen: true,
           jobId,
           midiData: null,
           duration: 0,
+          error: 'MIDI preview is unavailable (package failed to load). Please refresh the page.',
         }));
         return;
       }
@@ -95,6 +96,7 @@ function createMidiStore() {
         midiData: midi,
         duration: midi.duration,
         currentTime: Number(transport.seconds),
+        error: null,
       }));
 
       // Initialize synth for playback
@@ -113,6 +115,15 @@ function createMidiStore() {
       scheduleMidiPlayback(midi);
     } catch (error) {
       console.error('Error loading MIDI:', error);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      update((state) => ({
+        ...state,
+        isOpen: true,
+        jobId,
+        midiData: null,
+        duration: 0,
+        error: `Failed to load MIDI preview: ${msg}`,
+      }));
     }
   };
 
@@ -120,13 +131,14 @@ function createMidiStore() {
     try {
       const hasMidi = await ensureMidiLoaded();
       if (!hasMidi || !Midi) {
-        console.warn('MIDI package not available, opening modal without MIDI data');
+        console.error('MIDI package failed to load — cannot display preview');
         update((state) => ({
           ...state,
           isOpen: true,
           jobId: null,
           midiData: null,
           duration: 0,
+          error: 'MIDI preview is unavailable (package failed to load). Please refresh the page.',
         }));
         return;
       }
@@ -140,6 +152,7 @@ function createMidiStore() {
         midiData: midi,
         duration: midi.duration,
         currentTime: Number(transport.seconds),
+        error: null,
       }));
 
       // Initialize synth for playback
@@ -157,6 +170,15 @@ function createMidiStore() {
       scheduleMidiPlayback(midi);
     } catch (error) {
       console.error('Error opening MIDI from buffer:', error);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      update((state) => ({
+        ...state,
+        isOpen: true,
+        jobId: null,
+        midiData: null,
+        duration: 0,
+        error: `Failed to open MIDI preview: ${msg}`,
+      }));
     }
   };
 
@@ -221,6 +243,7 @@ function createMidiStore() {
       isPlaying: false,
       currentTime: 0,
       duration: 0,
+      error: null,
     });
   };
 
