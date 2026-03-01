@@ -4,6 +4,7 @@ Optimized for Cloudflare Workers deployment
 """
 
 import io
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
@@ -14,6 +15,8 @@ from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 # NOTE: Avoid importing the heavy transcriber (and TensorFlow) at module import time.
 DrumTranscriber = None  # will be lazily imported when needed
@@ -87,8 +90,10 @@ async def startup_load_model():
             from src.app.transcriber import DrumTranscriber as _DrumTranscriber  # type: ignore
 
             app.state.transcriber = _DrumTranscriber()
-        except Exception:
-            # Do not block server startup; background task will fallback to lazy init
+        except Exception as exc:
+            logger.error(
+                "PRELOAD_MODEL=1 but model failed to load at startup: %s", exc, exc_info=True
+            )
             app.state.transcriber = None
 
 
@@ -190,7 +195,8 @@ async def upload_audio(file: UploadFile = File(...)):
                 compat_brands = {
                     compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
                 }
-        except Exception:
+        except Exception as exc:
+            logger.warning("Could not parse ftyp box compat brands: %s", exc)
             compat_brands = set()
         is_valid_audio = (major_brand in M4A_AUDIO_BRANDS) or bool(
             compat_brands & M4A_AUDIO_BRANDS
@@ -362,12 +368,11 @@ async def process_audio_task(job_id: str, file_path: str):
         os.remove(file_path)
 
     except Exception as e:
-        # Update job as failed
+        logger.exception("Transcription job %s failed: %s", job_id, e)
         jobs_store[job_id]["status"] = "failed"
         jobs_store[job_id]["error"] = str(e)
         jobs_store[job_id]["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-        # Clean up temp file if exists
         if os.path.exists(file_path):
             os.remove(file_path)
 
