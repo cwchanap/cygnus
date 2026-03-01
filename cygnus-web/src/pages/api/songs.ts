@@ -14,8 +14,8 @@ export const GET: APIRoute = async ({ locals, request }) => {
     }
 
     const url = new URL(request.url);
-    const parsedPage = parseInt(url.searchParams.get('page') || '1');
-    const parsedLimit = parseInt(url.searchParams.get('limit') || '20');
+    const parsedPage = parseInt(url.searchParams.get('page') || '1', 10);
+    const parsedLimit = parseInt(url.searchParams.get('limit') || '20', 10);
     const MAX_PAGE = 1000;
     const parsedPageSafe = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
     const page = Math.min(MAX_PAGE, parsedPageSafe);
