@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         page,
         limit,
         total: totalCount,
-        totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+        totalPages: Math.max(1, Math.min(MAX_PAGE, Math.ceil(totalCount / limit))),
       }
     }), {
       status: 200,

@@ -97,6 +97,28 @@ const mockDb = {
 };
 
 function makeAuthedRequest(path = '/api/admin/songs', options: RequestInit = {}) {
+  if (options.body instanceof FormData) {
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+    const formData = options.body;
+    const parts: string[] = [];
+    formData.forEach((value, key) => {
+      parts.push(`--${boundary}`);
+      parts.push(`Content-Disposition: form-data; name="${key}"`);
+      parts.push('');
+      parts.push(String(value));
+    });
+    parts.push(`--${boundary}--`);
+    const body = parts.join('\r\n');
+    return new Request(`http://localhost${path}`, {
+      ...options,
+      body,
+      headers: {
+        ...(options.headers as Record<string, string> ?? {}),
+        'content-type': `multipart/form-data; boundary=${boundary}`,
+        cookie: 'admin_auth=1',
+      },
+    });
+  }
   return new Request(`http://localhost${path}`, {
     ...options,
     headers: { cookie: 'admin_auth=1', ...((options.headers as Record<string, string>) ?? {}) },
