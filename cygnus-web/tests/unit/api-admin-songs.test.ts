@@ -159,19 +159,19 @@ describe('DELETE /api/admin/songs - NaN guard', () => {
 
 describe('PUT /api/admin/songs - NaN guard', () => {
   it('returns 400 for non-numeric bpm (authenticated)', async () => {
-    const formData = new FormData();
-    formData.append('id', '1');
-    formData.append('song_name', 'Test');
-    formData.append('artist', 'Artist');
-    formData.append('bpm', 'not-a-number');
+    const body = new URLSearchParams({
+      id: '1',
+      song_name: 'Test',
+      artist: 'Artist',
+      bpm: 'not-a-number',
+    });
     const resp = await PUT({
-      request: new Request('http://localhost/api/admin/songs', {
+      request: makeAuthedRequest('/api/admin/songs', {
         method: 'PUT',
         headers: {
-          cookie: 'admin_auth=1',
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: formData,
+        body,
       }),
       locals: { runtime: { env: { DB: {} } } },
       url: new URL('http://localhost/api/admin/songs'),
