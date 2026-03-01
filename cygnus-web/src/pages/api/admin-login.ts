@@ -101,7 +101,8 @@ export const POST: APIRoute = async (context) => {
     );
     headers.append('Location', nextParam);
     return buildRedirectResponse(nextParam, headers);
-  } catch {
+  } catch (err) {
+    console.error('Unexpected error in admin-login POST handler:', err);
     const reqUrl = new URL(request.url);
     const nextParam = safeRedirectPath(reqUrl.searchParams.get('next'), '/admin');
     const headers = new Headers();
