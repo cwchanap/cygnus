@@ -26,21 +26,27 @@
   onMount(async () => {
     try {
       const limit = 20;
-      let page = 1;
-      let totalPages: number | null = null;
       const MAX_CLIENT_PAGES = 50;
-      while ((totalPages === null || page <= totalPages) && page <= MAX_CLIENT_PAGES) {
-        const res = await fetch(`/api/songs?page=${page}&limit=${limit}`);
-        if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
-        const data: PaginatedResponse = await res.json();
-        if (data.songs.length === 0) break;
-        songs.push(...data.songs);
-        songs = songs;
-        if (totalPages === null) {
-          totalPages = data.pagination.totalPages;
+
+      const firstRes = await fetch(`/api/songs?page=1&limit=${limit}`);
+      if (!firstRes.ok) throw new Error(`Failed to load songs: ${firstRes.status}`);
+      const firstData: PaginatedResponse = await firstRes.json();
+      songs = firstData.songs;
+
+      const totalPages = Math.min(firstData.pagination.totalPages, MAX_CLIENT_PAGES);
+      if (totalPages > 1) {
+        const promises = [];
+        for (let page = 2; page <= totalPages; page++) {
+          promises.push(fetch(`/api/songs?page=${page}&limit=${limit}`));
         }
-        page++;
+        const responses = await Promise.all(promises);
+        const dataArr = await Promise.all(
+          responses.map((r) => r.json() as Promise<PaginatedResponse>)
+        );
+        dataArr.forEach((d) => songs.push(...d.songs));
+        songs = songs;
       }
+
       if (!selectedSong && songs.length > 0) {
         selectedSong = songs[0];
       }

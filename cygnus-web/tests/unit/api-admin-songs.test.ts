@@ -167,7 +167,10 @@ describe('PUT /api/admin/songs - NaN guard', () => {
     const resp = await PUT({
       request: new Request('http://localhost/api/admin/songs', {
         method: 'PUT',
-        headers: { cookie: 'admin_auth=1' },
+        headers: {
+          cookie: 'admin_auth=1',
+          'Content-Type': 'multipart/form-data',
+        },
         body: formData,
       }),
       locals: { runtime: { env: { DB: {} } } },

@@ -12,6 +12,9 @@
   $: if ($midiStore.midiData && notationContainer) {
     renderNotation($midiStore.midiData);
   }
+  $: if ($midiStore.error) {
+    isLoading = false;
+  }
   
   function convertMidiToAbc(midiData: MidiInstance): string {
     // Convert MIDI to ABC notation format
