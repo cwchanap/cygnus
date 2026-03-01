@@ -40,6 +40,10 @@
     "cygnus-web/**/*.{js,jsx,ts,tsx,astro,svelte,md,mdx}": [
       "cd cygnus-web && bunx prettier --write",
       "cd cygnus-web && bunx eslint --fix"
+    ],
+    "cygnus-api/**/*.py": [
+      "cd cygnus-api && uv run ruff check --fix",
+      "cd cygnus-api && uv run black"
     ]
   }
 }
