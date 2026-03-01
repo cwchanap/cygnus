@@ -126,14 +126,28 @@ describe('GET /api/admin/songs - NaN guards', () => {
     expect(mockOffset).toHaveBeenCalledWith(0);
   });
 
-  it('clamps non-numeric limit to 10', async () => {
+  it('clamps page to MAX_PAGE (1000)', async () => {
     const resp = await GET({
-      request: makeAuthedRequest('/api/admin/songs?limit=xyz'),
+      request: makeAuthedRequest('/api/admin/songs?page=9999'),
       locals: { runtime: { env: { DB: {} } } },
-      url: new URL('http://localhost/api/admin/songs?limit=xyz'),
+      url: new URL('http://localhost/api/admin/songs?page=9999'),
     } as any);
     expect(resp.status).toBe(200);
-    expect(mockLimit).toHaveBeenCalledWith(10);
+    const body = (await resp.json()) as { pagination: { page: number } };
+    expect(body.pagination.page).toBe(1000);
+  });
+
+  it('returns totalPages as at least 1 when totalCount is 0', async () => {
+    mockCount.mockResolvedValue(0);
+    const resp = await GET({
+      request: makeAuthedRequest('/api/admin/songs'),
+      locals: { runtime: { env: { DB: {} } } },
+      url: new URL('http://localhost/api/admin/songs'),
+    } as any);
+    expect(resp.status).toBe(200);
+    const body = (await resp.json()) as { pagination: { total: number; totalPages: number } };
+    expect(body.pagination.total).toBe(0);
+    expect(body.pagination.totalPages).toBe(1);
   });
 });
 
@@ -159,19 +173,15 @@ describe('DELETE /api/admin/songs - NaN guard', () => {
 
 describe('PUT /api/admin/songs - NaN guard', () => {
   it('returns 400 for non-numeric bpm (authenticated)', async () => {
-    const body = new URLSearchParams({
-      id: '1',
-      song_name: 'Test',
-      artist: 'Artist',
-      bpm: 'not-a-number',
-    });
+    const formData = new FormData();
+    formData.append('id', '1');
+    formData.append('song_name', 'Test');
+    formData.append('artist', 'Artist');
+    formData.append('bpm', 'not-a-number');
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body,
+        body: formData,
       }),
       locals: { runtime: { env: { DB: {} } } },
       url: new URL('http://localhost/api/admin/songs'),

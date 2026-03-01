@@ -41,7 +41,12 @@
         }
         const responses = await Promise.all(promises);
         const dataArr = await Promise.all(
-          responses.map((r) => r.json() as Promise<PaginatedResponse>)
+          responses.map((r, index) => {
+            if (!r.ok) {
+              throw new Error(`Failed to load songs page ${index + 2}: ${r.status}`);
+            }
+            return r.json() as Promise<PaginatedResponse>;
+          })
         );
         dataArr.forEach((d) => songs.push(...d.songs));
         songs = songs;

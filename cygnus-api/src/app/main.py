@@ -157,29 +157,44 @@ async def upload_audio(file: UploadFile = File(...)):
             detail="Invalid file format. Please upload MP3, WAV, M4A, or FLAC",
         )
 
-    # Stream upload in fixed-size chunks; reject early if size limit is exceeded
-    buf = io.BytesIO()
+    # Stream upload to temp file to avoid memory buffering
+    temp_dir = Path("temp_uploads")
+    temp_dir.mkdir(exist_ok=True)
+    upload_id = str(uuid.uuid4())
+    temp_file_path = temp_dir / f"{upload_id}_temp"
+
     total_bytes = 0
-    while True:
-        chunk = await file.read(CHUNK_SIZE)
-        if not chunk:
-            break
-        total_bytes += len(chunk)
-        if total_bytes > MAX_UPLOAD_BYTES:
-            raise HTTPException(
-                status_code=413,
-                detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB",
-            )
-        buf.write(chunk)
-    content = buf.getvalue()
+    header = b""
+    with open(temp_file_path, "wb") as f:
+        while True:
+            chunk = await file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+            total_bytes += len(chunk)
+            if total_bytes > MAX_UPLOAD_BYTES:
+                # Clean up temp file before raising
+                temp_file_path.unlink(missing_ok=True)
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB",
+                )
+            f.write(chunk)
+            if len(header) < 12:
+                header += chunk[:12 - len(header)]
 
     # Validate magic bytes (need at least 4 bytes)
-    if len(content) < 4:
+    if total_bytes < 4:
+        temp_file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=400, detail="File is too small to be valid audio"
         )
 
-    header = content[:12]
+    # Ensure we have at least 12 bytes for full header validation
+    if len(header) < 12:
+        # Read additional bytes from file if needed
+        with open(temp_file_path, "rb") as f:
+            header = f.read(12)
+
     is_valid_audio = any(header.startswith(magic) for magic, _ in AUDIO_MAGIC)
     # WAV special case: RIFF....WAVE
     if header[:4] == b"RIFF" and header[8:12] != b"WAVE":
@@ -187,42 +202,43 @@ async def upload_audio(file: UploadFile = File(...)):
     # M4A: 'ftyp' at offset 4 – only accept known audio-specific brands
     if len(header) >= 12 and header[4:8] == b"ftyp":
         major_brand = header[8:12]
-        try:
-            ftyp_size = int.from_bytes(content[:4], "big")
-            # Validate ftyp_size is within reasonable bounds (min 8 bytes header, max content length)
-            if ftyp_size < 8 or ftyp_size > len(content):
-                compat_brands = set()
+        with open(temp_file_path, "rb") as f:
+            ftyp_size_bytes = f.read(4)
+            if len(ftyp_size_bytes) >= 4:
+                try:
+                    ftyp_size = int.from_bytes(ftyp_size_bytes, "big")
+                    if ftyp_size >= 8 and ftyp_size <= total_bytes:
+                        f.seek(16)
+                        compat_area = f.read(ftyp_size - 16)
+                        compat_brands = {
+                            compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
+                        }
+                    else:
+                        compat_brands = set()
+                except Exception as exc:
+                    logger.warning("Could not parse ftyp box compat brands: %s", exc)
+                    compat_brands = set()
             else:
-                compat_area = content[16:ftyp_size]
-                compat_brands = {
-                    compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
-                }
-        except Exception as exc:
-            logger.warning("Could not parse ftyp box compat brands: %s", exc)
-            compat_brands = set()
+                compat_brands = set()
         is_valid_audio = (major_brand in M4A_AUDIO_BRANDS) or bool(
             compat_brands & M4A_AUDIO_BRANDS
         )
 
     if not is_valid_audio:
+        temp_file_path.unlink(missing_ok=True)
         raise HTTPException(
             status_code=400,
             detail="File content does not match a supported audio format",
         )
 
-    # Generate upload ID and save temporarily
-    upload_id = str(uuid.uuid4())
-    temp_dir = Path("temp_uploads")
-    temp_dir.mkdir(exist_ok=True)
+    # Rename temp file to final name
     file_path = temp_dir / f"{upload_id}_{safe_name}"
-
-    with open(file_path, "wb") as f:
-        f.write(content)
+    temp_file_path.rename(file_path)
 
     upload_info = {
         "upload_id": upload_id,
         "filename": safe_name,
-        "file_size": len(content),
+        "file_size": total_bytes,
         "file_path": str(file_path),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -231,7 +247,7 @@ async def upload_audio(file: UploadFile = File(...)):
     return UploadResponse(
         upload_id=upload_id,
         filename=safe_name,
-        file_size=len(content),
+        file_size=total_bytes,
         message="File uploaded successfully",
     )
 

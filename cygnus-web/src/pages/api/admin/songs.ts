@@ -27,7 +27,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const parsedPage = parseInt(url.searchParams.get('page') || '1', 10);
     const parsedLimit = parseInt(url.searchParams.get('limit') || '10', 10);
-    const page = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
+    const MAX_PAGE = 1000;
+    const parsedPageSafe = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
+    const page = Math.min(MAX_PAGE, parsedPageSafe);
     const limit = Math.min(100, Math.max(1, Number.isNaN(parsedLimit) ? 10 : parsedLimit));
     const offset = (page - 1) * limit;
 
@@ -63,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         page,
         limit,
         total: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
+        totalPages: Math.max(1, Math.ceil(totalCount / limit)),
       }
     }), {
       status: 200,
