@@ -41,6 +41,13 @@ describe('isAdminAuthed', () => {
     });
     expect(isAdminAuthed(req)).toBe(false);
   });
+
+  it('returns false for whitespace-padded cookie value admin_auth= 1', () => {
+    const req = new Request('http://localhost/', {
+      headers: { cookie: 'admin_auth= 1' },
+    });
+    expect(isAdminAuthed(req)).toBe(false);
+  });
 });
 
 import { safeRedirectPath } from '../../src/lib/auth';
@@ -68,5 +75,16 @@ describe('safeRedirectPath', () => {
 
   it('respects custom fallback', () => {
     expect(safeRedirectPath('https://evil.com', '/login')).toBe('/login');
+  });
+
+  it('rejects paths with backslashes (open-redirect via UA normalization)', () => {
+    expect(safeRedirectPath('/\\evil.com')).toBe('/admin');
+    expect(safeRedirectPath('/admin\\..\\evil.com')).toBe('/admin');
+  });
+
+  it('rejects paths with control characters (header injection)', () => {
+    expect(safeRedirectPath('/admin\r\nSet-Cookie: evil=1')).toBe('/admin');
+    expect(safeRedirectPath('/path\x00null')).toBe('/admin');
+    expect(safeRedirectPath('/path\x1Fctrl')).toBe('/admin');
   });
 });
