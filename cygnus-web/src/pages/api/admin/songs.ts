@@ -25,8 +25,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const url = new URL(request.url);
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const parsedPage = parseInt(url.searchParams.get('page') || '1', 10);
+    const parsedLimit = parseInt(url.searchParams.get('limit') || '10', 10);
+    const page = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
+    const limit = Math.min(100, Math.max(1, Number.isNaN(parsedLimit) ? 10 : parsedLimit));
     const offset = (page - 1) * limit;
 
     const db = createDb(runtime.env.DB);
@@ -104,12 +106,20 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
       });
     }
 
+    const parsedId = parseInt(songId, 10);
+    if (Number.isNaN(parsedId) || parsedId <= 0) {
+      return new Response(JSON.stringify({ message: 'Song ID must be a positive integer' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const db = createDb(runtime.env.DB);
 
     // Delete the song
     await db
       .delete(songs)
-      .where(eq(songs.id, parseInt(songId)))
+      .where(eq(songs.id, parsedId))
       .run();
 
     return new Response(JSON.stringify({ message: 'Song deleted successfully' }), {
@@ -161,6 +171,25 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    const parsedSongId = parseInt(songId as string, 10);
+    if (Number.isNaN(parsedSongId) || parsedSongId <= 0) {
+      return new Response(JSON.stringify({ message: 'Song ID must be a positive integer' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    let parsedBpm: number | undefined;
+    if (bpm) {
+      parsedBpm = parseInt(bpm as string, 10);
+      if (Number.isNaN(parsedBpm)) {
+        return new Response(JSON.stringify({ message: 'BPM must be a valid integer' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const db = createDb(runtime.env.DB);
 
     // Update the song
@@ -169,12 +198,12 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       .set({
         song_name: songName as string,
         artist: artist as string,
-        bpm: bpm ? parseInt(bpm as string) : undefined,
+        bpm: parsedBpm,
         release_date: releaseDate as string,
         is_released: isReleased ? (isReleased === 'true') : undefined,
         origin: origin as string,
       })
-      .where(eq(songs.id, parseInt(songId as string)))
+      .where(eq(songs.id, parsedSongId))
       .run();
 
     return new Response(JSON.stringify({ message: 'Song updated successfully' }), {
