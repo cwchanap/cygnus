@@ -92,7 +92,9 @@ async def startup_load_model():
             app.state.transcriber = _DrumTranscriber()
         except Exception as exc:
             logger.error(
-                "PRELOAD_MODEL=1 but model failed to load at startup: %s", exc, exc_info=True
+                "PRELOAD_MODEL=1 but model failed to load at startup: %s",
+                exc,
+                exc_info=True,
             )
             app.state.transcriber = None
 
