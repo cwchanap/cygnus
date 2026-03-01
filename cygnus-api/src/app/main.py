@@ -3,7 +3,6 @@ FastAPI server for drum transcription using TensorFlow 2.x
 Optimized for Cloudflare Workers deployment
 """
 
-import io
 import logging
 import os
 import uuid
@@ -180,7 +179,7 @@ async def upload_audio(file: UploadFile = File(...)):
                 )
             f.write(chunk)
             if len(header) < 12:
-                header += chunk[:12 - len(header)]
+                header += chunk[: 12 - len(header)]
 
     # Validate magic bytes (need at least 4 bytes)
     if total_bytes < 4:
@@ -211,7 +210,8 @@ async def upload_audio(file: UploadFile = File(...)):
                         f.seek(16)
                         compat_area = f.read(ftyp_size - 16)
                         compat_brands = {
-                            compat_area[i : i + 4] for i in range(0, len(compat_area) - 3, 4)
+                            compat_area[i : i + 4]
+                            for i in range(0, len(compat_area) - 3, 4)
                         }
                     else:
                         compat_brands = set()
