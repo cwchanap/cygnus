@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
           page,
           limit,
           total: totalCount,
-          totalPages: Math.min(Math.ceil(totalCount / limit), MAX_PAGE),
+          totalPages: Math.max(1, Math.min(Math.ceil(totalCount / limit), MAX_PAGE)),
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

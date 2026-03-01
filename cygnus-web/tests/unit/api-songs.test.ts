@@ -68,9 +68,20 @@ describe('GET /api/songs', () => {
     const req = new Request('http://localhost/api/songs?page=9999&limit=1');
     const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
     expect(resp.status).toBe(200);
-    const body = await resp.json();
+    const body = (await resp.json()) as { pagination: { page: number } };
     // page should be capped at 1000, offset = (1000 - 1) * 1 = 999
     expect(body.pagination.page).toBe(1000);
     expect(mockDb.offset).toHaveBeenCalledWith(999);
+  });
+
+  it('returns totalPages as at least 1 when totalCount is 0', async () => {
+    const mockDb = makeMockDb([], 0);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
+    const req = new Request('http://localhost/api/songs');
+    const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
+    expect(resp.status).toBe(200);
+    const body = (await resp.json()) as { pagination: { total: number; totalPages: number } };
+    expect(body.pagination.total).toBe(0);
+    expect(body.pagination.totalPages).toBe(1);
   });
 });
