@@ -28,7 +28,8 @@
       const limit = 20;
       let page = 1;
       let totalPages: number | null = null;
-      while (totalPages === null || page <= totalPages) {
+      const MAX_CLIENT_PAGES = 50;
+      while ((totalPages === null || page <= totalPages) && page <= MAX_CLIENT_PAGES) {
         const res = await fetch(`/api/songs?page=${page}&limit=${limit}`);
         if (!res.ok) throw new Error(`Failed to load songs: ${res.status}`);
         const data: PaginatedResponse = await res.json();
