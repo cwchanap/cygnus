@@ -45,5 +45,7 @@ pnpm-debug.log*
 
 test-results/
 /cygnus-web/test-results/
+coverage/
+/cygnus-web/coverage/
 models/
 /cygnus-web/models/
