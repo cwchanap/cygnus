@@ -206,7 +206,7 @@ async def upload_audio(file: UploadFile = File(...)):
             if len(ftyp_size_bytes) >= 4:
                 try:
                     ftyp_size = int.from_bytes(ftyp_size_bytes, "big")
-                    if ftyp_size >= 8 and ftyp_size <= total_bytes:
+                    if ftyp_size >= 16 and ftyp_size <= total_bytes:
                         f.seek(16)
                         compat_area = f.read(ftyp_size - 16)
                         compat_brands = {

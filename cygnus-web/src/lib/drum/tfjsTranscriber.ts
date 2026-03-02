@@ -49,7 +49,12 @@ let cachedModel: LayersModel | null = null;
 let cachedModelUrl: string | null = null;
 
 // Cache for mel filterbanks keyed by "nMels-nFFT-sr-fmin-fmax"
-const MAX_MEL_FILTER_CACHE = 50;
+// Configurable via env (default 16); bounded FIFO eviction when limit exceeded
+const MAX_MEL_FILTER_CACHE = (() => {
+  const env = (import.meta as unknown as { env?: Record<string, string> }).env;
+  const parsed = env?.PUBLIC_MEL_CACHE_LIMIT ? parseInt(env.PUBLIC_MEL_CACHE_LIMIT, 10) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 16;
+})();
 const melFilterBankCache = new Map<string, Float32Array[]>();
 
 export async function transcribeInBrowser(file: File, opts: TranscriptionOptions = {}): Promise<ArrayBuffer> {
