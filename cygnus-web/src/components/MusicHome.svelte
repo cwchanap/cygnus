@@ -48,8 +48,7 @@
             return r.json() as Promise<PaginatedResponse>;
           })
         );
-        dataArr.forEach((d) => songs.push(...d.songs));
-        songs = songs;
+        songs = [...songs, ...dataArr.flatMap(d => d.songs)];
       }
 
       if (!selectedSong && songs.length > 0) {

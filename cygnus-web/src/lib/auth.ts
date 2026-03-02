@@ -31,8 +31,11 @@ export function safeRedirectPath(raw: string | null, fallback = '/admin'): strin
     return fallback;
   }
   // Reject ASCII control characters (0x00-0x1F, 0x7F) which are not safe in paths.
-  // eslint-disable-next-line no-control-regex
-  if (/[\x00-\x1F\x7F]/.test(trimmed)) {
+  const hasControlChar = Array.from(trimmed).some(ch => {
+    const code = ch.charCodeAt(0);
+    return code <= 0x1F || code === 0x7F;
+  });
+  if (hasControlChar) {
     return fallback;
   }
   return trimmed;

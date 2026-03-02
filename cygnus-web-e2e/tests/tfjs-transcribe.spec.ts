@@ -91,76 +91,10 @@ test.describe('TFJS Drum Transcription', () => {
     console.log('TFJS button count after file select (via evaluate):', countAfter);
     await page.screenshot({ path: 'test-results/tfjs-after-upload.png', fullPage: true });
 
-    // Click the TFJS button when available; in parallel CI runs UI timing can be flaky,
-    // so fall back to directly invoking the same browser transcription path.
+    // Wait for and click the TFJS button (Playwright will auto-retry)
     const tfjsBtn = page.getByTestId('tfjs-transcribe-button').first();
-    const tfjsVisible = await tfjsBtn
-      .isVisible({ timeout: 10_000 })
-      .catch(() => false);
-
-    if (tfjsVisible) {
-      await tfjsBtn.click();
-    } else {
-      console.log('TFJS button not detected in time, invoking browser transcription directly...');
-      await page.evaluate(async () => {
-        const createWavArrayBuffer = ({
-          durationSeconds = 1,
-          sampleRate = 16_000,
-          frequencyHz = 220,
-        } = {}) => {
-          const numChannels = 1;
-          const bitsPerSample = 16;
-          const bytesPerSample = bitsPerSample / 8;
-          const numSamples = Math.floor(durationSeconds * sampleRate);
-          const dataSize = numSamples * numChannels * bytesPerSample;
-          const arrayBuffer = new ArrayBuffer(44 + dataSize);
-          const view = new DataView(arrayBuffer);
-
-          const writeAscii = (offset: number, text: string) => {
-            for (let i = 0; i < text.length; i++) {
-              view.setUint8(offset + i, text.charCodeAt(i));
-            }
-          };
-
-          writeAscii(0, 'RIFF');
-          view.setUint32(4, 36 + dataSize, true);
-          writeAscii(8, 'WAVE');
-
-          writeAscii(12, 'fmt ');
-          view.setUint32(16, 16, true);
-          view.setUint16(20, 1, true);
-          view.setUint16(22, numChannels, true);
-          view.setUint32(24, sampleRate, true);
-          view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
-          view.setUint16(32, numChannels * bytesPerSample, true);
-          view.setUint16(34, bitsPerSample, true);
-
-          writeAscii(36, 'data');
-          view.setUint32(40, dataSize, true);
-
-          const amplitude = 0.3;
-          for (let i = 0; i < numSamples; i++) {
-            const t = i / sampleRate;
-            const sample = Math.sin(2 * Math.PI * frequencyHz * t) * amplitude;
-            const int16 = Math.round(Math.max(-1, Math.min(1, sample)) * 0x7fff);
-            view.setInt16(44 + i * bytesPerSample, int16, true);
-          }
-
-          return arrayBuffer;
-        };
-
-        const [{ transcribeInBrowser }, { midiStore }] = await Promise.all([
-          import('/src/lib/drum/tfjsTranscriber.ts'),
-          import('/src/stores/midi.ts'),
-        ]);
-
-        const file = new File([createWavArrayBuffer()], 'test-song.wav', {
-          type: 'audio/wav',
-        });
-        const buffer = await transcribeInBrowser(file);
-        await midiStore.openPreviewFromArrayBuffer(buffer);
-      });
-    }
+    await expect(tfjsBtn).toBeVisible({ timeout: 10_000 });
+    await tfjsBtn.click();
 
     // Expect the MIDI preview modal to open
     await page.waitForSelector('text=MIDI Preview', { timeout: 120_000 });
