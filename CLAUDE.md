@@ -127,6 +127,7 @@ Uses Cloudflare D1 (SQLite) with a `songs` table:
 - `release_date`, `is_released` (TEXT, INTEGER)
 - `created_date`, `origin` (TEXT)
 - `r2_key` (TEXT) — R2 storage reference for MIDI files
+- `preview_r2_key` (TEXT, nullable) — R2 storage reference for audio preview files
 
 Schema defined in `cygnus-web/migrations/0001_init.sql` and `cygnus-web/src/lib/db/schema.ts` (Drizzle)
 
@@ -199,7 +200,7 @@ bun run test tests/admin-upload.spec.ts
 
 ```bash
 cd cygnus-web
-bun run test:unit src/lib/utils.test.ts
+bun run test:unit tests/unit/SongDetail.test.ts
 ```
 
 ### Deployment checklist
