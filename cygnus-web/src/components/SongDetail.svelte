@@ -6,6 +6,7 @@
     bpm: number;
     releaseDate: string;
     previewImage?: string;
+    previewUrl?: string;
   } | null = null;
 
   // Generate waveform bar heights with a natural envelope shape
@@ -16,6 +17,29 @@
     const detail = Math.abs(Math.sin(i * 1.7 + 0.4) * 0.5 + Math.sin(i * 3.1) * 0.3);
     return Math.max(12, Math.round(envelope * detail * 100));
   });
+
+  let audio: HTMLAudioElement | null = null;
+  let isPlaying = false;
+
+  function playPreview() {
+    if (!song?.previewUrl) {
+      console.warn('[SongDetail] No preview URL available for this song.');
+      return;
+    }
+
+    if (!audio) {
+      audio = new Audio(song.previewUrl);
+      audio.addEventListener('ended', () => { isPlaying = false; });
+      audio.addEventListener('error', () => { isPlaying = false; });
+    }
+
+    if (isPlaying) {
+      audio.pause();
+      isPlaying = false;
+    } else {
+      audio.play().then(() => { isPlaying = true; }).catch(() => { isPlaying = false; });
+    }
+  }
 </script>
 
 <div class="bg-[#0d0c1e] border border-white/[0.06] rounded-xl h-full min-h-[680px] flex flex-col overflow-hidden">
@@ -68,7 +92,7 @@
         </div>
 
         <!-- Scan line effect -->
-        <div class="absolute inset-y-0 w-8 pointer-events-none scan-line"
+        <div class="absolute inset-y-0 w-8 pointer-events-none animate-scan-line"
           style="background: linear-gradient(90deg, transparent, rgba(194,255,0,0.06), transparent);"></div>
       </div>
 
@@ -85,7 +109,10 @@
       </div>
 
       <!-- Play button -->
-      <button class="w-full bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black py-4 px-6 rounded-lg transition-all duration-100 flex items-center justify-center gap-3 text-sm tracking-widest uppercase">
+      <button
+        on:click={playPreview}
+        class="w-full bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black py-4 px-6 rounded-lg transition-all duration-100 flex items-center justify-center gap-3 text-sm tracking-widest uppercase"
+      >
         <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
         </svg>
@@ -107,13 +134,5 @@
   {/if}
 </div>
 
-<style>
-  .scan-line {
-    animation: scan-line 4s linear infinite;
-  }
 
-  @keyframes scan-line {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(1200%); }
-  }
-</style>
+
