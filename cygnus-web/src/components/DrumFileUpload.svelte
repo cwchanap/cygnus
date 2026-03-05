@@ -100,8 +100,9 @@
         throw new Error(`Failed to start transcription: ${response.statusText}`);
       }
 
-      const result = await response.json() as { job_id: string; metadata: { filename: string } };
-      toastStore.show(`Job started for ${result.metadata.filename}`, 'success');
+      const result = await response.json() as { job_id: string; metadata?: { filename?: string } };
+      const filename = result.metadata?.filename ?? result.job_id ?? 'untitled';
+      toastStore.show(`Job started for ${filename}`, 'success');
 
       jobsStore.startAutoRefresh();
       jobsStore.loadJobs();

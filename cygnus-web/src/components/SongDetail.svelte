@@ -19,7 +19,11 @@
   });
 
   let audio: HTMLAudioElement | null = null;
+  let audioUrl: string | null = null;
   let isPlaying = false;
+
+  function onEnded() { isPlaying = false; }
+  function onError() { isPlaying = false; }
 
   function playPreview() {
     if (!song?.previewUrl) {
@@ -27,10 +31,20 @@
       return;
     }
 
+    if (audio && audioUrl !== song.previewUrl) {
+      audio.pause();
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      audio = null;
+      audioUrl = null;
+      isPlaying = false;
+    }
+
     if (!audio) {
       audio = new Audio(song.previewUrl);
-      audio.addEventListener('ended', () => { isPlaying = false; });
-      audio.addEventListener('error', () => { isPlaying = false; });
+      audioUrl = song.previewUrl;
+      audio.addEventListener('ended', onEnded);
+      audio.addEventListener('error', onError);
     }
 
     if (isPlaying) {
@@ -111,7 +125,9 @@
       <!-- Play button -->
       <button
         on:click={playPreview}
-        class="w-full bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black py-4 px-6 rounded-lg transition-all duration-100 flex items-center justify-center gap-3 text-sm tracking-widest uppercase"
+        disabled={!song?.previewUrl}
+        aria-disabled={!song?.previewUrl}
+        class="w-full bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black py-4 px-6 rounded-lg transition-all duration-100 flex items-center justify-center gap-3 text-sm tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
