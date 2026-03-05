@@ -117,6 +117,7 @@
 
   function resetUpload() {
     uploadedFile = null;
+    selectedFile = null;
     if (fileInput) fileInput.value = '';
   }
 
@@ -237,7 +238,7 @@
       <div class="grid gap-3 sm:grid-cols-2">
         <button
           on:click={startTranscription}
-          disabled={isStarting}
+          disabled={isStarting || isLocalTranscribing}
           class="px-5 py-3 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {#if isStarting}
@@ -257,7 +258,7 @@
 
         <button
           on:click={runTfjsTranscription}
-          disabled={isLocalTranscribing}
+          disabled={isLocalTranscribing || isStarting}
           class="px-5 py-3 border border-[#ff3385]/40 text-[#ff3385] font-mono text-xs uppercase tracking-widest rounded-lg hover:bg-[#ff3385]/[0.08] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-100 flex items-center justify-center gap-2"
           data-testid="tfjs-transcribe-button"
         >

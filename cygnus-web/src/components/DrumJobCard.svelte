@@ -6,13 +6,13 @@
 
   const API_BASE_URL = import.meta.env.PUBLIC_CRUX_API_URL || 'http://localhost:8000';
 
-  function getStatusStyles(status: string): { dot: string; text: string; bg: string } {
+  function getStatusStyles(status: Job['status']): { dot: string; text: string; bg: string } {
     switch (status) {
       case 'pending':    return { dot: 'bg-yellow-400', text: 'text-yellow-300', bg: 'bg-yellow-500/10 border-yellow-500/20' };
       case 'processing': return { dot: 'bg-[#c2ff00] pulse-dot', text: 'text-[#c2ff00]', bg: 'bg-[#c2ff00]/[0.06] border-[#c2ff00]/15' };
       case 'completed':  return { dot: 'bg-emerald-400', text: 'text-emerald-300', bg: 'bg-emerald-500/10 border-emerald-500/20' };
       case 'failed':     return { dot: 'bg-red-400', text: 'text-red-300', bg: 'bg-red-500/10 border-red-500/20' };
-      default:           return { dot: 'bg-white/30', text: 'text-white/50', bg: 'bg-white/[0.04] border-white/10' };
+      default:           return ((_: never) => ({ dot: 'bg-white/30', text: 'text-white/50', bg: 'bg-white/[0.04] border-white/10' }))(status);
     }
   }
 
