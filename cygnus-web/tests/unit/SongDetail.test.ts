@@ -16,7 +16,7 @@ describe('SongDetail', () => {
     render(SongDetail, { props: { song: mockSong } });
 
     expect(screen.getByText('Test Song')).toBeInTheDocument();
-    expect(screen.getByText('Created with AI Generated')).toBeInTheDocument();
+    expect(screen.getByText('via AI Generated')).toBeInTheDocument();
     expect(screen.getByText('120')).toBeInTheDocument();
     expect(screen.getByText('2023-01-01')).toBeInTheDocument();
   });
@@ -24,8 +24,8 @@ describe('SongDetail', () => {
   it('renders placeholder when no song is provided', () => {
     render(SongDetail, { props: { song: null } });
 
-    expect(screen.getByText('Select a Song')).toBeInTheDocument();
-    expect(screen.getByText('Choose a composition from the list to view details')).toBeInTheDocument();
+    expect(screen.getByText('SELECT A TRACK')).toBeInTheDocument();
+    expect(screen.getByText('Choose a composition from the library')).toBeInTheDocument();
   });
 
   it('renders play button when song is provided', () => {

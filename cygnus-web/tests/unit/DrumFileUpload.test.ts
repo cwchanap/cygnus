@@ -20,8 +20,8 @@ describe('DrumFileUpload', () => {
   it('renders the upload area correctly', () => {
     render(DrumFileUpload);
 
-    expect(screen.getByText(/Drop your drum audio file here/i)).toBeInTheDocument();
-    expect(screen.getByText(/MP3, WAV, M4A, or FLAC/i)).toBeInTheDocument();
+    expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
+    expect(screen.getByText(/MP3.*WAV.*M4A.*FLAC/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Choose File/i })).toBeInTheDocument();
   });
 
@@ -48,18 +48,18 @@ describe('DrumFileUpload', () => {
 
     // The validation happens in handleFileUpload, but since we can't easily mock the internal function,
     // we'll just check that the component renders without errors
-    expect(screen.getByText(/Drop your drum audio file here/i)).toBeInTheDocument();
+    expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
   });
 
   it('handles drag and drop events', () => {
     render(DrumFileUpload);
 
-    const dropZone = screen.getByText(/Drop your drum audio file here/i).closest('div');
+    const dropZone = screen.getByText(/Drop your drum audio here/i).closest('div');
 
     // Simulate drag over
     fireEvent.dragOver(dropZone!, { preventDefault: () => {} });
 
     // The component should still render
-    expect(screen.getByText(/Drop your drum audio file here/i)).toBeInTheDocument();
+    expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
   });
 });
