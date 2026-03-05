@@ -12,7 +12,7 @@
       case 'processing': return { dot: 'bg-[#c2ff00] pulse-dot', text: 'text-[#c2ff00]', bg: 'bg-[#c2ff00]/[0.06] border-[#c2ff00]/15' };
       case 'completed':  return { dot: 'bg-emerald-400', text: 'text-emerald-300', bg: 'bg-emerald-500/10 border-emerald-500/20' };
       case 'failed':     return { dot: 'bg-red-400', text: 'text-red-300', bg: 'bg-red-500/10 border-red-500/20' };
-      default:           return ((_: never) => ({ dot: 'bg-white/30', text: 'text-white/50', bg: 'bg-white/[0.04] border-white/10' }))(status);
+      default:           return { dot: 'bg-white/30', text: 'text-white/50', bg: 'bg-white/[0.04] border-white/10' };
     }
   }
 
@@ -21,7 +21,8 @@
   }
 
   async function downloadMidi() {
-    window.open(`${API_BASE_URL}/api/jobs/${job.job_id}/download`, '_blank');
+    const newWin = window.open(`${API_BASE_URL}/api/jobs/${job.job_id}/download`, '_blank', 'noopener,noreferrer');
+    if (newWin) newWin.opener = null;
   }
 
   function previewMidi() {
@@ -29,6 +30,7 @@
   }
 
   $: styles = getStatusStyles(job.status);
+  $: clampedProgress = Math.max(0, Math.min(100, job.progress));
 </script>
 
 <div class="bg-[#080716] border border-white/[0.05] rounded-lg p-4 hover:border-white/10 transition-colors duration-150">
@@ -55,10 +57,10 @@
       <div class="w-full bg-white/[0.06] rounded-full h-1.5 overflow-hidden">
         <div
           class="bg-[#c2ff00] h-1.5 rounded-full transition-all duration-300"
-          style="width: {job.progress}%"
+          style="width: {clampedProgress}%"
         ></div>
       </div>
-      <p class="text-[#6060a0] font-mono text-[10px] mt-1 tabular-nums">{job.progress}% complete</p>
+      <p class="text-[#6060a0] font-mono text-[10px] mt-1 tabular-nums">{clampedProgress}% complete</p>
     </div>
   {/if}
 
