@@ -8,6 +8,7 @@
     origin: string;
     bpm: number;
     releaseDate: string;
+    previewUrl?: string;
     previewImage?: string;
   };
   let songs: Song[] = [];

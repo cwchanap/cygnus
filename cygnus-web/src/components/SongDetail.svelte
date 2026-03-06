@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let song: {
+  interface Song {
     id: string;
     title: string;
     origin: string;
@@ -7,7 +7,9 @@
     releaseDate: string;
     previewImage?: string;
     previewUrl?: string;
-  } | null = null;
+  }
+
+  let { song = null }: { song: Song | null } = $props();
 
   // Generate waveform bar heights with a natural envelope shape
   const barCount = 52;
@@ -25,7 +27,7 @@
   function onEnded() { isPlaying = false; }
   function onError() { isPlaying = false; }
 
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
 
   onDestroy(() => {
     if (audio) {
@@ -39,6 +41,25 @@
     // so we don't need to revoke it
     audioUrl = null;
     isPlaying = false;
+  });
+
+  // Stop audio and reset state when song.previewUrl changes (reactive cleanup)
+  $effect(() => {
+    const previewUrl = song?.previewUrl;
+    // Use untrack to avoid infinite loops
+    const currentAudioUrl = untrack(() => audioUrl);
+
+    // If previewUrl changed and we have audio playing, stop it
+    if (currentAudioUrl !== null && currentAudioUrl !== previewUrl) {
+      if (audio) {
+        audio.pause();
+        audio.removeEventListener('ended', onEnded);
+        audio.removeEventListener('error', onError);
+        audio = null;
+      }
+      audioUrl = null;
+      isPlaying = false;
+    }
   });
 
   function playPreview() {
@@ -140,7 +161,7 @@
 
       <!-- Play button -->
       <button
-        on:click={playPreview}
+        onclick={playPreview}
         disabled={!song?.previewUrl}
         aria-disabled={!song?.previewUrl}
         class="w-full bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black py-4 px-6 rounded-lg transition-all duration-100 flex items-center justify-center gap-3 text-sm tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed"

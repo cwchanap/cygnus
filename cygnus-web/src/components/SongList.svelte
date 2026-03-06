@@ -9,6 +9,8 @@
     origin: string;
     bpm: number;
     releaseDate: string;
+    previewUrl?: string;
+    previewImage?: string;
   };
 
   export let songs: Song[] = [];
