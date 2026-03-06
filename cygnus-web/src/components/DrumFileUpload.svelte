@@ -158,6 +158,13 @@
       role="button"
       aria-label="Upload drum audio drop zone"
       tabindex="0"
+      on:click={() => fileInput?.click()}
+      on:keydown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          fileInput?.click();
+        }
+      }}
       on:dragover|preventDefault={() => dragover = true}
       on:dragleave|preventDefault={() => dragover = false}
       on:drop={handleDrop}
