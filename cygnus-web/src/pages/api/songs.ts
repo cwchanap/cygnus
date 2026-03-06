@@ -48,7 +48,14 @@ export const GET: APIRoute = async ({ locals, request }) => {
       origin: r.origin,
       bpm: r.bpm,
       releaseDate: r.release_date,
-      previewUrl: r.preview_r2_key ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}` : undefined,
+      // Only emit audio preview URL if the key doesn't start with 'preview/'
+      // (preview/ prefix is used for image previews from admin upload flow)
+      previewUrl: r.preview_r2_key && !r.preview_r2_key.startsWith('preview/')
+        ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
+        : undefined,
+      previewImage: r.preview_r2_key && r.preview_r2_key.startsWith('preview/')
+        ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
+        : undefined,
     }));
 
     return new Response(

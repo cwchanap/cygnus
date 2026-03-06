@@ -190,7 +190,7 @@
       />
 
       <button
-        on:click={() => fileInput?.click()}
+        on:click|stopPropagation={() => fileInput?.click()}
         disabled={isUploading}
         class="px-6 py-2.5 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed"
       >
@@ -200,7 +200,7 @@
       {#if selectedFile}
         <div class="mt-4">
           <button
-            on:click={runTfjsTranscription}
+            on:click|stopPropagation={runTfjsTranscription}
             disabled={isLocalTranscribing}
             class="px-6 py-2.5 border border-[#ff3385]/40 text-[#ff3385] font-mono text-xs uppercase tracking-widest rounded-lg hover:bg-[#ff3385]/[0.08] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-100"
             data-testid="tfjs-transcribe-button"
@@ -245,7 +245,7 @@
 
       <div class="grid gap-3 sm:grid-cols-2">
         <button
-          on:click={startTranscription}
+          on:click|stopPropagation={startTranscription}
           disabled={isStarting || isLocalTranscribing}
           class="px-5 py-3 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
@@ -265,7 +265,7 @@
         </button>
 
         <button
-          on:click={runTfjsTranscription}
+          on:click|stopPropagation={runTfjsTranscription}
           disabled={isLocalTranscribing || isStarting}
           class="px-5 py-3 border border-[#ff3385]/40 text-[#ff3385] font-mono text-xs uppercase tracking-widest rounded-lg hover:bg-[#ff3385]/[0.08] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-100 flex items-center justify-center gap-2"
           data-testid="tfjs-transcribe-button"

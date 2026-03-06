@@ -9,7 +9,7 @@ import { createDb } from '../../src/lib/db';
 import { GET } from '../../src/pages/api/songs';
 
 const mockSongs = [
-  { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01' },
+  { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01', preview_r2_key: null as string | null },
 ];
 
 function makeMockDb(songs = mockSongs, total = 1) {
@@ -83,5 +83,44 @@ describe('GET /api/songs', () => {
     const body = (await resp.json()) as { pagination: { total: number; totalPages: number } };
     expect(body.pagination.total).toBe(0);
     expect(body.pagination.totalPages).toBe(1);
+  });
+
+  it('emits previewUrl for audio previews (non-preview/ keys)', async () => {
+    const songsWithAudioPreview = [
+      { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01', preview_r2_key: 'audio/test-song.mp3' },
+    ];
+    vi.mocked(createDb).mockReturnValue(makeMockDb(songsWithAudioPreview, 1) as any);
+    const req = new Request('http://localhost/api/songs');
+    const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { songs: Array<{ previewUrl?: string; previewImage?: string }> };
+    expect(body.songs[0].previewUrl).toBe('/api/file?key=audio%2Ftest-song.mp3');
+    expect(body.songs[0].previewImage).toBeUndefined();
+  });
+
+  it('emits previewImage for image previews (preview/ keys)', async () => {
+    const songsWithImagePreview = [
+      { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01', preview_r2_key: 'preview/123456-test.png' },
+    ];
+    vi.mocked(createDb).mockReturnValue(makeMockDb(songsWithImagePreview, 1) as any);
+    const req = new Request('http://localhost/api/songs');
+    const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { songs: Array<{ previewUrl?: string; previewImage?: string }> };
+    expect(body.songs[0].previewUrl).toBeUndefined();
+    expect(body.songs[0].previewImage).toBe('/api/file?key=preview%2F123456-test.png');
+  });
+
+  it('omits both previewUrl and previewImage when preview_r2_key is null', async () => {
+    const songsWithoutPreview = [
+      { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01', preview_r2_key: null },
+    ];
+    vi.mocked(createDb).mockReturnValue(makeMockDb(songsWithoutPreview, 1) as any);
+    const req = new Request('http://localhost/api/songs');
+    const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { songs: Array<{ previewUrl?: string; previewImage?: string }> };
+    expect(body.songs[0].previewUrl).toBeUndefined();
+    expect(body.songs[0].previewImage).toBeUndefined();
   });
 });
