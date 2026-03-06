@@ -67,10 +67,15 @@ describe('SongDetail', () => {
     render(SongDetail, { props: { song: songWithPreview } });
 
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
-    
+
+    // First click to start playing
     await fireEvent.click(playButton);
     expect(mockAudioInstance.play).toHaveBeenCalled();
-    
+
+    // Wait for the play promise to resolve and component to update
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Second click to pause
     await fireEvent.click(playButton);
     expect(mockAudioInstance.pause).toHaveBeenCalled();
   });

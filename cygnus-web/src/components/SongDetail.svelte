@@ -25,6 +25,22 @@
   function onEnded() { isPlaying = false; }
   function onError() { isPlaying = false; }
 
+  import { onDestroy } from 'svelte';
+
+  onDestroy(() => {
+    if (audio) {
+      audio.pause();
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      audio = null;
+    }
+    // Only revoke object URLs if they were created with URL.createObjectURL
+    // Note: In this component, audioUrl is just a string URL from song.previewUrl,
+    // so we don't need to revoke it
+    audioUrl = null;
+    isPlaying = false;
+  });
+
   function playPreview() {
     if (!song?.previewUrl) {
       console.warn('[SongDetail] No preview URL available for this song.');
@@ -102,7 +118,7 @@
 
         <!-- Label -->
         <div class="absolute bottom-3 left-4 text-[#2a2a52] font-mono text-[9px] uppercase tracking-widest select-none">
-          Audio Waveform
+          Decorative Waveform
         </div>
 
         <!-- Scan line effect -->
