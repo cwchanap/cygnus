@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
     const totalCount = await db.$count(songs);
     const rows: Pick<
       InferSelectModel<typeof songs>,
-      'id' | 'song_name' | 'origin' | 'bpm' | 'release_date'
+      'id' | 'song_name' | 'origin' | 'bpm' | 'release_date' | 'preview_r2_key'
     >[] = await db
       .select({
         id: songs.id,
@@ -34,6 +34,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
         origin: songs.origin,
         bpm: songs.bpm,
         release_date: songs.release_date,
+        preview_r2_key: songs.preview_r2_key,
       })
       .from(songs)
       .orderBy(desc(songs.id))
@@ -47,6 +48,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
       origin: r.origin,
       bpm: r.bpm,
       releaseDate: r.release_date,
+      previewUrl: r.preview_r2_key ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}` : undefined,
     }));
 
     return new Response(
