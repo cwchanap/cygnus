@@ -166,3 +166,9 @@
   animation-delay: var(--bar-delay, 0s);
   height: var(--bar-height, 40%);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .waveform-bar {
+    animation: none;
+  }
+}
