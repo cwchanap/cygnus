@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 const ALLOWED_EXTENSIONS = {
   audio: ['.mp3', '.wav', '.m4a', '.webm', '.flac'],
-  preview: ['.png', '.jpg', '.jpeg', '.gif', '.svg'],
+  preview: ['.png', '.jpg', '.jpeg', '.gif'],
 } as const;
 
 function getAllowedFileConfig(key: string) {
@@ -29,7 +29,6 @@ function getAllowedFileConfig(key: string) {
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
         '.gif': 'image/gif',
-        '.svg': 'image/svg+xml',
       } as Record<string, string>,
     };
   }

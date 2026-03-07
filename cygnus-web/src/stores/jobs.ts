@@ -40,7 +40,7 @@ function createJobsStore() {
     } catch (error) {
       console.error('Error loading jobs:', error);
       // Keep polling alive on transient errors to allow recovery
-      // Polling will naturally stop when all jobs complete
+      // Note: Polling continues on errors; interval must be cleared externally
     }
   };
 
