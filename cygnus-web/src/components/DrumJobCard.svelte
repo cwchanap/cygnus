@@ -26,11 +26,31 @@
     if (newWin) {
       newWin.opener = null;
     } else {
-      // Popup blocked — fall back to anchor click
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '';
-      a.click();
+      try {
+        const response = await fetch(url, {
+          credentials: 'include',
+          headers: {
+            Accept: 'audio/midi,audio/x-midi,application/octet-stream',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Download failed with status ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const filenameBase = job.metadata?.filename?.replace(/\.[^/.]+$/, '') || `job-${job.job_id}`;
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = `${filenameBase}.mid`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      } catch (error) {
+        console.error('[DrumJobCard] Failed to download MIDI file:', error);
+      }
     }
   }
 

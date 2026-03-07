@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import SongDetail from '../../src/components/SongDetail.svelte';
 
@@ -27,6 +27,10 @@ describe('SongDetail', () => {
       removeEventListener: vi.fn(),
     };
     vi.stubGlobal('Audio', vi.fn(() => mockAudioInstance));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('renders song details when song is provided', () => {
@@ -75,9 +79,12 @@ describe('SongDetail', () => {
     // Wait for the play promise to resolve and component to update
     await new Promise(resolve => setTimeout(resolve, 0));
 
+    expect(screen.getByRole('button', { name: /Pause Preview/i })).toHaveAttribute('aria-pressed', 'true');
+
     // Second click to pause
     await fireEvent.click(playButton);
     expect(mockAudioInstance.pause).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Play Preview/i })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('creates new Audio when song previewUrl changes', async () => {
@@ -136,6 +143,7 @@ describe('SongDetail', () => {
 
     const songWithPreview1 = { ...mockSong, id: '1', previewUrl: 'https://example.com/song1.mp3' };
     const songWithPreview2 = { ...mockSong, id: '2', previewUrl: 'https://example.com/song2.mp3' };
+    const songWithoutPreview = { ...mockSong, id: '3' };
 
     const { rerender } = render(SongDetail, { props: { song: songWithPreview1 } });
 
@@ -156,19 +164,22 @@ describe('SongDetail', () => {
     resolvePlay2!();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    // Verify song 2 can be paused (isPlaying should be true)
-    await fireEvent.click(playButton);
-    expect(mockAudio2.pause).toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Pause Preview/i })).toHaveAttribute('aria-pressed', 'true');
+
+    // Tear down playback without starting a replacement track
+    await rerender({ song: songWithoutPreview });
+    const disabledPlayButton = screen.getByRole('button', { name: /Play Preview/i });
+    expect(disabledPlayButton).toBeDisabled();
+    expect(disabledPlayButton).toHaveAttribute('aria-pressed', 'false');
+    expect(mockAudio2.pause).toHaveBeenCalledTimes(1);
 
     // Now resolve song 1's stale promise (the older operation)
     resolvePlay1!();
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    // Click play again - should start playing song 2, not take pause branch
-    // This proves the stale promise from song 1 didn't corrupt the state
-    audioInstanceIndex = 0; // Reset for new audio instance
-    await fireEvent.click(playButton);
-    expect(mockAudio2.play).toHaveBeenCalledTimes(2); // Called again, meaning it started fresh
+    expect(screen.getByRole('button', { name: /Play Preview/i })).toHaveAttribute('aria-pressed', 'false');
+    expect(mockAudio2.pause).toHaveBeenCalledTimes(1);
+    expect(mockAudio2.play).toHaveBeenCalledTimes(1);
   });
 
   it('handles multiple rapid play clicks without state corruption', async () => {

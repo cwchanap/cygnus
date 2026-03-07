@@ -25,12 +25,17 @@
 
   let audio: HTMLAudioElement | null = null;
   let audioUrl: string | null = null;
-  let isPlaying = false;
+  let isPlaying = $state(false);
   let playToken = 0;
+
+  function invalidatePlayToken() {
+    playToken += 1;
+  }
 
   function onEnded() { isPlaying = false; }
   function onError() {
     isPlaying = false;
+    invalidatePlayToken();
     const mediaErr = audio?.error;
     const detail = mediaErr ? `(code ${mediaErr.code})` : '';
     console.error('[SongDetail] Audio playback error', detail, mediaErr);
@@ -43,12 +48,14 @@
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
       audio = null;
+      invalidatePlayToken();
     }
     // Only revoke object URLs if they were created with URL.createObjectURL
     // Note: In this component, audioUrl is just a string URL from song.previewUrl,
     // so we don't need to revoke it
     audioUrl = null;
     isPlaying = false;
+    invalidatePlayToken();
   });
 
   // Stop audio and reset state when song.previewUrl changes (reactive cleanup)
@@ -64,9 +71,11 @@
         audio.removeEventListener('ended', onEnded);
         audio.removeEventListener('error', onError);
         audio = null;
+        invalidatePlayToken();
       }
       audioUrl = null;
       isPlaying = false;
+      invalidatePlayToken();
     }
   });
 
@@ -83,6 +92,7 @@
       audio = null;
       audioUrl = null;
       isPlaying = false;
+      invalidatePlayToken();
     }
 
     if (!audio) {
@@ -95,6 +105,7 @@
     if (isPlaying) {
       audio.pause();
       isPlaying = false;
+      invalidatePlayToken();
     } else {
       // Capture current token for this play operation
       const token = ++playToken;
@@ -190,12 +201,19 @@
         onclick={playPreview}
         disabled={!song?.previewUrl}
         aria-disabled={!song?.previewUrl}
+        aria-pressed={isPlaying}
         class="w-full bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black py-4 px-6 rounded-lg transition-all duration-100 flex items-center justify-center gap-3 text-sm tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-        </svg>
-        Play Preview
+        {#if isPlaying}
+          <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 7a1 1 0 012 0v6a1 1 0 11-2 0V7zm4 0a1 1 0 112 0v6a1 1 0 11-2 0V7z" clip-rule="evenodd" />
+          </svg>
+        {:else}
+          <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+          </svg>
+        {/if}
+        {isPlaying ? 'Pause Preview' : 'Play Preview'}
       </button>
 
     </div>
