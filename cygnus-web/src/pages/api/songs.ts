@@ -48,11 +48,12 @@ export const GET: APIRoute = async ({ locals, request }) => {
       origin: r.origin,
       bpm: r.bpm,
       releaseDate: r.release_date,
-      // Only emit audio preview URL if the key doesn't start with 'preview/'
-      // (preview/ prefix is used for image previews from admin upload flow)
-      previewUrl: r.preview_r2_key && !r.preview_r2_key.startsWith('preview/')
+      // Only emit audio preview URL for keys that /api/file accepts (audio/ prefix)
+      // to avoid returning URLs that will 400 on legacy/imported data
+      previewUrl: r.preview_r2_key && r.preview_r2_key.startsWith('audio/')
         ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
         : undefined,
+      // Emit previewImage for image previews from admin upload flow (preview/ prefix)
       previewImage: r.preview_r2_key && r.preview_r2_key.startsWith('preview/')
         ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
         : undefined,

@@ -39,8 +39,8 @@ function createJobsStore() {
       }
     } catch (error) {
       console.error('Error loading jobs:', error);
-      // Stop polling if API is not reachable to avoid silent background failures
-      stopAutoRefresh();
+      // Keep polling alive on transient errors to allow recovery
+      // Polling will naturally stop when all jobs complete
     }
   };
 
