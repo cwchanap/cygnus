@@ -1,5 +1,42 @@
 import type { APIRoute } from 'astro';
 
+const ALLOWED_EXTENSIONS = {
+  audio: ['.mp3', '.wav', '.m4a', '.webm', '.flac'],
+  preview: ['.png', '.jpg', '.jpeg', '.gif', '.svg'],
+} as const;
+
+function getAllowedFileConfig(key: string) {
+  const lowerKey = key.toLowerCase();
+
+  if (lowerKey.startsWith('audio/')) {
+    return {
+      extensions: ALLOWED_EXTENSIONS.audio,
+      contentTypes: {
+        '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
+        '.m4a': 'audio/mp4',
+        '.webm': 'audio/webm',
+        '.flac': 'audio/flac',
+      } as Record<string, string>,
+    };
+  }
+
+  if (lowerKey.startsWith('preview/')) {
+    return {
+      extensions: ALLOWED_EXTENSIONS.preview,
+      contentTypes: {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif',
+        '.svg': 'image/svg+xml',
+      } as Record<string, string>,
+    };
+  }
+
+  return null;
+}
+
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
     const runtime = locals.runtime;
@@ -19,11 +56,20 @@ export const GET: APIRoute = async ({ locals, url }) => {
     }
 
     // Only allow known key prefixes to prevent unauthorized access to arbitrary R2 objects
-    const isAllowedKey = key.startsWith('audio/') || key.startsWith('preview/');
-    if (!isAllowedKey || key.includes('..')) {
+    const fileConfig = getAllowedFileConfig(key);
+    if (!fileConfig || key.includes('..')) {
       return new Response(
         JSON.stringify({ message: 'Invalid key' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const lowerKey = key.toLowerCase();
+    const extension = fileConfig.extensions.find((ext) => lowerKey.endsWith(ext));
+    if (!extension) {
+      return new Response(
+        JSON.stringify({ message: 'Unsupported file type' }),
+        { status: 415, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
@@ -37,30 +83,14 @@ export const GET: APIRoute = async ({ locals, url }) => {
       );
     }
 
-    // Determine content type based on file extension
-    let contentType = 'application/octet-stream';
-    const lowerKey = key.toLowerCase();
-    if (lowerKey.endsWith('.mp3')) {
-      contentType = 'audio/mpeg';
-    } else if (lowerKey.endsWith('.wav')) {
-      contentType = 'audio/wav';
-    } else if (lowerKey.endsWith('.m4a')) {
-      contentType = 'audio/mp4';
-    } else if (lowerKey.endsWith('.flac')) {
-      contentType = 'audio/flac';
-    } else if (lowerKey.endsWith('.png')) {
-      contentType = 'image/png';
-    } else if (lowerKey.endsWith('.jpg') || lowerKey.endsWith('.jpeg')) {
-      contentType = 'image/jpeg';
-    } else if (lowerKey.endsWith('.gif')) {
-      contentType = 'image/gif';
-    }
+    const contentType = fileConfig.contentTypes[extension];
 
     return new Response(object.body, {
       status: 200,
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400',
+        'X-Content-Type-Options': 'nosniff',
       },
     });
   } catch (err) {
