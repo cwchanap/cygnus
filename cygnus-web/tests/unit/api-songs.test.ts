@@ -85,7 +85,7 @@ describe('GET /api/songs', () => {
     expect(body.pagination.totalPages).toBe(1);
   });
 
-  it('emits previewUrl for audio previews (non-preview/ keys)', async () => {
+  it('emits previewUrl for audio previews (audio/ keys)', async () => {
     const songsWithAudioPreview = [
       { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01', preview_r2_key: 'audio/test-song.mp3' },
     ];
@@ -95,6 +95,19 @@ describe('GET /api/songs', () => {
     expect(resp.status).toBe(200);
     const body = await resp.json() as { songs: Array<{ previewUrl?: string; previewImage?: string }> };
     expect(body.songs[0].previewUrl).toBe('/api/file?key=audio%2Ftest-song.mp3');
+    expect(body.songs[0].previewImage).toBeUndefined();
+  });
+
+  it('omits previewUrl for legacy/invalid keys that /api/file rejects (e.g., songs/, midi/)', async () => {
+    const songsWithLegacyKey = [
+      { id: 1, song_name: 'Test Song', origin: 'AI', bpm: 120, release_date: '2024-01-01', preview_r2_key: 'songs/test-song.mp3' },
+    ];
+    vi.mocked(createDb).mockReturnValue(makeMockDb(songsWithLegacyKey, 1) as any);
+    const req = new Request('http://localhost/api/songs');
+    const resp = await GET({ locals: { runtime: { env: { DB: {} } } }, request: req } as any);
+    expect(resp.status).toBe(200);
+    const body = await resp.json() as { songs: Array<{ previewUrl?: string; previewImage?: string }> };
+    expect(body.songs[0].previewUrl).toBeUndefined();
     expect(body.songs[0].previewImage).toBeUndefined();
   });
 

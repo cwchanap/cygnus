@@ -41,4 +41,40 @@ describe('jobsStore', () => {
     const { jobsStore } = await import('../../src/stores/jobs');
     await expect(jobsStore.loadJobs()).resolves.toBeUndefined();
   });
+
+  it('keeps polling alive after a fetch error to allow recovery', async () => {
+    const { jobsStore } = await import('../../src/stores/jobs');
+
+    // Start with active jobs that should trigger auto-refresh
+    const activeJobs = [
+      { job_id: 'abc', status: 'processing' as const, created_at: '', updated_at: '', progress: 50 },
+    ];
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jobs: activeJobs }),
+    });
+
+    await jobsStore.loadJobs();
+    const jobs1 = get(jobsStore);
+    expect(jobs1).toEqual(activeJobs);
+
+    // Simulate a network error on next fetch
+    mockFetch.mockRejectedValueOnce(new Error('Network error'));
+    await jobsStore.loadJobs();
+
+    // Verify polling should still be active (error shouldn't stop it)
+    // The store should still contain the previous jobs data
+    const jobs2 = get(jobsStore);
+    expect(jobs2).toEqual(activeJobs);
+
+    // Verify auto-refresh is still possible by making a successful call
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ jobs: [] }),
+    });
+
+    await jobsStore.loadJobs();
+    const jobs3 = get(jobsStore);
+    expect(jobs3).toEqual([]);
+  });
 });
