@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { onDestroy, untrack } from 'svelte';
+  import { toastStore } from '../stores/toast';
+
   interface Song {
     id: string;
     title: string;
@@ -25,9 +28,13 @@
   let isPlaying = false;
 
   function onEnded() { isPlaying = false; }
-  function onError() { isPlaying = false; }
-
-  import { onDestroy, untrack } from 'svelte';
+  function onError() {
+    isPlaying = false;
+    const mediaErr = audio?.error;
+    const detail = mediaErr ? `(code ${mediaErr.code})` : '';
+    console.error('[SongDetail] Audio playback error', detail, mediaErr);
+    toastStore.show(`Audio preview failed to load. ${detail}`.trim(), 'error');
+  }
 
   onDestroy(() => {
     if (audio) {
@@ -88,7 +95,14 @@
       audio.pause();
       isPlaying = false;
     } else {
-      audio.play().then(() => { isPlaying = true; }).catch(() => { isPlaying = false; });
+      audio.play().then(() => { isPlaying = true; }).catch((err: unknown) => {
+        isPlaying = false;
+        console.error('[SongDetail] audio.play() failed:', err);
+        const msg = err instanceof DOMException && err.name === 'NotAllowedError'
+          ? 'Playback blocked by browser. Try clicking the page first.'
+          : `Playback failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+        toastStore.show(msg, 'error');
+      });
     }
   }
 </script>

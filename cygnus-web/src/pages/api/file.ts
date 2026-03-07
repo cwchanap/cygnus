@@ -18,6 +18,15 @@ export const GET: APIRoute = async ({ locals, url }) => {
       );
     }
 
+    // Only allow known key prefixes to prevent unauthorized access to arbitrary R2 objects
+    const isAllowedKey = key.startsWith('audio/') || key.startsWith('preview/');
+    if (!isAllowedKey || key.includes('..')) {
+      return new Response(
+        JSON.stringify({ message: 'Invalid key' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get the object from R2
     const object = await runtime.env.CYGNUS_BUCKET.get(key);
 
@@ -45,19 +54,17 @@ export const GET: APIRoute = async ({ locals, url }) => {
       contentType = 'image/jpeg';
     } else if (lowerKey.endsWith('.gif')) {
       contentType = 'image/gif';
-    } else if (lowerKey.endsWith('.svg')) {
-      contentType = 'image/svg+xml';
     }
 
     return new Response(object.body, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'public, max-age=86400',
       },
     });
   } catch (err) {
-    console.error('GET /api/file error', err);
+    console.error('GET /api/file error', { key: url.searchParams.get('key'), err });
     return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

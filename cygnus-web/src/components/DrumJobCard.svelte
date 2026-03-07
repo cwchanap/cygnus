@@ -21,8 +21,17 @@
   }
 
   async function downloadMidi() {
-    const newWin = window.open(`${API_BASE_URL}/api/jobs/${job.job_id}/download`, '_blank', 'noopener,noreferrer');
-    if (newWin) newWin.opener = null;
+    const url = `${API_BASE_URL}/api/jobs/${job.job_id}/download`;
+    const newWin = window.open(url, '_blank', 'noopener,noreferrer');
+    if (newWin) {
+      newWin.opener = null;
+    } else {
+      // Popup blocked — fall back to anchor click
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '';
+      a.click();
+    }
   }
 
   function previewMidi() {
@@ -83,9 +92,11 @@
   {/if}
 
   <!-- Error -->
-  {#if job.status === 'failed' && job.error}
+  {#if job.status === 'failed'}
     <div class="mt-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-      <p class="text-red-300 font-mono text-[11px] leading-relaxed">{job.error}</p>
+      <p class="text-red-300 font-mono text-[11px] leading-relaxed">
+        {job.error ?? 'Transcription failed. Please try again.'}
+      </p>
     </div>
   {/if}
 </div>
