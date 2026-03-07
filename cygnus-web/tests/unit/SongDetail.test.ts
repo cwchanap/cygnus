@@ -85,10 +85,10 @@ describe('SongDetail', () => {
     const songWithPreview2 = { ...mockSong, id: '2', previewUrl: 'https://example.com/song2.mp3' };
 
     const { rerender } = render(SongDetail, { props: { song: songWithPreview1 } });
-    
+
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
     await fireEvent.click(playButton);
-    
+
     expect(Audio).toHaveBeenCalledWith('https://example.com/song1.mp3');
     const prevAudioCall = vi.mocked(Audio).mock.calls.length;
 
@@ -97,5 +97,108 @@ describe('SongDetail', () => {
 
     expect(Audio).toHaveBeenCalledWith('https://example.com/song2.mp3');
     expect(vi.mocked(Audio).mock.calls.length).toBeGreaterThan(prevAudioCall);
+  });
+
+  it('guards against stale play() promises when songs are switched rapidly', async () => {
+    // Create a deferred promise that we can control when it resolves
+    let resolvePlay1: (() => void) | null = null;
+    const deferredPromise1 = new Promise<void>((resolve) => {
+      resolvePlay1 = resolve;
+    });
+
+    let resolvePlay2: (() => void) | null = null;
+    const deferredPromise2 = new Promise<void>((resolve) => {
+      resolvePlay2 = resolve;
+    });
+
+    // Mock audio instances for each song
+    const mockAudio1 = {
+      play: vi.fn(() => deferredPromise1),
+      pause: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+
+    const mockAudio2 = {
+      play: vi.fn(() => deferredPromise2),
+      pause: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+
+    // Setup Audio mock to return different instances
+    let audioInstanceIndex = 0;
+    vi.mocked(Audio).mockImplementation(() => {
+      const instance = audioInstanceIndex === 0 ? mockAudio1 : mockAudio2;
+      audioInstanceIndex++;
+      return instance as unknown as HTMLAudioElement;
+    });
+
+    const songWithPreview1 = { ...mockSong, id: '1', previewUrl: 'https://example.com/song1.mp3' };
+    const songWithPreview2 = { ...mockSong, id: '2', previewUrl: 'https://example.com/song2.mp3' };
+
+    const { rerender } = render(SongDetail, { props: { song: songWithPreview1 } });
+
+    const playButton = screen.getByRole('button', { name: /Play Preview/i });
+
+    // Click play for song 1 (start but don't resolve)
+    await fireEvent.click(playButton);
+    expect(mockAudio1.play).toHaveBeenCalledTimes(1);
+
+    // Switch to song 2 immediately before song 1's play() resolves
+    await rerender({ song: songWithPreview2 });
+
+    // Click play for song 2 (start but don't resolve)
+    await fireEvent.click(playButton);
+    expect(mockAudio2.play).toHaveBeenCalledTimes(1);
+
+    // Now resolve song 2's play() first (the newer operation)
+    resolvePlay2!();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Verify song 2 can be paused (isPlaying should be true)
+    await fireEvent.click(playButton);
+    expect(mockAudio2.pause).toHaveBeenCalled();
+
+    // Now resolve song 1's stale promise (the older operation)
+    resolvePlay1!();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Click play again - should start playing song 2, not take pause branch
+    // This proves the stale promise from song 1 didn't corrupt the state
+    audioInstanceIndex = 0; // Reset for new audio instance
+    await fireEvent.click(playButton);
+    expect(mockAudio2.play).toHaveBeenCalledTimes(2); // Called again, meaning it started fresh
+  });
+
+  it('handles multiple rapid play clicks without state corruption', async () => {
+    // Mock audio with a slow promise
+    let resolvePlay: (() => void) | null = null;
+    const deferredPromise = new Promise<void>((resolve) => {
+      resolvePlay = resolve;
+    });
+
+    mockAudioInstance.play = vi.fn(() => deferredPromise);
+
+    const songWithPreview = { ...mockSong, previewUrl: 'https://example.com/preview.mp3' };
+    render(SongDetail, { props: { song: songWithPreview } });
+
+    const playButton = screen.getByRole('button', { name: /Play Preview/i });
+
+    // Rapidly click play multiple times before promise resolves
+    await fireEvent.click(playButton);
+    await fireEvent.click(playButton);
+    await fireEvent.click(playButton);
+
+    // Resolve the deferred promise
+    resolvePlay!();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    // Verify that audio.play() was called (first click)
+    expect(mockAudioInstance.play).toHaveBeenCalled();
+
+    // Now the button should work normally
+    // Click once more - should start playing
+    await fireEvent.click(playButton);
   });
 });

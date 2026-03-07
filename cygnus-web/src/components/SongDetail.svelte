@@ -26,6 +26,7 @@
   let audio: HTMLAudioElement | null = null;
   let audioUrl: string | null = null;
   let isPlaying = false;
+  let playToken = 0;
 
   function onEnded() { isPlaying = false; }
   function onError() {
@@ -95,13 +96,24 @@
       audio.pause();
       isPlaying = false;
     } else {
-      audio.play().then(() => { isPlaying = true; }).catch((err: unknown) => {
-        isPlaying = false;
-        console.error('[SongDetail] audio.play() failed:', err);
-        const msg = err instanceof DOMException && err.name === 'NotAllowedError'
-          ? 'Playback blocked by browser. Try clicking the page first.'
-          : `Playback failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
-        toastStore.show(msg, 'error');
+      // Capture current token for this play operation
+      const token = ++playToken;
+
+      audio.play().then(() => {
+        // Only update state if this is still the current play operation
+        if (token === playToken) {
+          isPlaying = true;
+        }
+      }).catch((err: unknown) => {
+        // Only update state if this is still the current play operation
+        if (token === playToken) {
+          isPlaying = false;
+          console.error('[SongDetail] audio.play() failed:', err);
+          const msg = err instanceof DOMException && err.name === 'NotAllowedError'
+            ? 'Playback blocked by browser. Try clicking the page first.'
+            : `Playback failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+          toastStore.show(msg, 'error');
+        }
       });
     }
   }
