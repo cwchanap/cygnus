@@ -1,5 +1,4 @@
- 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
 
 // --- Mock Tone.js ---
@@ -45,9 +44,7 @@ vi.mock('../../src/lib/config', () => ({
   API_BASE_URL: 'http://localhost:8000',
 }));
 
-// --- Mock fetch ---
 const mockFetch = vi.fn();
-vi.stubGlobal('fetch', mockFetch);
 
 describe('midiStore', () => {
   beforeEach(() => {
@@ -55,6 +52,11 @@ describe('midiStore', () => {
     vi.resetModules();
     mockTransport.seconds = 0;
     mockTransport.schedule.mockReturnValue(1);
+    vi.stubGlobal('fetch', mockFetch);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('has correct initial state', async () => {

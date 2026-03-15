@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import SongList from '../../src/components/SongList.svelte';
 
@@ -116,13 +116,10 @@ describe('SongList', () => {
     expect(screen.getByText('Library')).toBeInTheDocument();
   });
 
-  it('shows "— End of library —" footer when all items are visible and count > 10', async () => {
-    vi.useFakeTimers();
-    const songs = makeSongs(11);
-    render(SongList, { props: { songs } });
-    // Initially only 10 shown, footer not visible
+  it('does not show "— End of library —" footer when not all items are visible yet', () => {
+    // 11 songs means initially only 10 are visible (visibleCount starts at 10)
+    render(SongList, { props: { songs: makeSongs(11) } });
     expect(screen.queryByText(/End of library/i)).not.toBeInTheDocument();
-    vi.useRealTimers();
   });
 
   it('applies selected styling when selectedSongId matches', () => {
