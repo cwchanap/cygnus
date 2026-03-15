@@ -38,12 +38,12 @@
   },
   "lint-staged": {
     "cygnus-web/**/*.{js,jsx,ts,tsx,astro,svelte,md,mdx}": [
-      "cd cygnus-web && bunx prettier --write",
-      "cd cygnus-web && bunx eslint --fix"
+      "bash -c 'cd cygnus-web && bunx prettier --write \"$@\"' bash",
+      "bash -c 'cd cygnus-web && bunx eslint --fix \"$@\"' bash"
     ],
     "cygnus-api/**/*.py": [
-      "cd cygnus-api && uv run ruff check --fix",
-      "cd cygnus-api && uv run black"
+      "bash -c 'cd cygnus-api && uv run ruff check --fix \"$@\"' bash",
+      "bash -c 'cd cygnus-api && uv run black \"$@\"' bash"
     ]
   }
 }
