@@ -13,7 +13,9 @@ const { jobsWritable } = vi.hoisted(() => {
   };
   const set = (v: unknown[]) => {
     _value = v;
-    subs.forEach((fn) => fn(v));
+    subs.forEach((fn) => {
+      fn(v);
+    });
   };
   return { jobsWritable: { subscribe, set } };
 });
