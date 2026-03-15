@@ -107,7 +107,7 @@ describe('SongList', () => {
     // All songs should be buttons that can be clicked without error
     expect(buttons).toHaveLength(3);
     for (const button of buttons) {
-      await expect(fireEvent.click(button)).resolves.not.toThrow();
+      await expect(fireEvent.click(button)).resolves.toBe(true);
     }
   });
 
