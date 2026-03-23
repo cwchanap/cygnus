@@ -12,8 +12,11 @@ vi.mock('../../src/lib/db', () => ({
 
 import { GET, DELETE, PUT } from '../../src/pages/api/admin/songs';
 
-// Authenticated request helper
+// Authenticated request helper – merges caller headers with auth/content-type
 function authedRequest(path: string, options: RequestInit = {}) {
+  // Normalise caller headers (Headers | Record | array) into a mutable instance
+  const merged = new Headers(options.headers as HeadersInit | undefined);
+
   if (options.body instanceof FormData) {
     const boundary = '----Boundary' + Math.random().toString(36).slice(2);
     const formData = options.body;
@@ -25,18 +28,18 @@ function authedRequest(path: string, options: RequestInit = {}) {
       parts.push(String(value));
     });
     parts.push(`--${boundary}--`);
+    merged.set('content-type', `multipart/form-data; boundary=${boundary}`);
+    merged.set('cookie', 'admin_auth=1');
     return new Request(`http://localhost${path}`, {
       ...options,
       body: parts.join('\r\n'),
-      headers: {
-        'content-type': `multipart/form-data; boundary=${boundary}`,
-        cookie: 'admin_auth=1',
-      },
+      headers: merged,
     });
   }
+  merged.set('cookie', 'admin_auth=1');
   return new Request(`http://localhost${path}`, {
     ...options,
-    headers: { cookie: 'admin_auth=1' },
+    headers: merged,
   });
 }
 
@@ -212,6 +215,11 @@ describe('PUT /api/admin/songs - missing DB (authenticated)', () => {
 });
 
 describe('PUT /api/admin/songs - validation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupMockDb();
+  });
+
   it('returns 400 when song_name is missing', async () => {
     const fd = new FormData();
     fd.append('id', '1');
