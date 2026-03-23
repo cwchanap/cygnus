@@ -146,6 +146,7 @@ describe('MusicHome', () => {
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
+    expect(mockFetch.mock.calls[1][0]).toBe('/api/songs?page=2&limit=20');
   });
 
   it('renders SongList panel with 0 tracks initially', async () => {
