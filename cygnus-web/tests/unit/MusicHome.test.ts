@@ -1,19 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/svelte';
 
-// MusicHome renders SongDetail which creates an Audio element
-beforeEach(() => {
-  vi.stubGlobal(
-    'Audio',
-    vi.fn(() => ({
-      play: vi.fn().mockResolvedValue(undefined),
-      pause: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }))
-  );
-});
-
+// SongDetail only creates Audio inside playPreview() (user interaction),
+// never on mount, so no Audio stub is needed here.
 afterEach(() => {
   vi.unstubAllGlobals();
 });
