@@ -33,7 +33,7 @@ const paginatedResponse = {
 
 const emptyResponse = {
   songs: [],
-  pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+  pagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
 };
 
 beforeEach(() => {

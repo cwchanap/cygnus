@@ -29,14 +29,22 @@ function authedRequest(path: string, options: RequestInit = {}) {
     });
     parts.push(`--${boundary}--`);
     merged.set('content-type', `multipart/form-data; boundary=${boundary}`);
-    merged.set('cookie', 'admin_auth=1');
+    const existingCookie = merged.get('cookie');
+    merged.set(
+      'cookie',
+      existingCookie ? `${existingCookie}; admin_auth=1` : 'admin_auth=1'
+    );
     return new Request(`http://localhost${path}`, {
       ...options,
       body: parts.join('\r\n'),
       headers: merged,
     });
   }
-  merged.set('cookie', 'admin_auth=1');
+  const existingCookie = merged.get('cookie');
+  merged.set(
+    'cookie',
+    existingCookie ? `${existingCookie}; admin_auth=1` : 'admin_auth=1'
+  );
   return new Request(`http://localhost${path}`, {
     ...options,
     headers: merged,
