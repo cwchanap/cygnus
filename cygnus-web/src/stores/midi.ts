@@ -1,7 +1,6 @@
 import { writable } from 'svelte/store';
 import * as Tone from 'tone';
 import type { Midi as MidiInstance } from '@tonejs/midi';
-import { API_BASE_URL } from '../lib/config';
 
 // Lazily load MIDI package to avoid SSR/hydration issues
 type MidiCtor = typeof import('@tonejs/midi').Midi;
@@ -60,70 +59,6 @@ function createMidiStore() {
     if (playbackInterval !== null) {
       clearInterval(playbackInterval);
       playbackInterval = null;
-    }
-  };
-
-  const openPreview = async (jobId: string) => {
-    try {
-      // Ensure MIDI lib is available
-      const hasMidi = await ensureMidiLoaded();
-      if (!hasMidi || !Midi) {
-        console.error('MIDI package failed to load — cannot display preview');
-        update((state) => ({
-          ...state,
-          isOpen: true,
-          jobId,
-          midiData: null,
-          duration: 0,
-          error: 'MIDI preview is unavailable (package failed to load). Please refresh the page.',
-        }));
-        return;
-      }
-
-      // Fetch MIDI file from cygnus-api
-      const response = await fetch(
-        `${API_BASE_URL}/api/jobs/${jobId}/download`
-      );
-      if (!response.ok) throw new Error('Failed to fetch MIDI file');
-
-      const arrayBuffer = await response.arrayBuffer();
-      const midi = new Midi(arrayBuffer);
-
-      update((state) => ({
-        ...state,
-        isOpen: true,
-        jobId,
-        midiData: midi,
-        duration: midi.duration,
-        currentTime: Number(transport.seconds),
-        error: null,
-      }));
-
-      // Initialize synth for playback
-      if (!synth) {
-        synth = new Tone.PolySynth(Tone.Synth, {
-          envelope: {
-            attack: 0.02,
-            decay: 0.1,
-            sustain: 0.3,
-            release: 0.5,
-          },
-        }).toDestination();
-      }
-
-      // Schedule MIDI events for playback
-      scheduleMidiPlayback(midi);
-    } catch (error) {
-      console.error('Error loading MIDI:', error);
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      update((state) => ({
-        ...state,
-        isOpen: true,
-        jobId,
-        midiData: null,
-        duration: 0,
-        error: `Failed to load MIDI preview: ${msg}`,
-      }));
     }
   };
 
@@ -249,7 +184,6 @@ function createMidiStore() {
 
   return {
     subscribe,
-    openPreview,
     openPreviewFromArrayBuffer,
     play,
     pause,
