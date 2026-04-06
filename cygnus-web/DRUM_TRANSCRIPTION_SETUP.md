@@ -1,62 +1,54 @@
-# Drum Transcription Integration Setup
+# Drum Transcription Setup
 
 ## Overview
 
-The drum transcription feature from the cygnus-api (formerly Crux) service has been integrated into Cygnus. This allows you to upload drum audio files and get AI-powered MIDI transcriptions.
+Cygnus drum transcription now runs entirely in the browser. Users choose an audio file, start transcription from the page, and preview the generated MIDI without a Python API or background job service.
 
-## Setup Instructions
+## Local Development
 
-### 1. Start the cygnus-api Python server
-
-```bash
-cd ~/workspace/cygnus/cygnus-api
-uv run uvicorn app.main:app --reload --port 8000
-```
-
-### 2. Configure cygnus-web (optional)
-
-If the API server is running on a different URL, create a `.env` file in `cygnus-web`:
-
-```bash
-PUBLIC_CRUX_API_URL=http://localhost:8000
-```
-
-### 3. Start cygnus-web
+### 1. Start cygnus-web
 
 ```bash
 cd ~/workspace/cygnus
 bun run dev
 ```
 
-### 4. Access the Drum Transcription Page
+### 2. Open the drum transcription page
 
-- Open http://localhost:4330 in your browser
-- Click on "🥁 Transcribe" in the navigation menu
-- Or directly visit http://localhost:4330/drum-transcription
+- Visit http://localhost:4330/drum-transcription
+- Or use the **Transcribe** link in the site navigation
 
-## Features
+## User Flow
 
-- **File Upload**: Supports MP3, WAV, M4A, and FLAC files (max 50MB)
-- **Job Management**: View status of transcription jobs
-- **MIDI Preview**: Visual notation and playback of generated MIDI
-- **Download**: Save transcribed MIDI files
+1. Choose or drop a drum audio file
+2. Confirm the **File Ready** state
+3. Click **Transcribe in Browser**
+4. Wait for the **MIDI Preview** dialog to open
+5. Review notation and use the playback controls in the preview modal
 
-## Components Added
+## Supported Inputs
 
-- `DrumFileUpload.svelte`: File upload interface
-- `DrumJobsList.svelte`: List of transcription jobs
-- `DrumJobCard.svelte`: Individual job display
-- `DrumMidiPreview.svelte`: MIDI notation and playback
-- `DrumToast.svelte`: Notification system
+- MP3
+- WAV
+- M4A
+- FLAC
+- Maximum file size: 50 MB
 
-## Stores Added
+## Optional TFJS Model Configuration
 
-- `stores/jobs.ts`: Job management and auto-refresh
-- `stores/midi.ts`: MIDI playback control
-- `stores/toast.ts`: Toast notifications
+The transcription pipeline tries to load a TensorFlow.js model from `PUBLIC_TFJS_MODEL_URL`.
 
-## Troubleshooting
+Example:
 
-- Ensure both servers are running (cygnus-api on port 8000, cygnus-web on port 4330)
-- Check browser console for CORS errors
-- Verify the API URL in the environment variable matches the cygnus-api server location
+```bash
+PUBLIC_TFJS_MODEL_URL=/models/drums/model.json
+```
+
+If this variable is not set, Cygnus tries `/models/drums/model.json` by default. If no model is available or model inference fails, the app falls back to the built-in browser-side signal-processing path.
+
+## Notes and Limitations
+
+- No server-side transcription service is required
+- Processing time depends on file length and the browser/device performance
+- Model downloads, when configured, happen in the browser at runtime
+- Unsupported or corrupt audio files will fail during browser decoding and show an error toast

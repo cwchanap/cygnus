@@ -32,7 +32,7 @@ const DEFAULTS: Required<Omit<TranscriptionOptions, 'modelUrl' | 'fmax'>> & { fm
   fmax: undefined,
 };
 
-// General MIDI drum mapping used by Crux
+// General MIDI drum mapping
 const DRUM_MAP: Record<number, string> = {
   36: 'Kick',
   38: 'Snare',
@@ -480,7 +480,7 @@ function processModelOutputsToDrums(
   sr: number,
   hop: number
 ) {
-  // Map piano keys to drum types (same idea as Crux)
+  // Map piano keys to drum types
   const drumKeyRanges: Record<number, [number, number]> = {
     36: [35, 37],
     38: [37, 41],

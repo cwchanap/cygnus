@@ -1,14 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import DrumFileUpload from '../../src/components/DrumFileUpload.svelte';
-
-// Mock the stores
-vi.mock('../../src/stores/jobs', () => ({
-  jobsStore: {
-    startAutoRefresh: vi.fn(),
-    loadJobs: vi.fn(),
-  },
-}));
 
 vi.mock('../../src/stores/toast', () => ({
   toastStore: {
@@ -17,6 +9,10 @@ vi.mock('../../src/stores/toast', () => ({
 }));
 
 describe('DrumFileUpload', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the upload area correctly', () => {
     render(DrumFileUpload);
 
@@ -28,26 +24,48 @@ describe('DrumFileUpload', () => {
   it('shows file input with correct attributes', () => {
     render(DrumFileUpload);
 
-    const fileInputs = screen.getAllByDisplayValue('') as HTMLInputElement[];
-    const fileInput = fileInputs.find(input => input.type === 'file');
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
     expect(fileInput).toHaveAttribute('type', 'file');
     expect(fileInput).toHaveAttribute('accept', '.mp3,.wav,.m4a,.flac,audio/*');
   });
 
-  it('validates file size', () => {
+  it('does not show the TFJS transcribe button before a file is selected', () => {
     render(DrumFileUpload);
 
-    const fileInputs = screen.getAllByDisplayValue('') as HTMLInputElement[];
-    const fileInput = fileInputs.find(input => input.type === 'file');
+    expect(screen.queryByTestId('tfjs-transcribe-button')).not.toBeInTheDocument();
+  });
 
-    if (fileInput) {
-      // Create a large file (over 50MB)
-      const largeFile = new File(['x'.repeat(51 * 1024 * 1024)], 'large.mp3', { type: 'audio/mpeg' });
-      fireEvent.change(fileInput, { target: { files: [largeFile] } });
-    }
+  it('shows the TFJS transcribe button after a valid file is selected', async () => {
+    render(DrumFileUpload);
 
-    // The validation happens in handleFileUpload, but since we can't easily mock the internal function,
-    // we'll just check that the component renders without errors
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
+    const testFile = new File(['audio content'], 'drums.mp3', { type: 'audio/mpeg' });
+    fireEvent.change(fileInput, { target: { files: [testFile] } });
+
+    expect(await screen.findByTestId('tfjs-transcribe-button')).toBeInTheDocument();
+  });
+
+  it('shows the selected filename after a file is chosen', async () => {
+    render(DrumFileUpload);
+
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
+    const testFile = new File(['audio content'], 'my-drums.mp3', { type: 'audio/mpeg' });
+    fireEvent.change(fileInput, { target: { files: [testFile] } });
+
+    expect(await screen.findByText('my-drums.mp3')).toBeInTheDocument();
+  });
+
+  it('shows error toast for oversized files and keeps drop zone visible', async () => {
+    const { toastStore } = await import('../../src/stores/toast');
+    render(DrumFileUpload);
+
+    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
+    const oversizedFile = new File(['x'], 'huge.mp3', { type: 'audio/mpeg' });
+    Object.defineProperty(oversizedFile, 'size', { value: 51 * 1024 * 1024 });
+    fireEvent.change(fileInput, { target: { files: [oversizedFile] } });
+
+    expect(toastStore.show).toHaveBeenCalledWith(expect.stringContaining('too large'), 'error');
+    // Drop zone should still be visible (file was rejected)
     expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
   });
 
@@ -55,11 +73,8 @@ describe('DrumFileUpload', () => {
     render(DrumFileUpload);
 
     const dropZone = screen.getByText(/Drop your drum audio here/i).closest('div');
-
-    // Simulate drag over
     fireEvent.dragOver(dropZone!, { preventDefault: () => {} });
 
-    // The component should still render
     expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
   });
 });

@@ -1,21 +1,15 @@
 <script lang="ts">
-  import { jobsStore } from '../stores/jobs';
   import { toastStore } from '../stores/toast';
-  import { API_BASE_URL } from '../lib/config';
-  // midiStore is imported dynamically at use time to avoid SSR/test side effects
+  // tfjsTranscriber and midiStore are imported dynamically to avoid SSR/test side effects
 
   let dragover = false;
   let fileInput: HTMLInputElement;
-  let uploadedFile: { upload_id: string; filename: string; file_size: number } | null = null;
-  let selectedFile: File | null = null; // keep a local reference for in-browser TFJS
-  let isStarting = false;
-  let isUploading = false;
-  let isLocalTranscribing = false;
+  let selectedFile: File | null = null;
+  let isTranscribing = false;
 
   const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/flac'];
 
-  async function handleFileUpload(file: File) {
-    console.log('[DrumFileUpload] handleFileUpload start', { name: file?.name, size: file?.size, type: file?.type });
+  function handleFile(file: File) {
     if (file.size > 50 * 1024 * 1024) {
       toastStore.show('File too large. Maximum size is 50MB.', 'error');
       return;
@@ -27,40 +21,7 @@
     }
 
     selectedFile = file;
-    console.log('[DrumFileUpload] selectedFile set', { name: selectedFile?.name, size: selectedFile?.size });
-    const formData = new FormData();
-    formData.append('file', file);
-
-    isUploading = true;
-
-    try {
-      toastStore.show('Uploading file...', 'success');
-
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const result = await response.json() as { upload_id: string; filename: string; file_size: number };
-      uploadedFile = {
-        upload_id: result.upload_id,
-        filename: result.filename,
-        file_size: result.file_size
-      };
-
-      toastStore.show('File uploaded. Click Start to begin transcription.', 'success');
-
-    } catch (error) {
-      console.error('[DrumFileUpload] Upload error:', error);
-      toastStore.show(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-    } finally {
-      isUploading = false;
-      console.log('[DrumFileUpload] handleFileUpload end', { uploadedFile: !!uploadedFile, selectedFile: !!selectedFile });
-    }
+    toastStore.show(`${file.name} ready. Click "Transcribe in Browser" to start.`, 'success');
   }
 
   async function runTfjsTranscription() {
@@ -68,56 +29,26 @@
       toastStore.show('Please choose a file first.', 'error');
       return;
     }
-    isLocalTranscribing = true;
+    isTranscribing = true;
     try {
-      toastStore.show('Running in-browser transcription (TFJS)...', 'success');
+      toastStore.show('Running in-browser transcription…', 'success');
       const { transcribeInBrowser } = await import('../lib/drum/tfjsTranscriber');
       const buffer = await transcribeInBrowser(selectedFile);
       const { midiStore } = await import('../stores/midi');
       await midiStore.openPreviewFromArrayBuffer(buffer);
-      toastStore.show('Transcription complete! Opening preview...', 'success');
+      toastStore.show('Transcription complete! Opening preview…', 'success');
     } catch (error) {
-      console.error('TFJS transcription error:', error);
-      toastStore.show(`TFJS transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      console.error('[DrumFileUpload] Transcription error:', error);
+      toastStore.show(
+        `Transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      );
     } finally {
-      isLocalTranscribing = false;
+      isTranscribing = false;
     }
   }
 
-  async function startTranscription() {
-    if (!uploadedFile) return;
-
-    isStarting = true;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ upload_id: uploadedFile.upload_id })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to start transcription: ${response.statusText}`);
-      }
-
-      const result = await response.json() as { job_id: string; message?: string; status_url?: string };
-      const filename = uploadedFile.filename ?? result.job_id ?? 'untitled';
-      toastStore.show(`Job started for ${filename}`, 'success');
-
-      jobsStore.startAutoRefresh();
-      jobsStore.loadJobs();
-      uploadedFile = null;
-
-    } catch (error) {
-      console.error('Start transcription error:', error);
-      toastStore.show(`Failed to start transcription: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
-    } finally {
-      isStarting = false;
-    }
-  }
-
-  function resetUpload() {
-    uploadedFile = null;
+  function resetFile() {
     selectedFile = null;
     if (fileInput) fileInput.value = '';
   }
@@ -127,28 +58,25 @@
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   function handleDrop(e: DragEvent) {
     e.preventDefault();
     dragover = false;
     const files = e.dataTransfer?.files;
-    if (files && files.length > 0) handleFileUpload(files[0]);
+    if (files && files.length > 0) handleFile(files[0]);
   }
 
   function handleFileSelect(e: Event) {
     const target = e.target as HTMLInputElement;
     const files = target.files;
-    if (files && files.length > 0) {
-      console.log('[DrumFileUpload] handleFileSelect received', { count: files.length, name: files[0]?.name });
-      handleFileUpload(files[0]);
-    }
+    if (files && files.length > 0) handleFile(files[0]);
   }
 </script>
 
 <div class="w-full">
-  {#if !uploadedFile}
+  {#if !selectedFile}
     <!-- Drop zone -->
     <div
       class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-150 cursor-pointer
@@ -165,8 +93,8 @@
           fileInput?.click();
         }
       }}
-      on:dragover|preventDefault={() => dragover = true}
-      on:dragleave|preventDefault={() => dragover = false}
+      on:dragover|preventDefault={() => (dragover = true)}
+      on:dragleave|preventDefault={() => (dragover = false)}
       on:drop={handleDrop}
     >
       <!-- Upload icon -->
@@ -185,38 +113,15 @@
         class="hidden"
         bind:this={fileInput}
         on:change={handleFileSelect}
-        disabled={isUploading}
         data-testid="file-input"
       />
 
       <button
         on:click|stopPropagation={() => fileInput?.click()}
-        disabled={isUploading}
-        class="px-6 py-2.5 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed"
+        class="px-6 py-2.5 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100"
       >
-        {isUploading ? 'Uploading...' : 'Choose File'}
+        Choose File
       </button>
-
-      {#if selectedFile}
-        <div class="mt-4">
-          <button
-            on:click|stopPropagation={runTfjsTranscription}
-            disabled={isLocalTranscribing}
-            class="px-6 py-2.5 border border-[#ff3385]/40 text-[#ff3385] font-mono text-xs uppercase tracking-widest rounded-lg hover:bg-[#ff3385]/[0.08] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-100"
-            data-testid="tfjs-transcribe-button"
-          >
-            {#if isLocalTranscribing}
-              <svg class="animate-spin h-3.5 w-3.5 inline-block mr-2" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Transcribing (TFJS)...
-            {:else}
-              Transcribe in Browser (TFJS)
-            {/if}
-          </button>
-        </div>
-      {/if}
     </div>
 
   {:else}
@@ -228,14 +133,14 @@
             <div class="w-1.5 h-1.5 rounded-full bg-[#c2ff00] pulse-dot"></div>
             <span class="text-[#c2ff00] font-mono text-[10px] uppercase tracking-widest">File Ready</span>
           </div>
-          <p class="text-white font-semibold text-sm">{uploadedFile.filename}</p>
-          <p class="text-[#6060a0] font-mono text-xs mt-0.5">{formatFileSize(uploadedFile.file_size)}</p>
+          <p class="text-white font-semibold text-sm">{selectedFile.name}</p>
+          <p class="text-[#6060a0] font-mono text-xs mt-0.5">{formatFileSize(selectedFile.size)}</p>
         </div>
         <button
-          on:click={resetUpload}
+          on:click={resetFile}
           class="text-[#6060a0] hover:text-white transition-colors p-1"
-          title="Upload different file"
-          aria-label="Remove uploaded file"
+          title="Choose a different file"
+          aria-label="Remove selected file"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -243,47 +148,25 @@
         </button>
       </div>
 
-      <div class="grid gap-3 sm:grid-cols-2">
-        <button
-          on:click|stopPropagation={startTranscription}
-          disabled={isStarting || isLocalTranscribing}
-          class="px-5 py-3 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {#if isStarting}
-            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Starting...
-          {:else}
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Start on Server
-          {/if}
-        </button>
-
-        <button
-          on:click|stopPropagation={runTfjsTranscription}
-          disabled={isLocalTranscribing || isStarting}
-          class="px-5 py-3 border border-[#ff3385]/40 text-[#ff3385] font-mono text-xs uppercase tracking-widest rounded-lg hover:bg-[#ff3385]/[0.08] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-100 flex items-center justify-center gap-2"
-          data-testid="tfjs-transcribe-button"
-        >
-          {#if isLocalTranscribing}
-            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Transcribing...
-          {:else}
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7v10l9-5-9-5z" />
-            </svg>
-            Browser (TFJS)
-          {/if}
-        </button>
-      </div>
+      <button
+        on:click={runTfjsTranscription}
+        disabled={isTranscribing}
+        class="w-full px-5 py-3 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+        data-testid="tfjs-transcribe-button"
+      >
+        {#if isTranscribing}
+          <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Transcribing…
+        {:else}
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7v10l9-5-9-5z" />
+          </svg>
+          Transcribe in Browser
+        {/if}
+      </button>
     </div>
   {/if}
 </div>

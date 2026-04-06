@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 
 // --- Mock Tone.js ---
@@ -39,24 +39,12 @@ const mockMidiInstance = {
 const MockMidi = vi.fn().mockReturnValue(mockMidiInstance);
 vi.mock('@tonejs/midi', () => ({ Midi: MockMidi }));
 
-// --- Mock config ---
-vi.mock('../../src/lib/config', () => ({
-  API_BASE_URL: 'http://localhost:8000',
-}));
-
-const mockFetch = vi.fn();
-
 describe('midiStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
     mockTransport.seconds = 0;
     mockTransport.schedule.mockReturnValue(1);
-    vi.stubGlobal('fetch', mockFetch);
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
   });
 
   it('has correct initial state', async () => {
@@ -73,53 +61,6 @@ describe('midiStore', () => {
     });
   });
 
-  it('openPreview() sets isOpen, jobId, midiData, and duration on success', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
-    });
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreview('job-123');
-    const state = get(midiStore);
-    expect(state.isOpen).toBe(true);
-    expect(state.jobId).toBe('job-123');
-    expect(state.midiData).toBe(mockMidiInstance);
-    expect(state.duration).toBe(30);
-    expect(state.error).toBeNull();
-  });
-
-  it('openPreview() fetches from the correct URL', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
-    });
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreview('abc-999');
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/jobs/abc-999/download'
-    );
-  });
-
-  it('openPreview() sets error state when fetch fails', async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreview('bad-job');
-    const state = get(midiStore);
-    expect(state.isOpen).toBe(true);
-    expect(state.error).toMatch(/Failed to load MIDI preview/i);
-    expect(state.midiData).toBeNull();
-  });
-
-  it('openPreview() sets error state on network error', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network down'));
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreview('net-err');
-    const state = get(midiStore);
-    expect(state.isOpen).toBe(true);
-    expect(state.error).toContain('Network down');
-    expect(state.midiData).toBeNull();
-  });
-
   it('openPreviewFromArrayBuffer() sets state without fetch', async () => {
     const { midiStore } = await import('../../src/stores/midi');
     const buffer = new ArrayBuffer(8);
@@ -130,7 +71,6 @@ describe('midiStore', () => {
     expect(state.midiData).toBe(mockMidiInstance);
     expect(state.duration).toBe(30);
     expect(state.error).toBeNull();
-    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('openPreviewFromArrayBuffer() sets error when Midi constructor throws', async () => {
@@ -177,12 +117,8 @@ describe('midiStore', () => {
   });
 
   it('close() resets all state to initial values', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
-    });
     const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreview('job-456');
+    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
     midiStore.close();
     expect(get(midiStore)).toEqual({
       isOpen: false,
@@ -196,12 +132,8 @@ describe('midiStore', () => {
   });
 
   it('scheduleMidiPlayback schedules notes on transport', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(8),
-    });
     const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreview('schedule-test');
+    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
     // 2 notes in the mock MIDI, so schedule should be called twice
     expect(mockTransport.schedule).toHaveBeenCalledTimes(2);
   });
