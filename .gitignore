@@ -10,6 +10,8 @@ node_modules/
 /cygnus-web/node_modules/
 .bun-cache/
 .nx/
+.worktrees/
+.playwright-mcp/
 
 # logs
 npm-debug.log*
