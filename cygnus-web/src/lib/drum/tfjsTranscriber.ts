@@ -7,11 +7,7 @@
 */
 
 // Avoid SSR issues by importing heavy/browser-only libs dynamically inside functions
-import type {
-  LayersModel,
-  NamedTensorMap,
-  Tensor,
-} from '@tensorflow/tfjs';
+import type { LayersModel, NamedTensorMap, Tensor } from '@tensorflow/tfjs';
 
 export type TranscriptionOptions = {
   modelUrl?: string;
@@ -23,7 +19,9 @@ export type TranscriptionOptions = {
   fmax?: number; // if omitted, sr/2 is used
 };
 
-const DEFAULTS: Required<Omit<TranscriptionOptions, 'modelUrl' | 'fmax'>> & { fmax?: number } = {
+const DEFAULTS: Required<Omit<TranscriptionOptions, 'modelUrl' | 'fmax'>> & {
+  fmax?: number;
+} = {
   sampleRate: 16000,
   nFFT: 2048,
   hopLength: 512,
@@ -32,7 +30,7 @@ const DEFAULTS: Required<Omit<TranscriptionOptions, 'modelUrl' | 'fmax'>> & { fm
   fmax: undefined,
 };
 
-// General MIDI drum mapping
+// General MIDI drum mapping used by the browser transcription pipeline
 const DRUM_MAP: Record<number, string> = {
   36: 'Kick',
   38: 'Snare',
@@ -52,13 +50,21 @@ let cachedModelUrl: string | null = null;
 // Configurable via env (default 16); bounded FIFO eviction when limit exceeded
 const MAX_MEL_FILTER_CACHE = (() => {
   const env = (import.meta as unknown as { env?: Record<string, string> }).env;
-  const parsed = env?.PUBLIC_MEL_CACHE_LIMIT ? parseInt(env.PUBLIC_MEL_CACHE_LIMIT, 10) : NaN;
+  const parsed = env?.PUBLIC_MEL_CACHE_LIMIT
+    ? parseInt(env.PUBLIC_MEL_CACHE_LIMIT, 10)
+    : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 16;
 })();
 const melFilterBankCache = new Map<string, Float32Array[]>();
 
-export async function transcribeInBrowser(file: File, opts: TranscriptionOptions = {}): Promise<ArrayBuffer> {
-  const modelUrl = opts.modelUrl || (import.meta.env.PUBLIC_TFJS_MODEL_URL as string) || '/models/drums/model.json';
+export async function transcribeInBrowser(
+  file: File,
+  opts: TranscriptionOptions = {}
+): Promise<ArrayBuffer> {
+  const modelUrl =
+    opts.modelUrl ||
+    (import.meta.env.PUBLIC_TFJS_MODEL_URL as string) ||
+    '/models/drums/model.json';
   const settings = { ...DEFAULTS, ...opts } as Required<TranscriptionOptions>;
 
   const { audio, sr } = await decodeFileToMono(file, settings.sampleRate);
@@ -70,12 +76,19 @@ export async function transcribeInBrowser(file: File, opts: TranscriptionOptions
   try {
     const model = await loadModel(modelUrl);
     if (model) {
-      const midiAb = await withTimeout(runModelInference(model, logMel, sr, settings.hopLength), 20000, 'tfjs_inference');
+      const midiAb = await withTimeout(
+        runModelInference(model, logMel, sr, settings.hopLength),
+        20000,
+        'tfjs_inference'
+      );
       if (midiAb) return midiAb;
     }
   } catch (err) {
     // fall through to signal-based pipeline
-    console.warn('[TFJS] Model inference failed or model missing, using signal-based fallback', err);
+    console.warn(
+      '[TFJS] Model inference failed or model missing, using signal-based fallback',
+      err
+    );
   }
 
   // Fallback: Onset detection + heuristic classification
@@ -83,7 +96,12 @@ export async function transcribeInBrowser(file: File, opts: TranscriptionOptions
   return await drumEventsToMidi(events);
 }
 
-async function runModelInference(model: LayersModel, logMel: number[][], sr: number, hop: number): Promise<ArrayBuffer> {
+async function runModelInference(
+  model: LayersModel,
+  logMel: number[][],
+  sr: number,
+  hop: number
+): Promise<ArrayBuffer> {
   const { tf } = await importTF();
   // Prepare input: [1, time, nMels, 1]
   const input = tf.tidy(() => {
@@ -100,7 +118,12 @@ async function runModelInference(model: LayersModel, logMel: number[][], sr: num
   try {
     const raw = model.predict(input) as Tensor | Tensor[] | NamedTensorMap;
     const { onsetProbs, velocityValues } = await pickModelOutputs(raw);
-    const events = processModelOutputsToDrums(onsetProbs, velocityValues, sr, hop);
+    const events = processModelOutputsToDrums(
+      onsetProbs,
+      velocityValues,
+      sr,
+      hop
+    );
     if (Array.isArray(raw)) {
       raw.forEach((t) => {
         const v = t as { dispose?: unknown };
@@ -118,7 +141,11 @@ async function runModelInference(model: LayersModel, logMel: number[][], sr: num
   }
 }
 
-function withTimeout<T>(p: Promise<T>, ms: number, label = 'operation'): Promise<T | null> {
+function withTimeout<T>(
+  p: Promise<T>,
+  ms: number,
+  label = 'operation'
+): Promise<T | null> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       console.warn(`[TFJS] ${label} timed out after ${ms}ms; falling back`);
@@ -145,7 +172,10 @@ async function importTF() {
     }
   } catch (e) {
     // Backend selection is best-effort; CPU fallback will be used automatically
-    console.warn('[TFJS] WebGL backend init failed, falling back to default backend:', e);
+    console.warn(
+      '[TFJS] WebGL backend init failed, falling back to default backend:',
+      e
+    );
   }
   return { tf };
 }
@@ -175,19 +205,27 @@ async function pickModelOutputs(raw: Tensor | Tensor[] | NamedTensorMap) {
     velocityT = raw[2] as Tensor;
   } else if (raw && typeof raw === 'object') {
     const map = raw as NamedTensorMap;
-    onsetT = (map.onset_probs ?? (map as Record<string, unknown>)['onset_probs'] ?? (map as Record<string, unknown>)['onsetProbs']) as Tensor;
-    velocityT = (map.velocity_values ?? (map as Record<string, unknown>)['velocity_values'] ?? (map as Record<string, unknown>)['velocityValues']) as Tensor;
+    onsetT = (map.onset_probs ??
+      (map as Record<string, unknown>)['onset_probs'] ??
+      (map as Record<string, unknown>)['onsetProbs']) as Tensor;
+    velocityT = (map.velocity_values ??
+      (map as Record<string, unknown>)['velocity_values'] ??
+      (map as Record<string, unknown>)['velocityValues']) as Tensor;
   } else {
     throw new Error('Unknown TFJS model output format');
   }
 
   if (!onsetT || !velocityT) {
-    throw new Error('Required outputs (onset_probs, velocity_values) not present');
+    throw new Error(
+      'Required outputs (onset_probs, velocity_values) not present'
+    );
   }
 
   // Squeeze potential batch dimension [1, time, 88] -> [time, 88]
-  const onset2d = onsetT.rank === 3 ? tf.squeeze(onsetT, [0]) : (onsetT as Tensor);
-  const velocity2d = velocityT.rank === 3 ? tf.squeeze(velocityT, [0]) : (velocityT as Tensor);
+  const onset2d =
+    onsetT.rank === 3 ? tf.squeeze(onsetT, [0]) : (onsetT as Tensor);
+  const velocity2d =
+    velocityT.rank === 3 ? tf.squeeze(velocityT, [0]) : (velocityT as Tensor);
 
   const onset = (await onset2d.array()) as number[][];
   const velocity = (await velocity2d.array()) as number[][];
@@ -195,17 +233,28 @@ async function pickModelOutputs(raw: Tensor | Tensor[] | NamedTensorMap) {
   if (onset2d !== onsetT) onset2d.dispose();
   if (velocity2d !== velocityT) velocity2d.dispose();
 
-  return { onsetProbs: onset as number[][], velocityValues: velocity as number[][] };
+  return {
+    onsetProbs: onset as number[][],
+    velocityValues: velocity as number[][],
+  };
 }
 
 // --- Audio decode + resample to mono Float32 ---
-async function decodeFileToMono(file: File, targetSr: number): Promise<{ audio: Float32Array; sr: number }> {
+async function decodeFileToMono(
+  file: File,
+  targetSr: number
+): Promise<{ audio: Float32Array; sr: number }> {
   const arrayBuffer = await file.arrayBuffer();
 
   // Decode using a regular AudioContext (hardware sample rate), then resample offline to target
   type AudioContextCtor = typeof AudioContext;
-  const w = window as unknown as { AudioContext?: AudioContextCtor; webkitAudioContext?: AudioContextCtor };
-  const AudioContextImpl: AudioContextCtor = (w.AudioContext || w.webkitAudioContext || AudioContext) as AudioContextCtor;
+  const w = window as unknown as {
+    AudioContext?: AudioContextCtor;
+    webkitAudioContext?: AudioContextCtor;
+  };
+  const AudioContextImpl: AudioContextCtor = (w.AudioContext ||
+    w.webkitAudioContext ||
+    AudioContext) as AudioContextCtor;
   const ac = new AudioContextImpl();
   let decoded: AudioBuffer | null = null;
   try {
@@ -260,11 +309,18 @@ function melToHz(mel: number) {
 
 function hannWindow(N: number) {
   const w = new Float32Array(N);
-  for (let n = 0; n < N; n++) w[n] = 0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (N - 1));
+  for (let n = 0; n < N; n++)
+    w[n] = 0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (N - 1));
   return w;
 }
 
-function createMelFilterBank(nMels: number, nFFT: number, sr: number, fmin: number, fmax: number) {
+function createMelFilterBank(
+  nMels: number,
+  nFFT: number,
+  sr: number,
+  fmin: number,
+  fmax: number
+) {
   const fftBins = Math.floor(nFFT / 2) + 1;
   const melMin = hzToMel(fmin);
   const melMax = hzToMel(fmax);
@@ -273,7 +329,7 @@ function createMelFilterBank(nMels: number, nFFT: number, sr: number, fmin: numb
     melPoints.push(melMin + (i * (melMax - melMin)) / (nMels + 1));
   }
   const hzPoints = melPoints.map(melToHz);
-  const bin = hzPoints.map((hz) => Math.floor((nFFT + 1) * hz / sr));
+  const bin = hzPoints.map((hz) => Math.floor(((nFFT + 1) * hz) / sr));
 
   const fb = new Array(nMels).fill(0).map(() => new Float32Array(fftBins));
 
@@ -283,10 +339,12 @@ function createMelFilterBank(nMels: number, nFFT: number, sr: number, fmin: numb
     const f_m_plus = bin[m + 1];
 
     for (let k = f_m_minus; k < f_m; k++) {
-      if (k >= 0 && k < fftBins) fb[m - 1][k] = (k - f_m_minus) / (f_m - f_m_minus);
+      if (k >= 0 && k < fftBins)
+        fb[m - 1][k] = (k - f_m_minus) / (f_m - f_m_minus);
     }
     for (let k = f_m; k < f_m_plus; k++) {
-      if (k >= 0 && k < fftBins) fb[m - 1][k] = (f_m_plus - k) / (f_m_plus - f_m);
+      if (k >= 0 && k < fftBins)
+        fb[m - 1][k] = (f_m_plus - k) / (f_m_plus - f_m);
     }
   }
 
@@ -382,7 +440,11 @@ async function computeLogMelSpectrogram(
 }
 
 // --- Fallback: Onset detection + heuristic drum classification ---
-function detectOnsetsAndClassify(logMel: number[][], sr: number, opts: Required<TranscriptionOptions>) {
+function detectOnsetsAndClassify(
+  logMel: number[][],
+  sr: number,
+  opts: Required<TranscriptionOptions>
+) {
   const hop = opts.hopLength;
   const nFrames = logMel.length;
   const nMels = logMel[0]?.length || 0;
@@ -400,13 +462,17 @@ function detectOnsetsAndClassify(logMel: number[][], sr: number, opts: Required<
 
   // Normalize and threshold
   const mean = flux.reduce((a, b) => a + b, 0) / nFrames;
-  const std = Math.sqrt(flux.reduce((a, b) => a + (b - mean) * (b - mean), 0) / nFrames) || 1;
+  const std =
+    Math.sqrt(
+      flux.reduce((a, b) => a + (b - mean) * (b - mean), 0) / nFrames
+    ) || 1;
   const thresh = mean + 0.5 * std;
 
   // Peak picking
   const peaks: number[] = [];
   for (let t = 1; t < nFrames - 1; t++) {
-    if (flux[t] > thresh && flux[t] > flux[t - 1] && flux[t] > flux[t + 1]) peaks.push(t);
+    if (flux[t] > thresh && flux[t] > flux[t - 1] && flux[t] > flux[t + 1])
+      peaks.push(t);
   }
 
   // Classification using spectral centroid approximation over mel bands
@@ -435,7 +501,8 @@ function detectOnsetsAndClassify(logMel: number[][], sr: number, opts: Required<
       wSum += e;
       fSum += e * f;
       if (f > 3000 && e > 0) highEnergy += e;
-      if (m > 0 && Math.sign(logMel[t][m]) !== Math.sign(logMel[t][m - 1])) zeroCrossings++;
+      if (m > 0 && Math.sign(logMel[t][m]) !== Math.sign(logMel[t][m - 1]))
+        zeroCrossings++;
     }
     const centroid = wSum > 0 ? fSum / wSum : 0;
     const zcr = zeroCrossings / nMels;
@@ -480,7 +547,7 @@ function processModelOutputsToDrums(
   sr: number,
   hop: number
 ) {
-  // Map piano keys to drum types
+  // Map model output ranges to drum types
   const drumKeyRanges: Record<number, [number, number]> = {
     36: [35, 37],
     38: [37, 41],
@@ -501,7 +568,8 @@ function processModelOutputsToDrums(
   const findPeaks = (arr: number[], threshold = 0.3) => {
     const idx: number[] = [];
     for (let i = 1; i < arr.length - 1; i++) {
-      if (arr[i] > threshold && arr[i] > arr[i - 1] && arr[i] > arr[i + 1]) idx.push(i);
+      if (arr[i] > threshold && arr[i] > arr[i - 1] && arr[i] > arr[i + 1])
+        idx.push(i);
     }
     return idx;
   };
@@ -515,7 +583,10 @@ function processModelOutputsToDrums(
       const peaks = findPeaks(onsets, 0.3);
       for (const t of peaks) {
         const time = (t * hop) / sr;
-        const velocity = Math.max(1, Math.min(127, Math.round((vels[t] ?? 0) * 127)));
+        const velocity = Math.max(
+          1,
+          Math.min(127, Math.round((vels[t] ?? 0) * 127))
+        );
         pushEvent(drumEvents, midi, time, velocity);
       }
     }

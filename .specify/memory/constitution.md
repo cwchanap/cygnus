@@ -1,14 +1,13 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 0.0.0 → 1.0.0 (MAJOR - initial ratification)
-Modified principles: N/A (initial version)
-Added sections:
-  - Core Principles (5 principles)
-  - Development Standards
-  - Quality Gates
-  - Governance
-Removed sections: None (initial version)
+Version change: 1.0.0 → 1.1.0 (MINOR - repository boundary clarification)
+Modified principles:
+  - I. Monorepo Coherence
+  - II. Type Safety & Strictness
+  - III. Test Coverage Requirements
+  - IV. Platform-Aware Development
+Removed sections: None
 Templates checked:
   ✅ .specify/templates/plan-template.md - Compatible (Constitution Check section present)
   ✅ .specify/templates/spec-template.md - Compatible (requirements-driven approach)
@@ -22,12 +21,12 @@ Follow-up TODOs: None
 
 ### I. Monorepo Coherence
 
-The Cygnus repository is an Nx-managed monorepo. All projects (`cygnus-web`, `cygnus-api`, `cygnus-web-e2e`) MUST:
+The Cygnus repository is an Nx-managed monorepo. All in-repo projects (`cygnus-web`, `cygnus-web-e2e`) MUST:
 
 - Respect Nx task orchestration and caching boundaries
 - Define targets in their respective `project.json` files
 - Use workspace-level scripts for cross-project operations
-- Share dependencies through the root `package.json` or `pyproject.toml`
+- Share dependencies through the root `package.json`
 
 **Rationale**: Nx provides build caching, task dependency management, and consistent tooling. Bypassing Nx leads to inconsistent builds and broken CI pipelines.
 
@@ -36,9 +35,8 @@ The Cygnus repository is an Nx-managed monorepo. All projects (`cygnus-web`, `cy
 All code MUST be type-safe and pass static analysis:
 
 - **TypeScript**: Use `lang="ts"` in Svelte components; no `any` types without justification
-- **Python**: Type hints required for public functions; `ruff` and `black` enforcement
 - **Database**: Drizzle ORM schemas MUST match D1 migrations exactly
-- **API contracts**: Request/response types MUST be explicitly defined
+- **Integration contracts**: Request/response types at external service boundaries MUST be explicitly defined
 
 **Rationale**: Type safety prevents runtime errors and improves maintainability. The cost of upfront typing is lower than debugging production issues.
 
@@ -47,27 +45,29 @@ All code MUST be type-safe and pass static analysis:
 Testing MUST follow this hierarchy:
 
 1. **E2E tests** (Playwright): Critical user journeys and cross-system integration
-2. **Unit tests** (Vitest/pytest): Business logic and utility functions
-3. **Contract tests**: API boundaries between frontend and backend
+2. **Unit tests** (Vitest): Business logic and utility functions
+3. **Integration/contract tests**: Boundaries with external services and platform APIs
 
 Tests are NOT optional for:
-- New user-facing features (requires at least one e2e test)
-- Bug fixes (requires regression test)
-- API endpoint changes (requires contract test)
 
-**Rationale**: The drum transcription feature involves ML models and complex audio processing. Without tests, regressions go undetected until production.
+- New user-facing features (requires at least one e2e or unit test, depending on scope)
+- Bug fixes (requires regression test)
+- External integration changes (requires coverage at the affected boundary)
+
+**Rationale**: Drum transcription and playback flows touch browser APIs, storage, and optional external services. Without tests, regressions go undetected until production.
 
 ### IV. Platform-Aware Development
 
 Code MUST account for deployment targets:
 
 - **Frontend**: Cloudflare Workers edge runtime (no Node.js-specific APIs)
-- **Backend**: Standard Python runtime (TensorFlow/Celery compatible)
 - **Storage**: D1 for structured data, R2 for binary assets (MIDI, audio files)
+- **External services**: Configure integration endpoints through environment variables
 
 Environment-specific code MUST be isolated:
+
 - Use `locals.runtime.env` for Cloudflare bindings in Astro
-- Use environment variables for API configuration
+- Use environment variables for external service configuration
 - Never hardcode URLs or credentials
 
 **Rationale**: Cloudflare Workers have runtime restrictions (no filesystem, limited APIs). Code that works locally may fail at the edge.
@@ -88,14 +88,10 @@ Before adding complexity, justify it:
 ### Code Style Enforcement
 
 **Frontend (cygnus-web)**:
+
 - ESLint + Prettier via Husky pre-commit hooks
 - 2-space indentation for JS/TS/Svelte
 - PascalCase for components, camelCase for utilities
-
-**Backend (cygnus-api)**:
-- Black formatting (max line length 100)
-- Ruff linting
-- Snake_case for Python modules and functions
 
 ### Commit Conventions
 
@@ -119,14 +115,14 @@ Before adding complexity, justify it:
 - [ ] Formatting correct (`bun run format:check`)
 - [ ] Build succeeds (`bun run build`)
 - [ ] No TypeScript errors
-- [ ] API changes documented
+- [ ] Integration changes documented when applicable
 
 ### Deployment Readiness
 
 - [ ] D1 migrations applied and tested
 - [ ] R2 bucket permissions verified
 - [ ] Environment variables configured in Cloudflare dashboard
-- [ ] API server accessible at expected URL
+- [ ] External service endpoints configured when required
 
 ## Governance
 
@@ -149,7 +145,8 @@ Before adding complexity, justify it:
 ### Runtime Guidance
 
 For day-to-day development guidance, refer to:
+
 - `CLAUDE.md` for development commands and architecture details
 - `README.md` for quickstart and project overview
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-03 | **Last Amended**: 2025-12-03
+**Version**: 1.1.0 | **Ratified**: 2025-12-03 | **Last Amended**: 2026-04-05

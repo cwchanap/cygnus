@@ -2,34 +2,30 @@
   "folders": [
     {
       "name": "cygnus (root)",
-      "path": "."
+      "path": ".",
     },
     {
       "name": "cygnus-web",
-      "path": "cygnus-web"
-    },
-    {
-      "name": "cygnus-api",
-      "path": "cygnus-api"
+      "path": "cygnus-web",
     },
     {
       "name": "cygnus-web-e2e",
-      "path": "cygnus-web-e2e"
-    }
+      "path": "cygnus-web-e2e",
+    },
   ],
   "settings": {
     "python.languageServer": "None",
     "files.exclude": {
       "**/node_modules": true,
-      "**/.nx": true
+      "**/.nx": true,
     },
     "search.exclude": {
       "**/node_modules": true,
       "**/dist": true,
-      "**/.nx": true
+      "**/.nx": true,
     },
     "typescript.tsdk": "node_modules/typescript/lib",
-    "typescript.enablePromptUseWorkspaceTsdk": true
+    "typescript.enablePromptUseWorkspaceTsdk": true,
   },
   "extensions": {
     "recommendations": [
@@ -37,7 +33,7 @@
       "svelte.svelte-vscode",
       "bradlc.vscode-tailwindcss",
       "dbaeumer.vscode-eslint",
-      "esbenp.prettier-vscode"
-    ]
-  }
+      "esbenp.prettier-vscode",
+    ],
+  },
 }

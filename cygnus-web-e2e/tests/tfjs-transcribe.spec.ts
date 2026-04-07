@@ -44,9 +44,14 @@ test.describe('TFJS Drum Transcription', () => {
     test.setTimeout(150_000);
 
     await page.goto('/drum-transcription');
-    await expect(page.getByRole('heading', { name: 'DRUM TRANSCRIBE' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'DRUM TRANSCRIBE' })
+    ).toBeVisible();
 
-    const chooseFileButton = page.getByRole('button', { name: 'Choose File', exact: true });
+    const chooseFileButton = page.getByRole('button', {
+      name: 'Choose File',
+      exact: true,
+    });
     await expect(chooseFileButton).toBeVisible();
 
     const [fileChooser] = await Promise.all([
@@ -61,7 +66,9 @@ test.describe('TFJS Drum Transcription', () => {
     });
 
     await expect(page.getByText('File Ready')).toBeVisible();
-    await expect(page.getByText('test-song.wav', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('test-song.wav', { exact: true })
+    ).toBeVisible();
 
     const tfjsButton = page.getByTestId('tfjs-transcribe-button');
     await expect(tfjsButton).toBeVisible();
@@ -69,7 +76,11 @@ test.describe('TFJS Drum Transcription', () => {
 
     await tfjsButton.click();
 
-    await expect(page.getByText('MIDI Preview')).toBeVisible({ timeout: 120_000 });
+    await expect(
+      page.getByRole('heading', { name: 'MIDI Preview', exact: true })
+    ).toBeVisible({
+      timeout: 120_000,
+    });
     await expect(page.getByLabel('Play MIDI')).toBeVisible();
   });
 });

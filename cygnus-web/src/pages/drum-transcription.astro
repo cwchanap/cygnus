@@ -17,7 +17,7 @@ import DrumFileUpload from '../components/DrumFileUpload.svelte';
         <span class="text-[#c2ff00]">TRANSCRIBE</span>
       </h1>
       <p class="text-[#6060a0] font-mono text-sm leading-relaxed max-w-md">
-        Upload drum audio. Get precise MIDI transcription — powered by TensorFlow and Magenta AI.
+        Upload drum audio and generate a local MIDI preview with TensorFlow.js and Magenta in your browser.
       </p>
     </div>
 
@@ -28,6 +28,23 @@ import DrumFileUpload from '../components/DrumFileUpload.svelte';
       <div class="p-7">
         <h2 class="font-display font-black text-white text-sm uppercase tracking-widest mb-5">Upload Audio</h2>
         <DrumFileUpload client:load />
+      </div>
+
+      <div class="mx-7 mb-7 bg-[#080716] border border-white/[0.05] rounded-lg p-4">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 mt-0.5">
+            <svg class="w-3.5 h-3.5 text-[#c2ff00]/60" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="space-y-2">
+            <p class="text-[#6060a0] font-mono text-[10px] uppercase tracking-widest mb-2">Browser-only workflow</p>
+            <div class="space-y-1.5 text-[#6060a0] font-mono text-[11px] leading-relaxed">
+              <p>Select a drum audio file, run TFJS transcription, then audition the generated MIDI preview locally.</p>
+              <p>Your upload stays in the browser throughout this flow.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>

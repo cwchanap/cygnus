@@ -26,12 +26,6 @@ pnpm-debug.log*
 /cygnus-web/.env
 /cygnus-web/.env.production
 
-# python virtualenvs (cygnus-api)
-/cygnus-api/.venv/
-/cygnus-api/.ruff_cache/
-/cygnus-api/.pytest_cache/
-/cygnus-api/.coverage
-
 # macOS-specific files
 .DS_Store
 

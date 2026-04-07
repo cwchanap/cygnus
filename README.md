@@ -1,9 +1,11 @@
 # Cygnus Monorepo (Nx)
 
-This repository is now managed with Nx. Two projects live in the workspace:
+This repository is managed with Nx and contains the Cygnus web application plus its end-to-end test project:
 
-- `cygnus-web/`: the Astro + Svelte frontend (moved from the repository root).
-- `cygnus-api/`: the Crux FastAPI service (submodule contents copied locally).
+- `cygnus-web/`: the Astro + Svelte frontend.
+- `cygnus-web-e2e/`: the Playwright end-to-end test suite.
+
+Backend drum-transcription service work now lives outside this repository.
 
 ## Quickstart
 
@@ -27,19 +29,14 @@ bun run nx graph
 - Preview: `bun run preview`
 - Lint: `bun run lint` (auto-fix with `bun run lint:fix`)
 - Format check: `bun run format:check` (write with `bun run format`)
-- Tests: `bun run test` (UI runner `bun run test:ui`, unit `bun run test:unit`)
+- Tests: `bun run test` (unit only: `bun run test:unit`)
 - Database init: `bun run db:setup`
 - Deploy: `bun run cf:deploy` (Workers) or `bun run cf:pages:deploy` (Pages)
 
-### cygnus-api (Crux)
+### cygnus-web-e2e (Playwright)
 
-Use Nx to keep commands rooted in the Python project:
-
-- Serve API: `bun run nx run cygnus-api:serve`
-- Worker: `bun run nx run cygnus-api:worker`
-- Lint: `bun run nx run cygnus-api:lint`
-- Format check: `bun run nx run cygnus-api:format`
-- Tests: `bun run nx run cygnus-api:test`
+- E2E tests: `bun run test:e2e`
+- UI runner: `bun run test:ui`
 
 ## Cloudflare Notes (cygnus-web)
 
