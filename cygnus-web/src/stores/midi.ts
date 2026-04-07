@@ -19,7 +19,6 @@ async function ensureMidiLoaded() {
 
 export interface MidiPreviewState {
   isOpen: boolean;
-  jobId: string | null;
   midiData: MidiInstance | null;
   isPlaying: boolean;
   currentTime: number;
@@ -30,7 +29,6 @@ export interface MidiPreviewState {
 function createMidiStore() {
   const { subscribe, set, update } = writable<MidiPreviewState>({
     isOpen: false,
-    jobId: null,
     midiData: null,
     isPlaying: false,
     currentTime: 0,
@@ -70,10 +68,10 @@ function createMidiStore() {
         update((state) => ({
           ...state,
           isOpen: true,
-          jobId: null,
           midiData: null,
           duration: 0,
-          error: 'MIDI preview is unavailable (package failed to load). Please refresh the page.',
+          error:
+            'MIDI preview is unavailable (package failed to load). Please refresh the page.',
         }));
         return;
       }
@@ -83,7 +81,6 @@ function createMidiStore() {
       update((state) => ({
         ...state,
         isOpen: true,
-        jobId: null,
         midiData: midi,
         duration: midi.duration,
         currentTime: Number(transport.seconds),
@@ -109,7 +106,6 @@ function createMidiStore() {
       update((state) => ({
         ...state,
         isOpen: true,
-        jobId: null,
         midiData: null,
         duration: 0,
         error: `Failed to open MIDI preview: ${msg}`,
@@ -117,7 +113,13 @@ function createMidiStore() {
     }
   };
 
-  type Note = { name: string; duration: number; time: number; velocity: number; midi: number };
+  type Note = {
+    name: string;
+    duration: number;
+    time: number;
+    velocity: number;
+    midi: number;
+  };
   type Track = { notes: Note[] };
   const scheduleMidiPlayback = (midi: MidiInstance) => {
     // Clear previous events
@@ -173,7 +175,6 @@ function createMidiStore() {
     stop();
     set({
       isOpen: false,
-      jobId: null,
       midiData: null,
       isPlaying: false,
       currentTime: 0,

@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { get } from 'svelte/store';
 
-// --- Mock Tone.js ---
 const mockTransport = {
   start: vi.fn(),
   pause: vi.fn(),
@@ -24,7 +23,6 @@ vi.mock('tone', () => ({
   start: vi.fn().mockResolvedValue(undefined),
 }));
 
-// --- Mock @tonejs/midi ---
 const mockMidiInstance = {
   duration: 30,
   tracks: [
@@ -44,15 +42,23 @@ describe('midiStore', () => {
     vi.clearAllMocks();
     vi.resetModules();
     mockTransport.seconds = 0;
+    mockTransport.position = 0;
     mockTransport.schedule.mockReturnValue(1);
+    vi.stubGlobal('fetch', vi.fn());
   });
 
-  it('has correct initial state', async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('starts with local preview state only', async () => {
     const { midiStore } = await import('../../src/stores/midi');
-    const state = get(midiStore);
-    expect(state).toEqual({
+
+    expect(
+      (midiStore as unknown as { openPreview?: unknown }).openPreview
+    ).toBeUndefined();
+    expect(get(midiStore)).toEqual({
       isOpen: false,
-      jobId: null,
       midiData: null,
       isPlaying: false,
       currentTime: 0,
@@ -61,80 +67,73 @@ describe('midiStore', () => {
     });
   });
 
-  it('openPreviewFromArrayBuffer() sets state without fetch', async () => {
+  it('opens a local MIDI preview from an array buffer without using fetch', async () => {
+    const fetchSpy = vi.mocked(fetch);
     const { midiStore } = await import('../../src/stores/midi');
-    const buffer = new ArrayBuffer(8);
-    await midiStore.openPreviewFromArrayBuffer(buffer);
-    const state = get(midiStore);
-    expect(state.isOpen).toBe(true);
-    expect(state.jobId).toBeNull();
-    expect(state.midiData).toBe(mockMidiInstance);
-    expect(state.duration).toBe(30);
-    expect(state.error).toBeNull();
+
+    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(get(midiStore)).toEqual({
+      isOpen: true,
+      midiData: mockMidiInstance,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 30,
+      error: null,
+    });
+    expect(mockTransport.schedule).toHaveBeenCalledTimes(2);
   });
 
-  it('openPreviewFromArrayBuffer() sets error when Midi constructor throws', async () => {
+  it('stores a local preview error when MIDI parsing fails', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
     MockMidi.mockImplementationOnce(() => {
       throw new Error('Bad buffer');
     });
     const { midiStore } = await import('../../src/stores/midi');
+
     await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(0));
-    const state = get(midiStore);
-    expect(state.isOpen).toBe(true);
-    expect(state.error).toContain('Bad buffer');
-    expect(state.midiData).toBeNull();
+
+    expect(get(midiStore)).toEqual({
+      isOpen: true,
+      midiData: null,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
+      error: 'Failed to open MIDI preview: Bad buffer',
+    });
+    consoleError.mockRestore();
   });
 
-  it('play() starts transport and sets isPlaying=true', async () => {
+  it('plays, pauses, seeks, stops, and closes the local preview', async () => {
     const { midiStore } = await import('../../src/stores/midi');
+
+    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
     await midiStore.play();
     expect(mockTransport.start).toHaveBeenCalled();
     expect(get(midiStore).isPlaying).toBe(true);
-  });
 
-  it('pause() pauses transport and sets isPlaying=false', async () => {
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.play();
     midiStore.pause();
     expect(mockTransport.pause).toHaveBeenCalled();
     expect(get(midiStore).isPlaying).toBe(false);
-  });
 
-  it('stop() stops transport and resets currentTime to 0', async () => {
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.play();
-    midiStore.stop();
-    expect(mockTransport.stop).toHaveBeenCalled();
-    const state = get(midiStore);
-    expect(state.isPlaying).toBe(false);
-    expect(state.currentTime).toBe(0);
-  });
-
-  it('seek() updates currentTime', async () => {
-    const { midiStore } = await import('../../src/stores/midi');
     midiStore.seek(15);
     expect(get(midiStore).currentTime).toBe(15);
-  });
 
-  it('close() resets all state to initial values', async () => {
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
+    midiStore.stop();
+    expect(mockTransport.stop).toHaveBeenCalled();
+    expect(get(midiStore).currentTime).toBe(0);
+
     midiStore.close();
     expect(get(midiStore)).toEqual({
       isOpen: false,
-      jobId: null,
       midiData: null,
       isPlaying: false,
       currentTime: 0,
       duration: 0,
       error: null,
     });
-  });
-
-  it('scheduleMidiPlayback schedules notes on transport', async () => {
-    const { midiStore } = await import('../../src/stores/midi');
-    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
-    // 2 notes in the mock MIDI, so schedule should be called twice
-    expect(mockTransport.schedule).toHaveBeenCalledTimes(2);
   });
 });

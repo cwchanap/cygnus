@@ -1,6 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import DrumFileUpload from '../../src/components/DrumFileUpload.svelte';
+import { toastStore } from '../../src/stores/toast';
+
+const transcribeInBrowser = vi.fn();
+const openPreviewFromArrayBuffer = vi.fn();
+const fetchMock = vi.fn();
 
 vi.mock('../../src/stores/toast', () => ({
   toastStore: {
@@ -8,73 +13,117 @@ vi.mock('../../src/stores/toast', () => ({
   },
 }));
 
+vi.mock('../../src/lib/drum/tfjsTranscriber', () => ({
+  transcribeInBrowser,
+}));
+
+vi.mock('../../src/stores/midi', () => ({
+  midiStore: {
+    openPreviewFromArrayBuffer,
+  },
+}));
+
 describe('DrumFileUpload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
   });
 
-  it('renders the upload area correctly', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('renders the upload area and keeps the TFJS test ids', () => {
     render(DrumFileUpload);
 
     expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
-    expect(screen.getByText(/MP3.*WAV.*M4A.*FLAC/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Choose File/i })).toBeInTheDocument();
+    expect(screen.getByTestId('file-input')).toHaveAttribute('type', 'file');
+    expect(
+      screen.queryByTestId('tfjs-transcribe-button')
+    ).not.toBeInTheDocument();
   });
 
-  it('shows file input with correct attributes', () => {
+  it('shows an error toast when the file is too large', async () => {
     render(DrumFileUpload);
 
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-    expect(fileInput).toHaveAttribute('type', 'file');
-    expect(fileInput).toHaveAttribute('accept', '.mp3,.wav,.m4a,.flac,audio/*');
+    const fileInput = screen.getByTestId('file-input');
+    const largeFile = new File(['x'.repeat(51 * 1024 * 1024)], 'large.mp3', {
+      type: 'audio/mpeg',
+    });
+
+    await fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+    expect(toastStore.show).toHaveBeenCalledWith(
+      'File too large. Maximum size is 50MB.',
+      'error'
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('does not show the TFJS transcribe button before a file is selected', () => {
+  it('keeps a valid file local and does not upload it to a server', async () => {
     render(DrumFileUpload);
 
-    expect(screen.queryByTestId('tfjs-transcribe-button')).not.toBeInTheDocument();
+    const fileInput = screen.getByTestId('file-input');
+    const file = new File(['beat'], 'beat.wav', { type: 'audio/wav' });
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('tfjs-transcribe-button')).toBeInTheDocument();
+    expect(screen.queryByText(/Start on Server/i)).not.toBeInTheDocument();
   });
 
-  it('shows the TFJS transcribe button after a valid file is selected', async () => {
+  it('runs the TFJS transcription path and opens the local MIDI preview', async () => {
+    transcribeInBrowser.mockResolvedValue(new ArrayBuffer(12));
+    openPreviewFromArrayBuffer.mockResolvedValue(undefined);
+
     render(DrumFileUpload);
 
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-    const testFile = new File(['audio content'], 'drums.mp3', { type: 'audio/mpeg' });
-    fireEvent.change(fileInput, { target: { files: [testFile] } });
+    const fileInput = screen.getByTestId('file-input');
+    const file = new File(['beat'], 'beat.wav', { type: 'audio/wav' });
 
-    expect(await screen.findByTestId('tfjs-transcribe-button')).toBeInTheDocument();
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await fireEvent.click(screen.getByTestId('tfjs-transcribe-button'));
+
+    await waitFor(() => {
+      expect(transcribeInBrowser).toHaveBeenCalledWith(file);
+      expect(openPreviewFromArrayBuffer).toHaveBeenCalledWith(
+        expect.any(ArrayBuffer)
+      );
+      expect(toastStore.show).toHaveBeenCalledWith(
+        'Transcription complete! Opening preview...',
+        'success'
+      );
+    });
   });
 
-  it('shows the selected filename after a file is chosen', async () => {
+  it('shows an error toast when TFJS transcription fails and recovers state', async () => {
+    const error = new Error('Model failed to load');
+    transcribeInBrowser.mockRejectedValue(error);
+
     render(DrumFileUpload);
 
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-    const testFile = new File(['audio content'], 'my-drums.mp3', { type: 'audio/mpeg' });
-    fireEvent.change(fileInput, { target: { files: [testFile] } });
+    const fileInput = screen.getByTestId('file-input');
+    const file = new File(['beat'], 'beat.wav', { type: 'audio/wav' });
 
-    expect(await screen.findByText('my-drums.mp3')).toBeInTheDocument();
-  });
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    const button = screen.getByTestId('tfjs-transcribe-button');
 
-  it('shows error toast for oversized files and keeps drop zone visible', async () => {
-    const { toastStore } = await import('../../src/stores/toast');
-    render(DrumFileUpload);
+    // Button should be enabled before clicking
+    expect(button).not.toBeDisabled();
 
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-    const oversizedFile = new File(['x'], 'huge.mp3', { type: 'audio/mpeg' });
-    Object.defineProperty(oversizedFile, 'size', { value: 51 * 1024 * 1024 });
-    fireEvent.change(fileInput, { target: { files: [oversizedFile] } });
+    await fireEvent.click(button);
 
-    expect(toastStore.show).toHaveBeenCalledWith(expect.stringContaining('too large'), 'error');
-    // Drop zone should still be visible (file was rejected)
-    expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
-  });
+    await waitFor(() => {
+      expect(transcribeInBrowser).toHaveBeenCalledWith(file);
+      expect(toastStore.show).toHaveBeenCalledWith(
+        'TFJS transcription failed: Model failed to load',
+        'error'
+      );
+    });
 
-  it('handles drag and drop events', () => {
-    render(DrumFileUpload);
-
-    const dropZone = screen.getByText(/Drop your drum audio here/i).closest('div');
-    fireEvent.dragOver(dropZone!, { preventDefault: () => {} });
-
-    expect(screen.getByText(/Drop your drum audio here/i)).toBeInTheDocument();
+    // Button should be enabled again after failure
+    expect(button).not.toBeDisabled();
   });
 });

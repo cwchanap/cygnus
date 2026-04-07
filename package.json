@@ -4,7 +4,10 @@
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.2",
-  "workspaces": ["cygnus-web", "cygnus-web-e2e"],
+  "workspaces": [
+    "cygnus-web",
+    "cygnus-web-e2e"
+  ],
   "scripts": {
     "nx": "nx",
     "dev": "nx run cygnus-web:dev",
@@ -24,11 +27,6 @@
     "lint:fix": "nx run cygnus-web:lint-fix",
     "format": "nx run cygnus-web:format",
     "format:check": "nx run cygnus-web:format-check",
-    "api:serve": "nx run cygnus-api:serve",
-    "api:worker": "nx run cygnus-api:worker",
-    "api:lint": "nx run cygnus-api:lint",
-    "api:format": "nx run cygnus-api:format",
-    "api:test": "nx run cygnus-api:test",
     "prepare": "husky || true"
   },
   "devDependencies": {
@@ -40,10 +38,6 @@
     "cygnus-web/**/*.{js,jsx,ts,tsx,astro,svelte,md,mdx}": [
       "bash -c 'cd cygnus-web && bunx prettier --write \"$@\"' bash",
       "bash -c 'cd cygnus-web && bunx eslint --fix \"$@\"' bash"
-    ],
-    "cygnus-api/**/*.py": [
-      "bash -c 'cd cygnus-api && uv run ruff check --fix \"$@\"' bash",
-      "bash -c 'cd cygnus-api && uv run black \"$@\"' bash"
     ]
   }
 }
