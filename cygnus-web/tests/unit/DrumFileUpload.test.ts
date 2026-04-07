@@ -48,9 +48,10 @@ describe('DrumFileUpload', () => {
     render(DrumFileUpload);
 
     const fileInput = screen.getByTestId('file-input');
-    const largeFile = new File(['x'.repeat(51 * 1024 * 1024)], 'large.mp3', {
+    const largeFile = new File(['x'], 'large.mp3', {
       type: 'audio/mpeg',
     });
+    Object.defineProperty(largeFile, 'size', { value: 51 * 1024 * 1024 });
 
     await fireEvent.change(fileInput, { target: { files: [largeFile] } });
 
@@ -76,7 +77,7 @@ describe('DrumFileUpload', () => {
 
   it('runs the TFJS transcription path and opens the local MIDI preview', async () => {
     transcribeInBrowser.mockResolvedValue(new ArrayBuffer(12));
-    openPreviewFromArrayBuffer.mockResolvedValue(undefined);
+    openPreviewFromArrayBuffer.mockResolvedValue(true);
 
     render(DrumFileUpload);
 
@@ -125,5 +126,33 @@ describe('DrumFileUpload', () => {
 
     // Button should be enabled again after failure
     expect(button).not.toBeDisabled();
+  });
+
+  it('shows an error toast when preview fails after successful transcription', async () => {
+    transcribeInBrowser.mockResolvedValue(new ArrayBuffer(12));
+    openPreviewFromArrayBuffer.mockResolvedValue(false);
+
+    render(DrumFileUpload);
+
+    const fileInput = screen.getByTestId('file-input');
+    const file = new File(['beat'], 'beat.wav', { type: 'audio/wav' });
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await fireEvent.click(screen.getByTestId('tfjs-transcribe-button'));
+
+    await waitFor(() => {
+      expect(transcribeInBrowser).toHaveBeenCalledWith(file);
+      expect(openPreviewFromArrayBuffer).toHaveBeenCalledWith(
+        expect.any(ArrayBuffer)
+      );
+      expect(toastStore.show).not.toHaveBeenCalledWith(
+        'Transcription complete! Opening preview...',
+        'success'
+      );
+      expect(toastStore.show).toHaveBeenCalledWith(
+        'Failed to open MIDI preview.',
+        'error'
+      );
+    });
   });
 });

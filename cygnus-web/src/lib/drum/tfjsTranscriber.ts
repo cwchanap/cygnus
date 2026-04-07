@@ -616,7 +616,8 @@ async function drumEventsToMidi(
   }
 
   const bytes: Uint8Array = midi.toArray();
-  const blob = new Blob([bytes], { type: 'audio/midi' });
-  const ab = await blob.arrayBuffer();
-  return ab;
+  return bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength
+  ) as ArrayBuffer;
 }
