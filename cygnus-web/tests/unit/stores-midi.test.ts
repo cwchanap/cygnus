@@ -14,7 +14,9 @@ const mockSynthInstance = {
   toDestination: vi.fn().mockReturnThis(),
   triggerAttackRelease: vi.fn(),
 };
-const MockPolySynth = vi.fn().mockReturnValue(mockSynthInstance);
+const MockPolySynth = vi.fn(function () {
+  return mockSynthInstance;
+});
 
 vi.mock('tone', () => ({
   Transport: mockTransport,
@@ -34,7 +36,9 @@ const mockMidiInstance = {
     },
   ],
 };
-const MockMidi = vi.fn().mockReturnValue(mockMidiInstance);
+const MockMidi = vi.fn(function () {
+  return mockMidiInstance;
+});
 vi.mock('@tonejs/midi', () => ({ Midi: MockMidi }));
 
 describe('midiStore', () => {
@@ -48,6 +52,7 @@ describe('midiStore', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -71,8 +76,11 @@ describe('midiStore', () => {
     const fetchSpy = vi.mocked(fetch);
     const { midiStore } = await import('../../src/stores/midi');
 
-    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(8));
+    const result = await midiStore.openPreviewFromArrayBuffer(
+      new ArrayBuffer(8)
+    );
 
+    expect(result).toBe(true);
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(get(midiStore)).toEqual({
       isOpen: true,
@@ -94,8 +102,11 @@ describe('midiStore', () => {
     });
     const { midiStore } = await import('../../src/stores/midi');
 
-    await midiStore.openPreviewFromArrayBuffer(new ArrayBuffer(0));
+    const result = await midiStore.openPreviewFromArrayBuffer(
+      new ArrayBuffer(0)
+    );
 
+    expect(result).toBe(false);
     expect(get(midiStore)).toEqual({
       isOpen: true,
       midiData: null,

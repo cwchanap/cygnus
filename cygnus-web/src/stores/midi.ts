@@ -60,7 +60,9 @@ function createMidiStore() {
     }
   };
 
-  const openPreviewFromArrayBuffer = async (buffer: ArrayBuffer) => {
+  const openPreviewFromArrayBuffer = async (
+    buffer: ArrayBuffer
+  ): Promise<boolean> => {
     try {
       const hasMidi = await ensureMidiLoaded();
       if (!hasMidi || !Midi) {
@@ -73,7 +75,7 @@ function createMidiStore() {
           error:
             'MIDI preview is unavailable (package failed to load). Please refresh the page.',
         }));
-        return;
+        return false;
       }
 
       const midi = new Midi(buffer);
@@ -100,6 +102,7 @@ function createMidiStore() {
       }
 
       scheduleMidiPlayback(midi);
+      return true;
     } catch (error) {
       console.error('Error opening MIDI from buffer:', error);
       const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -110,6 +113,7 @@ function createMidiStore() {
         duration: 0,
         error: `Failed to open MIDI preview: ${msg}`,
       }));
+      return false;
     }
   };
 

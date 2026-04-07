@@ -28,14 +28,19 @@
       toastStore.show('Please choose a file first.', 'error');
       return;
     }
+    const file = selectedFile;
     isLocalTranscribing = true;
     try {
       toastStore.show('Running in-browser transcription (TFJS)...', 'success');
       const { transcribeInBrowser } = await import('../lib/drum/tfjsTranscriber');
-      const buffer = await transcribeInBrowser(selectedFile);
+      const buffer = await transcribeInBrowser(file);
       const { midiStore } = await import('../stores/midi');
-      await midiStore.openPreviewFromArrayBuffer(buffer);
-      toastStore.show('Transcription complete! Opening preview...', 'success');
+      const ok = await midiStore.openPreviewFromArrayBuffer(buffer);
+      if (ok) {
+        toastStore.show('Transcription complete! Opening preview...', 'success');
+      } else {
+        toastStore.show('Failed to open MIDI preview.', 'error');
+      }
     } catch (error) {
       console.error('TFJS transcription error:', error);
       toastStore.show(`TFJS transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
@@ -45,6 +50,7 @@
   }
 
   function resetUpload() {
+    if (isLocalTranscribing) return;
     selectedFile = null;
     if (fileInput) fileInput.value = '';
   }
@@ -139,7 +145,8 @@
         </div>
         <button
           on:click={resetUpload}
-          class="text-[#6060a0] hover:text-white transition-colors p-1"
+          disabled={isLocalTranscribing}
+          class="text-[#6060a0] hover:text-white transition-colors p-1 disabled:opacity-40 disabled:cursor-not-allowed"
           title="Upload different file"
           aria-label="Remove uploaded file"
         >
