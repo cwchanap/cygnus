@@ -118,6 +118,8 @@ function createMidiStore() {
         ...state,
         isOpen: true,
         midiData: null,
+        isPlaying: false,
+        currentTime: 0,
         duration: 0,
         error: `Failed to open MIDI preview: ${msg}`,
       }));
