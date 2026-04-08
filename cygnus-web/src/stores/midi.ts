@@ -106,6 +106,14 @@ function createMidiStore() {
     } catch (error) {
       console.error('Error opening MIDI from buffer:', error);
       const msg = error instanceof Error ? error.message : 'Unknown error';
+
+      // Clear any partially-scheduled events and reset transport state
+      scheduledEvents.forEach((id) => transport.clear(id));
+      scheduledEvents = [];
+      transport.stop();
+      transport.position = 0;
+      stopPlaybackTracking();
+
       update((state) => ({
         ...state,
         isOpen: true,
