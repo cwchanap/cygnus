@@ -41,7 +41,9 @@ export const GET: APIRoute = async ({ locals, url }) => {
     const runtime = locals.runtime;
     if (!runtime?.env?.CYGNUS_BUCKET) {
       return new Response(
-        JSON.stringify({ message: 'Server configuration error: R2 binding missing.' }),
+        JSON.stringify({
+          message: 'Server configuration error: R2 binding missing.',
+        }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -57,14 +59,16 @@ export const GET: APIRoute = async ({ locals, url }) => {
     // Only allow known key prefixes to prevent unauthorized access to arbitrary R2 objects
     const fileConfig = getAllowedFileConfig(key);
     if (!fileConfig || key.includes('..')) {
-      return new Response(
-        JSON.stringify({ message: 'Invalid key' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ message: 'Invalid key' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const lowerKey = key.toLowerCase();
-    const extension = fileConfig.extensions.find((ext) => lowerKey.endsWith(ext));
+    const extension = fileConfig.extensions.find((ext) =>
+      lowerKey.endsWith(ext)
+    );
     if (!extension) {
       return new Response(
         JSON.stringify({ message: 'Unsupported file type' }),
@@ -76,10 +80,10 @@ export const GET: APIRoute = async ({ locals, url }) => {
     const object = await runtime.env.CYGNUS_BUCKET.get(key);
 
     if (!object) {
-      return new Response(
-        JSON.stringify({ message: 'File not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ message: 'File not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     const contentType = fileConfig.contentTypes[extension];
@@ -93,7 +97,10 @@ export const GET: APIRoute = async ({ locals, url }) => {
       },
     });
   } catch (err) {
-    console.error('GET /api/file error', { key: url.searchParams.get('key'), err });
+    console.error('GET /api/file error', {
+      key: url.searchParams.get('key'),
+      err,
+    });
     return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

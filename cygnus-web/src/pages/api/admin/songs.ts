@@ -28,9 +28,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const parsedPage = parseInt(url.searchParams.get('page') || '1', 10);
     const parsedLimit = parseInt(url.searchParams.get('limit') || '10', 10);
     const MAX_PAGE = 1000;
-    const parsedPageSafe = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
+    const parsedPageSafe = Math.max(
+      1,
+      Number.isNaN(parsedPage) ? 1 : parsedPage
+    );
     const page = Math.min(MAX_PAGE, parsedPageSafe);
-    const limit = Math.min(100, Math.max(1, Number.isNaN(parsedLimit) ? 10 : parsedLimit));
+    const limit = Math.min(
+      100,
+      Math.max(1, Number.isNaN(parsedLimit) ? 10 : parsedLimit)
+    );
     const offset = (page - 1) * limit;
 
     const db = createDb(runtime.env.DB);
@@ -59,18 +65,21 @@ export const GET: APIRoute = async ({ request, locals }) => {
       r2_key: song.r2_key,
     }));
 
-    return new Response(JSON.stringify({
-      songs: songsList,
-      pagination: {
-        page,
-        limit,
-        total: totalCount,
-        totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+    return new Response(
+      JSON.stringify({
+        songs: songsList,
+        pagination: {
+          page,
+          limit,
+          total: totalCount,
+          totalPages: Math.max(1, Math.ceil(totalCount / limit)),
+        },
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
       }
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    );
   } catch (err) {
     console.error('GET /api/admin/songs error', err);
     return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
@@ -104,30 +113,33 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     if (!songId) {
       return new Response(JSON.stringify({ message: 'Song ID is required' }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     const parsedId = parseInt(songId, 10);
     if (Number.isNaN(parsedId) || parsedId <= 0) {
-      return new Response(JSON.stringify({ message: 'Song ID must be a positive integer' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ message: 'Song ID must be a positive integer' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const db = createDb(runtime.env.DB);
 
     // Delete the song
-    await db
-      .delete(songs)
-      .where(eq(songs.id, parsedId))
-      .run();
+    await db.delete(songs).where(eq(songs.id, parsedId)).run();
 
-    return new Response(JSON.stringify({ message: 'Song deleted successfully' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ message: 'Song deleted successfully' }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (err) {
     console.error('DELETE /api/admin/songs error', err);
     return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
@@ -167,28 +179,37 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const origin = formData.get('origin');
 
     if (!songId || !songName || !artist) {
-      return new Response(JSON.stringify({ message: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ message: 'Missing required fields' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const parsedSongId = parseInt(songId as string, 10);
     if (Number.isNaN(parsedSongId) || parsedSongId <= 0) {
-      return new Response(JSON.stringify({ message: 'Song ID must be a positive integer' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ message: 'Song ID must be a positive integer' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     let parsedBpm: number | undefined;
     if (bpm) {
       parsedBpm = parseInt(bpm as string, 10);
       if (Number.isNaN(parsedBpm)) {
-        return new Response(JSON.stringify({ message: 'BPM must be a valid integer' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ message: 'BPM must be a valid integer' }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
       }
     }
 
@@ -202,16 +223,19 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         artist: artist as string,
         bpm: parsedBpm,
         release_date: releaseDate as string,
-        is_released: isReleased ? (isReleased === 'true') : undefined,
+        is_released: isReleased ? isReleased === 'true' : undefined,
         origin: origin as string,
       })
       .where(eq(songs.id, parsedSongId))
       .run();
 
-    return new Response(JSON.stringify({ message: 'Song updated successfully' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ message: 'Song updated successfully' }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (err) {
     console.error('PUT /api/admin/songs error', err);
     return new Response(JSON.stringify({ message: 'Internal Server Error' }), {

@@ -96,7 +96,10 @@ const mockDb = {
   set: mockSet,
 };
 
-function makeAuthedRequest(path = '/api/admin/songs', options: RequestInit = {}) {
+function makeAuthedRequest(
+  path = '/api/admin/songs',
+  options: RequestInit = {}
+) {
   if (options.body instanceof FormData) {
     const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
     const formData = options.body;
@@ -113,7 +116,7 @@ function makeAuthedRequest(path = '/api/admin/songs', options: RequestInit = {})
       ...options,
       body,
       headers: {
-        ...(options.headers as Record<string, string> ?? {}),
+        ...((options.headers as Record<string, string>) ?? {}),
         'content-type': `multipart/form-data; boundary=${boundary}`,
         cookie: 'admin_auth=1',
       },
@@ -121,7 +124,10 @@ function makeAuthedRequest(path = '/api/admin/songs', options: RequestInit = {})
   }
   return new Request(`http://localhost${path}`, {
     ...options,
-    headers: { cookie: 'admin_auth=1', ...((options.headers as Record<string, string>) ?? {}) },
+    headers: {
+      cookie: 'admin_auth=1',
+      ...((options.headers as Record<string, string>) ?? {}),
+    },
   });
 }
 
@@ -167,7 +173,9 @@ describe('GET /api/admin/songs - NaN guards', () => {
       url: new URL('http://localhost/api/admin/songs'),
     } as any);
     expect(resp.status).toBe(200);
-    const body = (await resp.json()) as { pagination: { total: number; totalPages: number } };
+    const body = (await resp.json()) as {
+      pagination: { total: number; totalPages: number };
+    };
     expect(body.pagination.total).toBe(0);
     expect(body.pagination.totalPages).toBe(1);
   });

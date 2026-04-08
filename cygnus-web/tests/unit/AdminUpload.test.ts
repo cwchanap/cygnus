@@ -16,17 +16,23 @@ describe('AdminUpload', () => {
     expect(screen.getByLabelText(/Release Date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Origin/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Is Released/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Upload Song/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Upload Song/i })
+    ).toBeInTheDocument();
   });
 
   it('can fill form fields', () => {
     render(AdminUpload);
 
     const fileInput = screen.getByLabelText(/Song File/i) as HTMLInputElement;
-    const songNameInput = screen.getByLabelText(/Song Name/i) as HTMLInputElement;
+    const songNameInput = screen.getByLabelText(
+      /Song Name/i
+    ) as HTMLInputElement;
     const artistInput = screen.getByLabelText(/Artist/i) as HTMLInputElement;
     const bpmInput = screen.getByLabelText(/BPM/i) as HTMLInputElement;
-    const releaseDateInput = screen.getByLabelText(/Release Date/i) as HTMLInputElement;
+    const releaseDateInput = screen.getByLabelText(
+      /Release Date/i
+    ) as HTMLInputElement;
     const originInput = screen.getByLabelText(/Origin/i) as HTMLInputElement;
 
     // Create a mock file
@@ -49,10 +55,14 @@ describe('AdminUpload', () => {
     render(AdminUpload);
 
     const fileInput = screen.getByLabelText(/Song File/i) as HTMLInputElement;
-    const songNameInput = screen.getByLabelText(/Song Name/i) as HTMLInputElement;
+    const songNameInput = screen.getByLabelText(
+      /Song Name/i
+    ) as HTMLInputElement;
     const artistInput = screen.getByLabelText(/Artist/i) as HTMLInputElement;
     const bpmInput = screen.getByLabelText(/BPM/i) as HTMLInputElement;
-    const releaseDateInput = screen.getByLabelText(/Release Date/i) as HTMLInputElement;
+    const releaseDateInput = screen.getByLabelText(
+      /Release Date/i
+    ) as HTMLInputElement;
     const originInput = screen.getByLabelText(/Origin/i) as HTMLInputElement;
 
     expect(fileInput).toBeRequired();

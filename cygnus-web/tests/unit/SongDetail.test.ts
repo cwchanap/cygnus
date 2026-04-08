@@ -26,7 +26,10 @@ describe('SongDetail', () => {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     };
-    vi.stubGlobal('Audio', vi.fn(() => mockAudioInstance));
+    vi.stubGlobal(
+      'Audio',
+      vi.fn(() => mockAudioInstance)
+    );
   });
 
   afterEach(() => {
@@ -46,17 +49,24 @@ describe('SongDetail', () => {
     render(SongDetail, { props: { song: null } });
 
     expect(screen.getByText('SELECT A TRACK')).toBeInTheDocument();
-    expect(screen.getByText('Choose a composition from the library')).toBeInTheDocument();
+    expect(
+      screen.getByText('Choose a composition from the library')
+    ).toBeInTheDocument();
   });
 
   it('renders play button when song is provided', () => {
     render(SongDetail, { props: { song: mockSong } });
 
-    expect(screen.getByRole('button', { name: /Play Preview/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Play Preview/i })
+    ).toBeInTheDocument();
   });
 
   it('creates new Audio instance when playPreview is clicked', async () => {
-    const songWithPreview = { ...mockSong, previewUrl: 'https://example.com/preview.mp3' };
+    const songWithPreview = {
+      ...mockSong,
+      previewUrl: 'https://example.com/preview.mp3',
+    };
     render(SongDetail, { props: { song: songWithPreview } });
 
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
@@ -67,7 +77,10 @@ describe('SongDetail', () => {
   });
 
   it('pauses audio when playPreview is clicked while playing', async () => {
-    const songWithPreview = { ...mockSong, previewUrl: 'https://example.com/preview.mp3' };
+    const songWithPreview = {
+      ...mockSong,
+      previewUrl: 'https://example.com/preview.mp3',
+    };
     render(SongDetail, { props: { song: songWithPreview } });
 
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
@@ -77,21 +90,35 @@ describe('SongDetail', () => {
     expect(mockAudioInstance.play).toHaveBeenCalled();
 
     // Wait for the play promise to resolve and component to update
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(screen.getByRole('button', { name: /Pause Preview/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: /Pause Preview/i })
+    ).toHaveAttribute('aria-pressed', 'true');
 
     // Second click to pause
     await fireEvent.click(playButton);
     expect(mockAudioInstance.pause).toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /Play Preview/i })).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: /Play Preview/i })
+    ).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('creates new Audio when song previewUrl changes', async () => {
-    const songWithPreview1 = { ...mockSong, id: '1', previewUrl: 'https://example.com/song1.mp3' };
-    const songWithPreview2 = { ...mockSong, id: '2', previewUrl: 'https://example.com/song2.mp3' };
+    const songWithPreview1 = {
+      ...mockSong,
+      id: '1',
+      previewUrl: 'https://example.com/song1.mp3',
+    };
+    const songWithPreview2 = {
+      ...mockSong,
+      id: '2',
+      previewUrl: 'https://example.com/song2.mp3',
+    };
 
-    const { rerender } = render(SongDetail, { props: { song: songWithPreview1 } });
+    const { rerender } = render(SongDetail, {
+      props: { song: songWithPreview1 },
+    });
 
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
     await fireEvent.click(playButton);
@@ -141,11 +168,21 @@ describe('SongDetail', () => {
       return instance as unknown as HTMLAudioElement;
     });
 
-    const songWithPreview1 = { ...mockSong, id: '1', previewUrl: 'https://example.com/song1.mp3' };
-    const songWithPreview2 = { ...mockSong, id: '2', previewUrl: 'https://example.com/song2.mp3' };
+    const songWithPreview1 = {
+      ...mockSong,
+      id: '1',
+      previewUrl: 'https://example.com/song1.mp3',
+    };
+    const songWithPreview2 = {
+      ...mockSong,
+      id: '2',
+      previewUrl: 'https://example.com/song2.mp3',
+    };
     const songWithoutPreview = { ...mockSong, id: '3' };
 
-    const { rerender } = render(SongDetail, { props: { song: songWithPreview1 } });
+    const { rerender } = render(SongDetail, {
+      props: { song: songWithPreview1 },
+    });
 
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
 
@@ -162,22 +199,28 @@ describe('SongDetail', () => {
 
     // Now resolve song 2's play() first (the newer operation)
     resolvePlay2!();
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(screen.getByRole('button', { name: /Pause Preview/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: /Pause Preview/i })
+    ).toHaveAttribute('aria-pressed', 'true');
 
     // Tear down playback without starting a replacement track
     await rerender({ song: songWithoutPreview });
-    const disabledPlayButton = screen.getByRole('button', { name: /Play Preview/i });
+    const disabledPlayButton = screen.getByRole('button', {
+      name: /Play Preview/i,
+    });
     expect(disabledPlayButton).toBeDisabled();
     expect(disabledPlayButton).toHaveAttribute('aria-pressed', 'false');
     expect(mockAudio2.pause).toHaveBeenCalledTimes(1);
 
     // Now resolve song 1's stale promise (the older operation)
     resolvePlay1!();
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(screen.getByRole('button', { name: /Play Preview/i })).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: /Play Preview/i })
+    ).toHaveAttribute('aria-pressed', 'false');
     expect(mockAudio2.pause).toHaveBeenCalledTimes(1);
     expect(mockAudio2.play).toHaveBeenCalledTimes(1);
   });
@@ -191,7 +234,10 @@ describe('SongDetail', () => {
 
     mockAudioInstance.play = vi.fn(() => deferredPromise);
 
-    const songWithPreview = { ...mockSong, previewUrl: 'https://example.com/preview.mp3' };
+    const songWithPreview = {
+      ...mockSong,
+      previewUrl: 'https://example.com/preview.mp3',
+    };
     render(SongDetail, { props: { song: songWithPreview } });
 
     const playButton = screen.getByRole('button', { name: /Play Preview/i });
@@ -203,7 +249,7 @@ describe('SongDetail', () => {
 
     // Resolve the deferred promise
     resolvePlay!();
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     // Verify that audio.play() was called (first click)
     expect(mockAudioInstance.play).toHaveBeenCalled();

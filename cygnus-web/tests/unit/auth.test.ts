@@ -56,7 +56,9 @@ describe('safeRedirectPath', () => {
   it('allows safe relative paths', () => {
     expect(safeRedirectPath('/admin')).toBe('/admin');
     expect(safeRedirectPath('/admin/songs')).toBe('/admin/songs');
-    expect(safeRedirectPath('/login?next=%2Fadmin')).toBe('/login?next=%2Fadmin');
+    expect(safeRedirectPath('/login?next=%2Fadmin')).toBe(
+      '/login?next=%2Fadmin'
+    );
   });
 
   it('rejects absolute URLs', () => {
