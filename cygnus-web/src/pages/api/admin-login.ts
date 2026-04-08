@@ -31,7 +31,10 @@ export const POST: APIRoute = async (context) => {
 
   if (!runtime?.env) {
     const reqUrl = new URL(request.url);
-    const nextParam = safeRedirectPath(reqUrl.searchParams.get('next'), '/admin');
+    const nextParam = safeRedirectPath(
+      reqUrl.searchParams.get('next'),
+      '/admin'
+    );
     const headers = new Headers();
     headers.append(
       'Location',
@@ -104,7 +107,10 @@ export const POST: APIRoute = async (context) => {
   } catch (err) {
     console.error('Unexpected error in admin-login POST handler:', err);
     const reqUrl = new URL(request.url);
-    const nextParam = safeRedirectPath(reqUrl.searchParams.get('next'), '/admin');
+    const nextParam = safeRedirectPath(
+      reqUrl.searchParams.get('next'),
+      '/admin'
+    );
     const headers = new Headers();
     headers.append(
       'Location',

@@ -8,7 +8,9 @@ export const GET: APIRoute = async ({ locals, request }) => {
     const runtime = locals.runtime;
     if (!runtime?.env?.DB) {
       return new Response(
-        JSON.stringify({ message: 'Server configuration error: D1 binding missing.' }),
+        JSON.stringify({
+          message: 'Server configuration error: D1 binding missing.',
+        }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -17,9 +19,15 @@ export const GET: APIRoute = async ({ locals, request }) => {
     const parsedPage = parseInt(url.searchParams.get('page') || '1', 10);
     const parsedLimit = parseInt(url.searchParams.get('limit') || '20', 10);
     const MAX_PAGE = 1000;
-    const parsedPageSafe = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage);
+    const parsedPageSafe = Math.max(
+      1,
+      Number.isNaN(parsedPage) ? 1 : parsedPage
+    );
     const page = Math.min(MAX_PAGE, parsedPageSafe);
-    const limit = Math.min(50, Math.max(1, Number.isNaN(parsedLimit) ? 20 : parsedLimit));
+    const limit = Math.min(
+      50,
+      Math.max(1, Number.isNaN(parsedLimit) ? 20 : parsedLimit)
+    );
     const offset = (page - 1) * limit;
 
     const db = createDb(runtime.env.DB);
@@ -50,13 +58,15 @@ export const GET: APIRoute = async ({ locals, request }) => {
       releaseDate: r.release_date,
       // Only emit audio preview URL for keys that /api/file accepts (audio/ prefix)
       // to avoid returning URLs that will 400 on legacy/imported data
-      previewUrl: r.preview_r2_key && r.preview_r2_key.startsWith('audio/')
-        ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
-        : undefined,
+      previewUrl:
+        r.preview_r2_key && r.preview_r2_key.startsWith('audio/')
+          ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
+          : undefined,
       // Emit previewImage for image previews from admin upload flow (preview/ prefix)
-      previewImage: r.preview_r2_key && r.preview_r2_key.startsWith('preview/')
-        ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
-        : undefined,
+      previewImage:
+        r.preview_r2_key && r.preview_r2_key.startsWith('preview/')
+          ? `/api/file?key=${encodeURIComponent(r.preview_r2_key)}`
+          : undefined,
     }));
 
     return new Response(
@@ -66,7 +76,10 @@ export const GET: APIRoute = async ({ locals, request }) => {
           page,
           limit,
           total: totalCount,
-          totalPages: Math.max(1, Math.min(Math.ceil(totalCount / limit), MAX_PAGE)),
+          totalPages: Math.max(
+            1,
+            Math.min(Math.ceil(totalCount / limit), MAX_PAGE)
+          ),
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
