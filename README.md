@@ -29,7 +29,7 @@ bun run nx graph
 - Preview: `bun run preview`
 - Lint: `bun run lint` (auto-fix with `bun run lint:fix`)
 - Format check: `bun run format:check` (write with `bun run format`)
-- Tests: `bun run test` (unit only: `bun run test:unit`)
+- Tests: `bun run test` (unit + e2e; unit only: `bun run test:unit`; e2e only: `bun run test:e2e`)
 - Database init: `bun run db:setup`
 - Deploy: `bun run cf:deploy` (Workers) or `bun run cf:pages:deploy` (Pages)
 
