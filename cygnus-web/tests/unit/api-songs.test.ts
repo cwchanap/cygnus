@@ -31,16 +31,19 @@ function makeMockDb(songs = mockSongs, total = 1) {
   };
 }
 
+function makeApiEvent(url: string, env: Record<string, unknown> = { DB: {} }) {
+  const req = new Request(url);
+  return { locals: { runtime: { env } }, request: req } as any;
+}
+
 describe('GET /api/songs', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns paginated songs with pagination metadata', async () => {
     vi.mocked(createDb).mockReturnValue(makeMockDb() as any);
-    const req = new Request('http://localhost/api/songs?page=1&limit=5');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(
+      makeApiEvent('http://localhost/api/songs?page=1&limit=5')
+    );
     expect(resp.status).toBe(200);
     const body = await resp.json();
     expect(body.songs).toHaveLength(1);
@@ -51,44 +54,30 @@ describe('GET /api/songs', () => {
   });
 
   it('returns 500 when DB binding is missing', async () => {
-    const req = new Request('http://localhost/api/songs');
-    const resp = await GET({
-      locals: { runtime: { env: {} } },
-      request: req,
-    } as any);
+    const resp = await GET(makeApiEvent('http://localhost/api/songs', {}));
     expect(resp.status).toBe(500);
   });
 
   it('caps limit at 50', async () => {
     const mockDb = makeMockDb([], 0);
     vi.mocked(createDb).mockReturnValue(mockDb as any);
-    const req = new Request('http://localhost/api/songs?limit=999');
-    await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    await GET(makeApiEvent('http://localhost/api/songs?limit=999'));
     expect(mockDb.limit).toHaveBeenCalledWith(50);
   });
 
   it('uses default limit of 20 when not specified', async () => {
     const mockDb = makeMockDb([], 0);
     vi.mocked(createDb).mockReturnValue(mockDb as any);
-    const req = new Request('http://localhost/api/songs');
-    await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    await GET(makeApiEvent('http://localhost/api/songs'));
     expect(mockDb.limit).toHaveBeenCalledWith(20);
   });
 
   it('caps page at MAX_PAGE (1000) to prevent expensive OFFSET scans', async () => {
     const mockDb = makeMockDb([], 0);
     vi.mocked(createDb).mockReturnValue(mockDb as any);
-    const req = new Request('http://localhost/api/songs?page=9999&limit=1');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(
+      makeApiEvent('http://localhost/api/songs?page=9999&limit=1')
+    );
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as { pagination: { page: number } };
     // page should be capped at 1000, offset = (1000 - 1) * 1 = 999
@@ -99,11 +88,7 @@ describe('GET /api/songs', () => {
   it('returns totalPages as at least 1 when totalCount is 0', async () => {
     const mockDb = makeMockDb([], 0);
     vi.mocked(createDb).mockReturnValue(mockDb as any);
-    const req = new Request('http://localhost/api/songs');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(makeApiEvent('http://localhost/api/songs'));
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as {
       pagination: { total: number; totalPages: number };
@@ -126,11 +111,7 @@ describe('GET /api/songs', () => {
     vi.mocked(createDb).mockReturnValue(
       makeMockDb(songsWithAudioPreview, 1) as any
     );
-    const req = new Request('http://localhost/api/songs');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(makeApiEvent('http://localhost/api/songs'));
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as {
       songs: Array<{ previewUrl?: string; previewImage?: string }>;
@@ -155,11 +136,7 @@ describe('GET /api/songs', () => {
     vi.mocked(createDb).mockReturnValue(
       makeMockDb(songsWithLegacyKey, 1) as any
     );
-    const req = new Request('http://localhost/api/songs');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(makeApiEvent('http://localhost/api/songs'));
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as {
       songs: Array<{ previewUrl?: string; previewImage?: string }>;
@@ -182,11 +159,7 @@ describe('GET /api/songs', () => {
     vi.mocked(createDb).mockReturnValue(
       makeMockDb(songsWithImagePreview, 1) as any
     );
-    const req = new Request('http://localhost/api/songs');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(makeApiEvent('http://localhost/api/songs'));
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as {
       songs: Array<{ previewUrl?: string; previewImage?: string }>;
@@ -211,11 +184,7 @@ describe('GET /api/songs', () => {
     vi.mocked(createDb).mockReturnValue(
       makeMockDb(songsWithoutPreview, 1) as any
     );
-    const req = new Request('http://localhost/api/songs');
-    const resp = await GET({
-      locals: { runtime: { env: { DB: {} } } },
-      request: req,
-    } as any);
+    const resp = await GET(makeApiEvent('http://localhost/api/songs'));
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as {
       songs: Array<{ previewUrl?: string; previewImage?: string }>;
