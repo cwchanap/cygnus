@@ -14,3 +14,14 @@ describe('wrangler.toml', () => {
     expect(wranglerToml).toMatch(/binding = "ASSETS"/);
   });
 });
+
+describe('public/.assetsignore', () => {
+  it('excludes the generated worker bundle from static asset uploads', () => {
+    const assetsIgnore = readFileSync(
+      resolve(process.cwd(), 'public/.assetsignore'),
+      'utf8'
+    );
+
+    expect(assetsIgnore).toMatch(/^_worker\.js\/?$/m);
+  });
+});
