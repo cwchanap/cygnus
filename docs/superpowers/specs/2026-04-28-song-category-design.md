@@ -120,7 +120,7 @@ Behavior:
 - include an `Uncategorized` option
 - selecting a filter updates the visible song list and selected song behavior consistently
 
-The filter can be driven by API data and applied client-side in the first version, but the API must also support category filtering so the backend contract is ready for narrower fetches and future expansion.
+The public source of truth for configured categories should be a lightweight public categories endpoint so the UI can show categories even when they currently have zero songs. The selected filter can still be applied client-side in the first version, but the songs API must also support category filtering so the backend contract is ready for narrower fetches and future expansion.
 
 ## API Design
 
@@ -167,6 +167,15 @@ Add optional category filtering support with a `category` query parameter that s
 - a specific configured category by category ID string
 - `uncategorized` for songs whose `category_id` is `NULL`
 
+### Public categories API
+
+Add a lightweight public endpoint such as `/api/categories` that returns the configured categories ordered by `normalized_name` ascending.
+
+This endpoint exists so the public filter can render:
+
+- all configured categories, including categories with zero songs
+- a stable source of truth for category labels and IDs
+
 ## Data Flow
 
 ### Admin create category
@@ -199,10 +208,11 @@ Add optional category filtering support with a `category` query parameter that s
 
 ### Public filtering
 
-1. public UI loads songs with category metadata
-2. public UI renders filter options including `All` and `Uncategorized`
-3. selecting a filter narrows the visible list
-4. if the active selection is filtered out, the UI selects the first visible song, or clears the selection when no songs remain visible
+1. public UI loads configured categories from the public categories endpoint
+2. public UI loads songs with category metadata
+3. public UI renders filter options including `All`, every configured category, and `Uncategorized`
+4. selecting a filter narrows the visible list
+5. if the active selection is filtered out, the UI selects the first visible song, or clears the selection when no songs remain visible
 
 ## Validation and Error Handling
 
@@ -243,6 +253,7 @@ Add or update coverage for:
 ### Public UI and API
 
 - `/api/songs` returns category metadata
+- `/api/categories` returns the complete configured category list, including categories with zero songs
 - public library shows category labels
 - category filter narrows the visible list correctly
 - `Uncategorized` filter shows songs with `NULL category_id`
