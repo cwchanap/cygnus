@@ -130,7 +130,7 @@ Add admin-only endpoints for category CRUD. A single route such as `/api/admin/c
 
 Required operations:
 
-- `GET` returns all categories ordered predictably
+- `GET` returns all categories ordered by `normalized_name` ascending
 - `POST` creates a category
 - `PUT` renames a category
 - `DELETE` deletes a category and uncategorizes affected songs
@@ -161,13 +161,11 @@ Extend `/api/upload` to accept `categoryId` with the same validation rules used 
 
 Extend `/api/songs` so each song includes category data for display.
 
-Add optional category filtering support with a query parameter that supports:
+Add optional category filtering support with a `category` query parameter that supports:
 
 - all songs when omitted
-- a specific configured category
-- uncategorized songs
-
-The exact parameter name should be kept consistent between frontend and backend planning, but the behavior above is required.
+- a specific configured category by category ID string
+- `uncategorized` for songs whose `category_id` is `NULL`
 
 ## Data Flow
 
@@ -203,7 +201,8 @@ The exact parameter name should be kept consistent between frontend and backend 
 
 1. public UI loads songs with category metadata
 2. public UI renders filter options including `All` and `Uncategorized`
-3. selecting a filter narrows the visible list and preserves a valid selected song state
+3. selecting a filter narrows the visible list
+4. if the active selection is filtered out, the UI selects the first visible song, or clears the selection when no songs remain visible
 
 ## Validation and Error Handling
 
@@ -212,6 +211,7 @@ The exact parameter name should be kept consistent between frontend and backend 
 - Category-related API failures return clear `400` responses for invalid input and `404` where an ID no longer exists.
 - If categories exist and a song request omits category selection, the API returns a validation error rather than silently assigning uncategorized.
 - If a category disappears between form load and submit, the API rejects the request and the UI surfaces the returned message.
+- Category lists returned by admin APIs and used in filter controls should be sorted by normalized name ascending for stable UX.
 - UI empty states should remain usable when there are no songs, no categories, or no songs for the selected filter.
 
 ## Testing
