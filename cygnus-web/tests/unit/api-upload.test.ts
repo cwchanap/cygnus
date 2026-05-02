@@ -12,6 +12,20 @@ const mockRun = vi.fn().mockResolvedValue({});
 const mockInsertValues = vi.fn().mockReturnValue({ run: mockRun });
 const mockInsert = vi.fn().mockReturnValue({ values: mockInsertValues });
 const mockPut = vi.fn().mockResolvedValue(undefined);
+const mockCount = vi.fn().mockResolvedValue(0);
+const mockSelect = vi.fn().mockReturnThis();
+const mockFrom = vi.fn().mockReturnThis();
+const mockWhere = vi.fn().mockReturnThis();
+const mockGet = vi.fn().mockResolvedValue(undefined);
+
+const mockDb = {
+  insert: mockInsert,
+  $count: mockCount,
+  select: mockSelect,
+  from: mockFrom,
+  where: mockWhere,
+  get: mockGet,
+};
 
 const mockRuntime = {
   env: {
@@ -82,12 +96,17 @@ describe('POST /api/upload - bindings check', () => {
 
 describe('POST /api/upload - CSRF protection', () => {
   beforeEach(() => {
-    vi.mocked(createDb).mockReturnValue({ insert: mockInsert } as any);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
     vi.clearAllMocks();
     mockRun.mockResolvedValue({});
     mockPut.mockResolvedValue(undefined);
+    mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue(undefined);
     mockInsert.mockReturnValue({ values: mockInsertValues });
     mockInsertValues.mockReturnValue({ run: mockRun });
+    mockSelect.mockReturnThis();
+    mockFrom.mockReturnThis();
+    mockWhere.mockReturnThis();
   });
 
   it('allows request with no origin/referer headers (no header = assume ok)', async () => {
@@ -141,12 +160,17 @@ describe('POST /api/upload - CSRF protection', () => {
 
 describe('POST /api/upload - authentication', () => {
   beforeEach(() => {
-    vi.mocked(createDb).mockReturnValue({ insert: mockInsert } as any);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
     vi.clearAllMocks();
     mockRun.mockResolvedValue({});
     mockPut.mockResolvedValue(undefined);
+    mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue(undefined);
     mockInsert.mockReturnValue({ values: mockInsertValues });
     mockInsertValues.mockReturnValue({ run: mockRun });
+    mockSelect.mockReturnThis();
+    mockFrom.mockReturnThis();
+    mockWhere.mockReturnThis();
   });
 
   it('returns 401 when no auth cookie and no passkey', async () => {
@@ -188,12 +212,17 @@ describe('POST /api/upload - authentication', () => {
 
 describe('POST /api/upload - field validation', () => {
   beforeEach(() => {
-    vi.mocked(createDb).mockReturnValue({ insert: mockInsert } as any);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
     vi.clearAllMocks();
     mockRun.mockResolvedValue({});
     mockPut.mockResolvedValue(undefined);
+    mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue(undefined);
     mockInsert.mockReturnValue({ values: mockInsertValues });
     mockInsertValues.mockReturnValue({ run: mockRun });
+    mockSelect.mockReturnThis();
+    mockFrom.mockReturnThis();
+    mockWhere.mockReturnThis();
   });
 
   it('returns 400 when song file is missing', async () => {
@@ -234,12 +263,17 @@ describe('POST /api/upload - field validation', () => {
 
 describe('POST /api/upload - success case', () => {
   beforeEach(() => {
-    vi.mocked(createDb).mockReturnValue({ insert: mockInsert } as any);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
     vi.clearAllMocks();
     mockRun.mockResolvedValue({});
     mockPut.mockResolvedValue(undefined);
+    mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue(undefined);
     mockInsert.mockReturnValue({ values: mockInsertValues });
     mockInsertValues.mockReturnValue({ run: mockRun });
+    mockSelect.mockReturnThis();
+    mockFrom.mockReturnThis();
+    mockWhere.mockReturnThis();
   });
 
   it('uploads file to R2 and inserts into DB', async () => {
@@ -288,6 +322,88 @@ describe('POST /api/upload - success case', () => {
   });
 });
 
+describe('POST /api/upload - category validation', () => {
+  beforeEach(() => {
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
+    vi.clearAllMocks();
+    mockRun.mockResolvedValue({});
+    mockPut.mockResolvedValue(undefined);
+    mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue(undefined);
+    mockInsert.mockReturnValue({ values: mockInsertValues });
+    mockInsertValues.mockReturnValue({ run: mockRun });
+    mockSelect.mockReturnThis();
+    mockFrom.mockReturnThis();
+    mockWhere.mockReturnThis();
+  });
+
+  it('requires categoryId when categories exist', async () => {
+    mockCount.mockResolvedValue(1);
+    const req = makeRequest({ form: makeFullForm({ passkey: 'secret' }) });
+
+    const resp = await POST({
+      request: req,
+      locals: { runtime: mockRuntime },
+    } as any);
+
+    expect(resp.status).toBe(400);
+    const body = await resp.json();
+    expect(body.message).toMatch(/category/i);
+    expect(mockInsertValues).not.toHaveBeenCalled();
+  });
+
+  it('stores category_id when categoryId is valid', async () => {
+    mockCount.mockResolvedValue(1);
+    mockGet.mockResolvedValue({ id: 2 });
+    const req = makeRequest({
+      form: makeFullForm({ passkey: 'secret', categoryId: '2' }),
+    });
+
+    const resp = await POST({
+      request: req,
+      locals: { runtime: mockRuntime },
+    } as any);
+
+    expect(resp.status).toBe(200);
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ category_id: 2 })
+    );
+  });
+
+  it('rejects invalid or nonexistent categoryId', async () => {
+    mockCount.mockResolvedValue(1);
+    mockGet.mockResolvedValue(undefined);
+    const req = makeRequest({
+      form: makeFullForm({ passkey: 'secret', categoryId: '999' }),
+    });
+
+    const resp = await POST({
+      request: req,
+      locals: { runtime: mockRuntime },
+    } as any);
+
+    expect(resp.status).toBe(400);
+    const body = await resp.json();
+    expect(body.message).toMatch(/category/i);
+    expect(mockInsertValues).not.toHaveBeenCalled();
+  });
+
+  it('allows missing categoryId when no categories exist and inserts category_id null', async () => {
+    mockCount.mockResolvedValue(0);
+    const req = makeRequest({ form: makeFullForm({ passkey: 'secret' }) });
+
+    const resp = await POST({
+      request: req,
+      locals: { runtime: mockRuntime },
+    } as any);
+
+    expect(resp.status).toBe(200);
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ category_id: null })
+    );
+  });
+});
+
 describe('POST /api/upload - error handling', () => {
   it('returns 500 when bucket.put throws', async () => {
     const failingRuntime = {
@@ -299,7 +415,7 @@ describe('POST /api/upload - error handling', () => {
         },
       },
     };
-    vi.mocked(createDb).mockReturnValue({ insert: mockInsert } as any);
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
     const req = makeRequest({ form: makeFullForm({ passkey: 'secret' }) });
     const resp = await POST({
       request: req,
