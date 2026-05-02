@@ -25,6 +25,9 @@ describe('category helpers', () => {
     expect(parseCategoryId('abc')).toBeNull();
     expect(parseCategoryId('12abc')).toBeNull();
     expect(parseCategoryId('1.5')).toBeNull();
+    expect(parseCategoryId('1e2')).toBeNull();
+    expect(parseCategoryId('0x10')).toBeNull();
+    expect(parseCategoryId('+42')).toBeNull();
     expect(parseCategoryId('-1')).toBeNull();
   });
 
