@@ -1,7 +1,61 @@
 import type { APIRoute } from 'astro';
 import { createDb } from '@/lib/db';
-import { songs } from '@/lib/db/schema';
+import { categories, songs } from '@/lib/db/schema';
 import { isAdminAuthed } from '@/lib/auth';
+import { parseCategoryId } from '@/lib/categories';
+import { eq } from 'drizzle-orm';
+
+async function resolveCategoryId(
+  db: ReturnType<typeof createDb>,
+  value: FormDataEntryValue | null
+): Promise<{ categoryId: number | null } | { response: Response }> {
+  const categoryCount = await db.$count(categories);
+  const hasValue = value != null;
+  const categoryId = parseCategoryId(value);
+
+  if (!hasValue && categoryCount > 0) {
+    return {
+      response: new Response(
+        JSON.stringify({ message: 'Category ID is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ),
+    };
+  }
+
+  if (!hasValue && categoryCount === 0) {
+    return { categoryId: null };
+  }
+
+  if (categoryId == null) {
+    return {
+      response: new Response(
+        JSON.stringify({
+          message: 'Category ID must refer to an existing category',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ),
+    };
+  }
+
+  const category = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.id, categoryId))
+    .get();
+
+  if (!category) {
+    return {
+      response: new Response(
+        JSON.stringify({
+          message: 'Category ID must refer to an existing category',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ),
+    };
+  }
+
+  return { categoryId };
+}
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -62,6 +116,7 @@ export const POST: APIRoute = async (context) => {
       String(formData.get('is_released')) !== 'false';
     const originField = formData.get('origin') as string;
     const previewImage = formData.get('preview_image') as File | null;
+    const categoryIdValue = formData.get('categoryId');
 
     if (!songFile || !songName || !artist) {
       return new Response(
@@ -75,6 +130,10 @@ export const POST: APIRoute = async (context) => {
 
     const bucket = runtime.env.CYGNUS_BUCKET;
     const db = createDb(runtime.env.DB);
+    const resolvedCategory = await resolveCategoryId(db, categoryIdValue);
+    if ('response' in resolvedCategory) {
+      return resolvedCategory.response;
+    }
 
     const r2Key = `songs/${Date.now()}-${songFile.name}`;
     await bucket.put(r2Key, await songFile.arrayBuffer());
@@ -100,6 +159,7 @@ export const POST: APIRoute = async (context) => {
         created_date: new Date().toISOString(),
         r2_key: r2Key,
         preview_r2_key: previewKey,
+        category_id: resolvedCategory.categoryId,
       })
       .run();
 

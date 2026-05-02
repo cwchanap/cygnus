@@ -1,8 +1,61 @@
 import type { APIRoute } from 'astro';
 import { createDb } from '../../../lib/db';
-import { songs } from '../../../lib/db/schema';
-import { desc, eq, type InferSelectModel } from 'drizzle-orm';
+import { categories, songs } from '../../../lib/db/schema';
+import { desc, eq } from 'drizzle-orm';
 import { isAdminAuthed } from '../../../lib/auth';
+import { parseCategoryId } from '../../../lib/categories';
+
+async function resolveCategoryId(
+  db: ReturnType<typeof createDb>,
+  value: FormDataEntryValue | null
+): Promise<{ categoryId: number | null } | { response: Response }> {
+  const categoryCount = await db.$count(categories);
+  const hasValue = value != null;
+  const categoryId = parseCategoryId(value);
+
+  if (!hasValue && categoryCount > 0) {
+    return {
+      response: new Response(
+        JSON.stringify({ message: 'Category ID is required' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ),
+    };
+  }
+
+  if (!hasValue && categoryCount === 0) {
+    return { categoryId: null };
+  }
+
+  if (categoryId == null) {
+    return {
+      response: new Response(
+        JSON.stringify({
+          message: 'Category ID must refer to an existing category',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ),
+    };
+  }
+
+  const category = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.id, categoryId))
+    .get();
+
+  if (!category) {
+    return {
+      response: new Response(
+        JSON.stringify({
+          message: 'Category ID must refer to an existing category',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      ),
+    };
+  }
+
+  return { categoryId };
+}
 
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
@@ -45,9 +98,22 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const totalCount = await db.$count(songs);
 
     // Get paginated songs
-    const rows: InferSelectModel<typeof songs>[] = await db
-      .select()
+    const rows = await db
+      .select({
+        id: songs.id,
+        song_name: songs.song_name,
+        artist: songs.artist,
+        bpm: songs.bpm,
+        release_date: songs.release_date,
+        is_released: songs.is_released,
+        created_date: songs.created_date,
+        origin: songs.origin,
+        r2_key: songs.r2_key,
+        categoryId: songs.category_id,
+        categoryName: categories.name,
+      })
       .from(songs)
+      .leftJoin(categories, eq(songs.category_id, categories.id))
       .orderBy(desc(songs.created_date))
       .limit(limit)
       .offset(offset)
@@ -63,6 +129,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       created_date: song.created_date,
       origin: song.origin,
       r2_key: song.r2_key,
+      categoryId: song.categoryId ?? null,
+      categoryName: song.categoryName ?? null,
     }));
 
     return new Response(
@@ -177,6 +245,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const releaseDate = formData.get('release_date');
     const isReleased = formData.get('is_released');
     const origin = formData.get('origin');
+    const categoryIdValue = formData.get('categoryId');
 
     if (!songId || !songName || !artist) {
       return new Response(
@@ -214,6 +283,10 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const db = createDb(runtime.env.DB);
+    const resolvedCategory = await resolveCategoryId(db, categoryIdValue);
+    if ('response' in resolvedCategory) {
+      return resolvedCategory.response;
+    }
 
     // Update the song
     await db
@@ -225,6 +298,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         release_date: releaseDate as string,
         is_released: isReleased ? isReleased === 'true' : undefined,
         origin: origin as string,
+        category_id: resolvedCategory.categoryId,
       })
       .where(eq(songs.id, parsedSongId))
       .run();
