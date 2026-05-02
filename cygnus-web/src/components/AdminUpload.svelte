@@ -43,9 +43,8 @@
   }
 
   async function handleSubmit(event: SubmitEvent) {
-    if (categoryLoading || categoryError) {
-      message =
-        categoryError || 'Categories are still loading. Try again in a moment.';
+    if (categoryLoading) {
+      message = 'Categories are still loading. Try again in a moment.';
       return;
     }
 
@@ -179,7 +178,7 @@
         id="categoryId"
         name="categoryId"
         required={categories.length > 0}
-        disabled={categoryLoading || !!categoryError}
+        disabled={categoryLoading}
         class="mt-1 block w-full px-3 py-2 bg-blue-900/40 border border-blue-400/30 rounded-md shadow-sm text-blue-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 sm:text-sm"
       >
         {#if categoryLoading}
@@ -197,6 +196,13 @@
       </select>
       {#if categoryError}
         <p class="mt-2 text-sm text-red-300">{categoryError}</p>
+        <button
+          type="button"
+          on:click={fetchCategories}
+          class="mt-1 text-sm text-cyan-400 underline hover:text-cyan-300"
+        >
+          Retry loading categories
+        </button>
       {/if}
     </div>
     <div class="flex items-center">
@@ -213,7 +219,7 @@
     </div>
     <button
       type="submit"
-      disabled={categoryLoading || !!categoryError}
+      disabled={categoryLoading}
       class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-75 transform hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
     >
       Upload Song

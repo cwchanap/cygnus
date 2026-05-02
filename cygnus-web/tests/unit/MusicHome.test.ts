@@ -65,15 +65,13 @@ describe('MusicHome', () => {
   });
 
   it('calls fetch on mount to load songs', async () => {
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve(emptySongsResponse),
-    });
+    const mockFetch = mockFetchWithCategories(emptySongsResponse);
     vi.stubGlobal('fetch', mockFetch);
     render(MusicHome);
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith('/api/songs?page=1&limit=20');
     });
+    expect(mockFetch).toHaveBeenCalledWith('/api/categories');
   });
 
   it('handles fetch error gracefully without crashing', async () => {

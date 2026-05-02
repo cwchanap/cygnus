@@ -28,7 +28,10 @@ export async function resolveSongCategoryId(
     return {
       response: new Response(
         JSON.stringify({
-          message: 'Category ID must refer to an existing category',
+          message:
+            value != null && String(value).trim() !== ''
+              ? 'Category ID must be a valid positive integer'
+              : 'Category ID must refer to an existing category',
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       ),
