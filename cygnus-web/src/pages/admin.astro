@@ -23,11 +23,13 @@ const authed = cookieAuthed || e2eBypass;
 // If not authenticated (and not using e2e bypass), redirect to login with next param
 if (!authed) {
   const next = Astro.url.pathname + (Astro.url.search ?? '');
-  const headers = new Headers();
-  headers.append('Location', `/login?next=${encodeURIComponent(next)}`);
-  return new Response(null, { status: 303, headers });
+  Astro.response.status = 303;
+  Astro.response.headers.set(
+    'Location',
+    `/login?next=${encodeURIComponent(next)}`
+  );
 }
---- 
+---
 
 <MainLayout content={{ title: 'Admin' }}>
   {

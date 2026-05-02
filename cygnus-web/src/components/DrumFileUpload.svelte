@@ -6,7 +6,14 @@
   let selectedFile: File | null = null;
   let isLocalTranscribing = false;
 
-  const validTypes = ['audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a', 'audio/flac'];
+  const validTypes = [
+    'audio/mpeg',
+    'audio/wav',
+    'audio/x-wav',
+    'audio/mp4',
+    'audio/x-m4a',
+    'audio/flac',
+  ];
 
   function handleFileSelection(file: File) {
     if (file.size > 50 * 1024 * 1024) {
@@ -14,13 +21,22 @@
       return;
     }
 
-    if (!validTypes.includes(file.type) && !file.name.match(/\.(mp3|wav|m4a|flac)$/i)) {
-      toastStore.show('Invalid file type. Please upload MP3, WAV, M4A, or FLAC.', 'error');
+    if (
+      !validTypes.includes(file.type) &&
+      !file.name.match(/\.(mp3|wav|m4a|flac)$/i)
+    ) {
+      toastStore.show(
+        'Invalid file type. Please upload MP3, WAV, M4A, or FLAC.',
+        'error'
+      );
       return;
     }
 
     selectedFile = file;
-    toastStore.show(`Selected ${file.name}. Ready for in-browser transcription.`, 'success');
+    toastStore.show(
+      `Selected ${file.name}. Ready for in-browser transcription.`,
+      'success'
+    );
   }
 
   async function runTfjsTranscription() {
@@ -32,18 +48,26 @@
     isLocalTranscribing = true;
     try {
       toastStore.show('Running in-browser transcription (TFJS)...', 'success');
-      const { transcribeInBrowser } = await import('../lib/drum/tfjsTranscriber');
+      const { transcribeInBrowser } = await import(
+        '../lib/drum/tfjsTranscriber'
+      );
       const buffer = await transcribeInBrowser(file);
       const { midiStore } = await import('../stores/midi');
       const ok = await midiStore.openPreviewFromArrayBuffer(buffer);
       if (ok) {
-        toastStore.show('Transcription complete! Opening preview...', 'success');
+        toastStore.show(
+          'Transcription complete! Opening preview...',
+          'success'
+        );
       } else {
         toastStore.show('Failed to open MIDI preview.', 'error');
       }
     } catch (error) {
       console.error('TFJS transcription error:', error);
-      toastStore.show(`TFJS transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      toastStore.show(
+        `TFJS transcription failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        'error'
+      );
     } finally {
       isLocalTranscribing = false;
     }
@@ -60,7 +84,7 @@
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   function handleDrop(e: DragEvent) {
@@ -85,8 +109,8 @@
     <div
       class="border-2 border-dashed rounded-lg p-10 text-center transition-all duration-150 cursor-pointer
         {dragover
-          ? 'border-[#c2ff00]/60 bg-[#c2ff00]/[0.04]'
-          : 'border-white/10 hover:border-white/20 hover:bg-white/[0.02]'}"
+        ? 'border-[#c2ff00]/60 bg-[#c2ff00]/[0.04]'
+        : 'border-white/10 hover:border-white/20 hover:bg-white/[0.02]'}"
       role="button"
       aria-label="Upload drum audio drop zone"
       tabindex="0"
@@ -97,19 +121,33 @@
           fileInput?.click();
         }
       }}
-      on:dragover|preventDefault={() => dragover = true}
-      on:dragleave|preventDefault={() => dragover = false}
+      on:dragover|preventDefault={() => (dragover = true)}
+      on:dragleave|preventDefault={() => (dragover = false)}
       on:drop={handleDrop}
     >
       <!-- Upload icon -->
-      <div class="w-14 h-14 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-5">
-        <svg class="w-6 h-6 text-[#6060a0]" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <div
+        class="w-14 h-14 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-5"
+      >
+        <svg
+          class="w-6 h-6 text-[#6060a0]"
+          stroke="currentColor"
+          fill="none"
+          viewBox="0 0 48 48"
+        >
+          <path
+            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </div>
 
       <p class="text-white font-semibold mb-1">Drop your drum audio here</p>
-      <p class="text-[#6060a0] font-mono text-xs mb-6">MP3 · WAV · M4A · FLAC — max 50MB</p>
+      <p class="text-[#6060a0] font-mono text-xs mb-6">
+        MP3 · WAV · M4A · FLAC — max 50MB
+      </p>
 
       <input
         type="file"
@@ -127,7 +165,6 @@
         Choose File
       </button>
     </div>
-
   {:else}
     <!-- File ready state -->
     <div class="bg-[#080716] border border-[#c2ff00]/20 rounded-lg p-6">
@@ -135,12 +172,18 @@
         <div>
           <div class="flex items-center gap-2 mb-1">
             <div class="w-1.5 h-1.5 rounded-full bg-[#c2ff00] pulse-dot"></div>
-            <span class="text-[#c2ff00] font-mono text-[10px] uppercase tracking-widest">File Ready</span>
+            <span
+              class="text-[#c2ff00] font-mono text-[10px] uppercase tracking-widest"
+              >File Ready</span
+            >
           </div>
           <p class="text-white font-semibold text-sm">{selectedFile.name}</p>
-          <p class="text-[#6060a0] font-mono text-xs mt-0.5">{formatFileSize(selectedFile.size)}</p>
+          <p class="text-[#6060a0] font-mono text-xs mt-0.5">
+            {formatFileSize(selectedFile.size)}
+          </p>
           <p class="text-[#6060a0] font-mono text-[11px] mt-3 leading-relaxed">
-            This file stays in your browser. Run TFJS transcription to generate a local MIDI preview.
+            This file stays in your browser. Run TFJS transcription to generate
+            a local MIDI preview.
           </p>
         </div>
         <button
@@ -150,8 +193,18 @@
           title="Upload different file"
           aria-label="Remove uploaded file"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       </div>
@@ -162,8 +215,18 @@
           disabled={isLocalTranscribing}
           class="px-5 py-3 bg-[#c2ff00] hover:bg-[#d4ff33] active:bg-[#aaee00] text-[#060614] font-display font-black text-xs uppercase tracking-widest rounded-lg transition-all duration-100 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <svg
+            class="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
           Choose Different File
         </button>
@@ -175,14 +238,39 @@
           data-testid="tfjs-transcribe-button"
         >
           {#if isLocalTranscribing}
-            <svg class="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              class="animate-spin h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             Transcribing (TFJS)...
           {:else}
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7v10l9-5-9-5z" />
+            <svg
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 7v10l9-5-9-5z"
+              />
             </svg>
             Transcribe in Browser (TFJS)
           {/if}
