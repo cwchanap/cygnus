@@ -3,15 +3,17 @@ import { test, expect } from '@playwright/test';
 test.describe('Admin Song Management', () => {
   test.beforeEach(async ({ page }) => {
     // Set admin authentication cookie
-    await page.context().addCookies([{
-      name: 'admin_auth',
-      value: '1',
-      domain: 'localhost',
-      path: '/',
-      httpOnly: true,
-      secure: false,
-      sameSite: 'Strict'
-    }]);
+    await page.context().addCookies([
+      {
+        name: 'admin_auth',
+        value: '1',
+        domain: 'localhost',
+        path: '/',
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Strict',
+      },
+    ]);
   });
 
   test('should load admin page and show navigation', async ({ page }) => {
@@ -43,13 +45,59 @@ test.describe('Admin Song Management', () => {
     await page.goto('/admin/songs');
 
     // Check table headers - be more specific to avoid matching data cells
-    await expect(page.locator('th').filter({ hasText: 'Song Name' })).toBeVisible();
-    await expect(page.locator('th').filter({ hasText: 'Artist' })).toBeVisible();
+    await expect(
+      page.locator('th').filter({ hasText: 'Song Name' })
+    ).toBeVisible();
+    await expect(
+      page.locator('th').filter({ hasText: 'Artist' })
+    ).toBeVisible();
     await expect(page.locator('th').filter({ hasText: 'BPM' })).toBeVisible();
-    await expect(page.locator('th').filter({ hasText: 'Release Date' })).toBeVisible();
-    await expect(page.locator('th').filter({ hasText: 'Status' })).toBeVisible();
-    await expect(page.locator('th').filter({ hasText: 'Uploaded' })).toBeVisible();
-    await expect(page.locator('th').filter({ hasText: 'Actions' })).toBeVisible();
+    await expect(
+      page.locator('th').filter({ hasText: 'Release Date' })
+    ).toBeVisible();
+    await expect(
+      page.locator('th').filter({ hasText: 'Status' })
+    ).toBeVisible();
+    await expect(
+      page.locator('th').filter({ hasText: 'Uploaded' })
+    ).toBeVisible();
+    await expect(
+      page.locator('th').filter({ hasText: 'Actions' })
+    ).toBeVisible();
+  });
+
+  test('admin can create a category and select it for uploads', async ({
+    page,
+  }) => {
+    const categoryName = `Metal E2E ${Date.now()}`;
+
+    await page.goto('/admin/songs');
+
+    await expect(
+      page.getByRole('heading', { name: 'Categories' })
+    ).toBeVisible();
+    const newCategoryInput = page.getByLabel('New category');
+    await newCategoryInput.click();
+    await newCategoryInput.pressSequentially(categoryName);
+    await expect(newCategoryInput).toHaveValue(categoryName);
+
+    const createResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/admin/categories') &&
+        response.request().method() === 'POST'
+    );
+    await page.getByRole('button', { name: 'Create Category' }).click();
+    await expect((await createResponse).status()).toBe(201);
+
+    await page.goto('/admin');
+
+    const categorySelect = page.getByLabel('Category');
+    await expect(categorySelect).toBeEnabled();
+    await expect(
+      categorySelect.locator('option', { hasText: categoryName })
+    ).toHaveCount(1);
+    await categorySelect.selectOption({ label: categoryName });
+    await expect(categorySelect).toHaveValue(/\d+/);
   });
 
   test('should handle empty song list', async ({ page }) => {
@@ -67,11 +115,11 @@ test.describe('Admin Song Management', () => {
     await page.context().clearCookies();
 
     // Mock the API to return 401 unauthorized
-    await page.route('/api/admin/songs**', route => {
+    await page.route('/api/admin/songs**', (route) => {
       route.fulfill({
         status: 401,
         contentType: 'application/json',
-        body: JSON.stringify({ message: 'Unauthorized' })
+        body: JSON.stringify({ message: 'Unauthorized' }),
       });
     });
 
@@ -88,16 +136,18 @@ test.describe('Admin Song Management', () => {
     await expect(page.getByLabel('Passkey')).toBeVisible();
   });
 
-  test('should handle login and redirect back to song management', async ({ page }) => {
+  test('should handle login and redirect back to song management', async ({
+    page,
+  }) => {
     // Clear cookies
     await page.context().clearCookies();
 
     // Mock the API to return 401 unauthorized initially
-    await page.route('/api/admin/songs**', route => {
+    await page.route('/api/admin/songs**', (route) => {
       route.fulfill({
         status: 401,
         contentType: 'application/json',
-        body: JSON.stringify({ message: 'Unauthorized' })
+        body: JSON.stringify({ message: 'Unauthorized' }),
       });
     });
 
@@ -118,7 +168,9 @@ test.describe('Admin Song Management', () => {
     await expect(page).toHaveURL(/.*\/admin\/songs/);
   });
 
-  test('should show pagination controls when multiple pages exist', async ({ page }) => {
+  test('should show pagination controls when multiple pages exist', async ({
+    page,
+  }) => {
     await page.goto('/admin/songs');
 
     // Check if pagination exists (only if there are enough songs)
@@ -167,7 +219,7 @@ test.describe('Admin Song Management', () => {
 
     if (await deleteButtons.first().isVisible()) {
       // Mock the confirm dialog to return false (cancel)
-      page.on('dialog', async dialog => {
+      page.on('dialog', async (dialog) => {
         expect(dialog.type()).toBe('confirm');
         expect(dialog.message()).toContain('delete');
         await dialog.dismiss(); // Cancel the deletion
@@ -183,11 +235,11 @@ test.describe('Admin Song Management', () => {
 
   test('should handle API errors gracefully', async ({ page }) => {
     // Mock a failed API response
-    await page.route('/api/admin/songs**', route => {
+    await page.route('/api/admin/songs**', (route) => {
       route.fulfill({
         status: 500,
         contentType: 'application/json',
-        body: JSON.stringify({ message: 'Internal Server Error' })
+        body: JSON.stringify({ message: 'Internal Server Error' }),
       });
     });
 
@@ -199,11 +251,11 @@ test.describe('Admin Song Management', () => {
 
   test('should handle authentication errors', async ({ page }) => {
     // Mock unauthorized response
-    await page.route('/api/admin/songs**', route => {
+    await page.route('/api/admin/songs**', (route) => {
       route.fulfill({
         status: 401,
         contentType: 'application/json',
-        body: JSON.stringify({ message: 'Unauthorized' })
+        body: JSON.stringify({ message: 'Unauthorized' }),
       });
     });
 
