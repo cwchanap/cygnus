@@ -10,4 +10,6 @@
 </script>
 
 <CategoryManagement on:changed={refreshSongs} />
-<SongManagement {refreshVersion} />
+{#key refreshVersion}
+  <SongManagement />
+{/key}

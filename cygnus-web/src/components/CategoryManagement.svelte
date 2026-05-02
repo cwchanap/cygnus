@@ -18,7 +18,9 @@
   async function readMessage(response: Response) {
     try {
       const body = await response.json();
-      return typeof body.message === 'string' ? body.message : response.statusText;
+      return typeof body.message === 'string'
+        ? body.message
+        : response.statusText;
     } catch {
       return response.statusText;
     }
@@ -97,7 +99,11 @@
   }
 
   async function deleteCategory(category: Category) {
-    if (!confirm(`Delete category "${category.name}"? Songs in this category will become uncategorized.`)) {
+    if (
+      !confirm(
+        `Delete category "${category.name}"? Songs in this category will become uncategorized.`
+      )
+    ) {
       return;
     }
 
@@ -137,7 +143,10 @@
       on:submit|preventDefault={createCategory}
     >
       <div>
-        <label for="new-category" class="block text-sm font-medium text-cyan-200">New category</label>
+        <label
+          for="new-category"
+          class="block text-sm font-medium text-cyan-200">New category</label
+        >
         <input
           id="new-category"
           type="text"
@@ -155,7 +164,9 @@
   </div>
 
   {#if error}
-    <div class="mt-4 rounded-lg border border-red-400/50 bg-red-500/20 px-4 py-3 text-red-300">
+    <div
+      class="mt-4 rounded-lg border border-red-400/50 bg-red-500/20 px-4 py-3 text-red-300"
+    >
       {error}
     </div>
   {/if}
@@ -167,7 +178,9 @@
   {:else}
     <div class="mt-5 space-y-3">
       {#each categories as category (category.id)}
-        <div class="flex flex-col gap-3 rounded-lg border border-white/15 bg-white/5 p-3 sm:flex-row sm:items-center">
+        <div
+          class="flex flex-col gap-3 rounded-lg border border-white/15 bg-white/5 p-3 sm:flex-row sm:items-center"
+        >
           <input
             aria-label={`Category ${category.id}`}
             type="text"
