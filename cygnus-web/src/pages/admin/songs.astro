@@ -1,5 +1,6 @@
 ---
 import MainLayout from '../../layouts/main.astro';
+import CategoryManagement from '../../components/CategoryManagement.svelte';
 import SongManagement from '../../components/SongManagement.svelte';
 import { isAdminAuthed } from '../../lib/auth';
 
@@ -69,6 +70,9 @@ if (!isAdminAuthed(Astro.request)) {
                   ← Back to Admin
                 </a>
               </div>
+
+              <!-- Category management component -->
+              <CategoryManagement client:load />
 
               <!-- Song management component -->
               <SongManagement client:load />
