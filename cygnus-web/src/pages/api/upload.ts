@@ -1,61 +1,8 @@
 import type { APIRoute } from 'astro';
 import { createDb } from '@/lib/db';
-import { categories, songs } from '@/lib/db/schema';
+import { songs } from '@/lib/db/schema';
 import { isAdminAuthed } from '@/lib/auth';
-import { parseCategoryId } from '@/lib/categories';
-import { eq } from 'drizzle-orm';
-
-async function resolveCategoryId(
-  db: ReturnType<typeof createDb>,
-  value: FormDataEntryValue | null
-): Promise<{ categoryId: number | null } | { response: Response }> {
-  const categoryCount = await db.$count(categories);
-  const hasValue = value != null;
-  const categoryId = parseCategoryId(value);
-
-  if (!hasValue && categoryCount > 0) {
-    return {
-      response: new Response(
-        JSON.stringify({ message: 'Category ID is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ),
-    };
-  }
-
-  if (!hasValue && categoryCount === 0) {
-    return { categoryId: null };
-  }
-
-  if (categoryId == null) {
-    return {
-      response: new Response(
-        JSON.stringify({
-          message: 'Category ID must refer to an existing category',
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ),
-    };
-  }
-
-  const category = await db
-    .select({ id: categories.id })
-    .from(categories)
-    .where(eq(categories.id, categoryId))
-    .get();
-
-  if (!category) {
-    return {
-      response: new Response(
-        JSON.stringify({
-          message: 'Category ID must refer to an existing category',
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ),
-    };
-  }
-
-  return { categoryId };
-}
+import { resolveSongCategoryId } from '@/lib/categoryValidation';
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -130,7 +77,7 @@ export const POST: APIRoute = async (context) => {
 
     const bucket = runtime.env.CYGNUS_BUCKET;
     const db = createDb(runtime.env.DB);
-    const resolvedCategory = await resolveCategoryId(db, categoryIdValue);
+    const resolvedCategory = await resolveSongCategoryId(db, categoryIdValue);
     if ('response' in resolvedCategory) {
       return resolvedCategory.response;
     }
