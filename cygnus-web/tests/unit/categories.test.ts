@@ -23,6 +23,8 @@ describe('category helpers', () => {
     expect(parseCategoryId(null)).toBeNull();
     expect(parseCategoryId('')).toBeNull();
     expect(parseCategoryId('abc')).toBeNull();
+    expect(parseCategoryId('12abc')).toBeNull();
+    expect(parseCategoryId('1.5')).toBeNull();
     expect(parseCategoryId('-1')).toBeNull();
   });
 

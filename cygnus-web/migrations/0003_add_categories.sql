@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE UNIQUE INDEX IF NOT EXISTS categories_normalized_name_unique
   ON categories (normalized_name);
 
-ALTER TABLE songs ADD COLUMN category_id INTEGER;
+ALTER TABLE songs ADD COLUMN category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL;

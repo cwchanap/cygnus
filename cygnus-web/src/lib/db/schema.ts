@@ -1,5 +1,12 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+export const categories = sqliteTable('categories', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  normalized_name: text('normalized_name').notNull().unique(),
+  created_date: text('created_date').notNull(),
+});
+
 // Drizzle schema for D1 (SQLite)
 export const songs = sqliteTable('songs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -13,14 +20,9 @@ export const songs = sqliteTable('songs', {
   origin: text('origin').notNull(),
   r2_key: text('r2_key').notNull(),
   preview_r2_key: text('preview_r2_key'),
-  category_id: integer('category_id'),
-});
-
-export const categories = sqliteTable('categories', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
-  normalized_name: text('normalized_name').notNull().unique(),
-  created_date: text('created_date').notNull(),
+  category_id: integer('category_id').references(() => categories.id, {
+    onDelete: 'set null',
+  }),
 });
 
 // Export schema object for typed db instance
