@@ -11,6 +11,13 @@
     created_date: string;
     origin: string;
     r2_key: string;
+    categoryId: number | null;
+    categoryName: string | null;
+  }
+
+  interface Category {
+    id: number;
+    name: string;
   }
 
   interface Pagination {
@@ -21,6 +28,7 @@
   }
 
   let songs: Song[] = [];
+  let categories: Category[] = [];
   let pagination: Pagination = { page: 1, limit: 10, total: 0, totalPages: 0 };
   let loading = true;
   let error = '';
@@ -34,8 +42,28 @@
     bpm: '',
     release_date: '',
     is_released: false,
-    origin: ''
+    origin: '',
+    categoryId: ''
   };
+
+  async function fetchCategories() {
+    try {
+      const response = await fetch('/api/admin/categories');
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+          return;
+        }
+        throw new Error('Failed to fetch categories');
+      }
+
+      const data = await response.json();
+      categories = data.categories ?? [];
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Failed to fetch categories';
+      console.error('Error fetching categories:', err);
+    }
+  }
 
   async function fetchSongs(page = 1) {
     try {
@@ -99,13 +127,22 @@
       bpm: song.bpm.toString(),
       release_date: song.release_date,
       is_released: song.is_released,
-      origin: song.origin
+      origin: song.origin,
+      categoryId: song.categoryId == null ? '' : song.categoryId.toString()
     };
   }
 
   function cancelEdit() {
     editingSong = null;
-    editForm = { song_name: '', artist: '', bpm: '', release_date: '', is_released: false, origin: '' };
+    editForm = {
+      song_name: '',
+      artist: '',
+      bpm: '',
+      release_date: '',
+      is_released: false,
+      origin: '',
+      categoryId: ''
+    };
   }
 
   async function saveEdit() {
@@ -120,6 +157,7 @@
       formData.append('release_date', editForm.release_date);
       formData.append('is_released', editForm.is_released.toString());
       formData.append('origin', editForm.origin);
+      formData.append('categoryId', categories.length > 0 ? editForm.categoryId : '');
 
       const response = await fetch('/api/admin/songs', {
         method: 'PUT',
@@ -153,6 +191,7 @@
   }
 
   onMount(() => {
+    fetchCategories();
     fetchSongs();
   });
 </script>
@@ -178,6 +217,7 @@
             <th class="text-left py-3 px-4 font-semibold">Song Name</th>
             <th class="text-left py-3 px-4 font-semibold">Artist</th>
             <th class="text-left py-3 px-4 font-semibold">BPM</th>
+            <th class="text-left py-3 px-4 font-semibold">Category</th>
             <th class="text-left py-3 px-4 font-semibold">Release Date</th>
             <th class="text-left py-3 px-4 font-semibold">Status</th>
             <th class="text-left py-3 px-4 font-semibold">Uploaded</th>
@@ -218,6 +258,28 @@
                   />
                 {:else}
                   {song.bpm}
+                {/if}
+              </td>
+              <td class="py-3 px-4">
+                {#if editingSong?.id === song.id}
+                  <label class="sr-only" for={`song-category-${song.id}`}>Category</label>
+                  <select
+                    id={`song-category-${song.id}`}
+                    name="categoryId"
+                    bind:value={editForm.categoryId}
+                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white w-40"
+                  >
+                    {#if categories.length > 0}
+                      <option value="">Uncategorized</option>
+                      {#each categories as category (category.id)}
+                        <option value={category.id.toString()}>{category.name}</option>
+                      {/each}
+                    {:else}
+                      <option value="">Uncategorized</option>
+                    {/if}
+                  </select>
+                {:else}
+                  {song.categoryName ?? 'Uncategorized'}
                 {/if}
               </td>
               <td class="py-3 px-4">

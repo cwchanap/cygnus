@@ -1,5 +1,25 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+
+  interface Category {
+    id: number;
+    name: string;
+  }
+
   let message = '';
+  let categories: Category[] = [];
+
+  async function fetchCategories() {
+    try {
+      const response = await fetch('/api/admin/categories');
+      if (!response.ok) return;
+
+      const data = await response.json();
+      categories = data.categories ?? [];
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  }
 
   async function handleSubmit(event: SubmitEvent) {
     console.log('Form submission triggered');
@@ -28,6 +48,10 @@
       message = 'Upload failed. See console for details.';
     }
   }
+
+  onMount(() => {
+    fetchCategories();
+  });
 </script>
 
 <div class="max-w-2xl mx-auto p-8 bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl shadow-2xl border border-blue-400/30 text-blue-50">
@@ -60,6 +84,24 @@
     <div>
       <label for="origin" class="block text-sm font-medium text-cyan-200">Origin</label>
       <input type="text" id="origin" name="origin" required class="mt-1 block w-full px-3 py-2 bg-blue-900/40 border border-blue-400/30 rounded-md shadow-sm placeholder-blue-300/60 text-blue-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 sm:text-sm">
+    </div>
+    <div>
+      <label for="categoryId" class="block text-sm font-medium text-cyan-200">Category</label>
+      <select
+        id="categoryId"
+        name="categoryId"
+        required={categories.length > 0}
+        class="mt-1 block w-full px-3 py-2 bg-blue-900/40 border border-blue-400/30 rounded-md shadow-sm text-blue-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 sm:text-sm"
+      >
+        {#if categories.length > 0}
+          <option value="">Select category</option>
+          {#each categories as category (category.id)}
+            <option value={category.id}>{category.name}</option>
+          {/each}
+        {:else}
+          <option value="">No configured categories</option>
+        {/if}
+      </select>
     </div>
     <div class="flex items-center">
       <input type="checkbox" id="is_released" name="is_released" value="true" class="h-4 w-4 text-cyan-400 bg-blue-900/40 border-blue-400/30 rounded focus:ring-cyan-400">
