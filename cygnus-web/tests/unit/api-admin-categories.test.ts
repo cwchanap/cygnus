@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createDb } from '../../src/lib/db';
+import { categories, songs } from '../../src/lib/db/schema';
 
 vi.mock('../../src/lib/db', () => ({
   createDb: vi.fn(),
@@ -20,6 +21,9 @@ const mockValues = vi.fn().mockReturnThis();
 const mockUpdate = vi.fn().mockReturnThis();
 const mockSet = vi.fn().mockReturnThis();
 const mockDelete = vi.fn().mockReturnThis();
+const mockBatch = vi.fn();
+const mockBind = vi.fn();
+const mockPrepare = vi.fn();
 
 const mockDb = {
   select: mockSelect,
@@ -36,7 +40,12 @@ const mockDb = {
   run: mockRun,
 };
 
-const authedLocals = { runtime: { env: { DB: {} } } };
+const mockD1 = {
+  batch: mockBatch,
+  prepare: mockPrepare,
+};
+
+const authedLocals = { runtime: { env: { DB: mockD1 } } };
 
 function makeRequest(
   path = '/api/admin/categories',
@@ -84,6 +93,14 @@ function setupDb() {
   mockUpdate.mockReturnThis();
   mockSet.mockReturnThis();
   mockDelete.mockReturnThis();
+  mockBatch.mockResolvedValue([]);
+  mockBind.mockImplementation(function bind(this: unknown) {
+    return this;
+  });
+  mockPrepare.mockImplementation((sql: string) => ({
+    sql,
+    bind: mockBind,
+  }));
 }
 
 describe('/api/admin/categories', () => {
@@ -144,6 +161,22 @@ describe('/api/admin/categories', () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
+  it('POST returns 400 for malformed JSON', async () => {
+    const resp = await POST(
+      routeContext('/api/admin/categories', {
+        method: 'POST',
+        body: '{"name":',
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+
+    expect(resp.status).toBe(400);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Invalid JSON body',
+    });
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
   it('POST rejects duplicate normalized names', async () => {
     mockGet.mockResolvedValue({ id: 1, name: 'Rock' });
 
@@ -170,10 +203,32 @@ describe('/api/admin/categories', () => {
     await expect(resp.json()).resolves.toEqual({
       message: 'Category created successfully',
     });
+    expect(mockFrom).toHaveBeenCalledWith(categories);
+    expect(mockInsert).toHaveBeenCalledWith(categories);
     expect(mockValues).toHaveBeenCalledWith({
       name: 'J Pop',
       normalized_name: 'j pop',
       created_date: expect.any(String),
+    });
+  });
+
+  it('POST maps insert unique constraint races to duplicate validation', async () => {
+    mockRun.mockRejectedValue(
+      new Error(
+        'D1_ERROR: UNIQUE constraint failed: categories.normalized_name'
+      )
+    );
+
+    const resp = await POST(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ name: 'Rock' }, 'POST')
+      )
+    );
+
+    expect(resp.status).toBe(409);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Category already exists',
     });
   });
 
@@ -222,10 +277,23 @@ describe('/api/admin/categories', () => {
     await expect(resp.json()).resolves.toEqual({
       message: 'Category deleted successfully',
     });
-    expect(mockSet).toHaveBeenCalledWith({ category_id: null });
-    expect(mockUpdate.mock.invocationCallOrder[0]).toBeLessThan(
-      mockDelete.mock.invocationCallOrder[0]
+    expect(mockFrom).toHaveBeenCalledWith(categories);
+    expect(mockUpdate).not.toHaveBeenCalledWith(songs);
+    expect(mockDelete).not.toHaveBeenCalledWith(categories);
+    expect(mockBatch).toHaveBeenCalledOnce();
+    const [statements] = mockBatch.mock.calls[0];
+    expect(statements).toHaveLength(2);
+    expect(mockPrepare.mock.calls[0][0]).toContain(
+      'UPDATE songs SET category_id = NULL WHERE category_id = ?'
     );
+    expect(mockPrepare.mock.calls[1][0]).toContain(
+      'DELETE FROM categories WHERE id = ?'
+    );
+    expect(mockPrepare.mock.invocationCallOrder[0]).toBeLessThan(
+      mockPrepare.mock.invocationCallOrder[1]
+    );
+    expect(mockBind).toHaveBeenNthCalledWith(1, 5);
+    expect(mockBind).toHaveBeenNthCalledWith(2, 5);
   });
 
   it('DELETE returns 400 for invalid ID', async () => {
