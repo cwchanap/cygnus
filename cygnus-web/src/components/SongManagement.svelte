@@ -448,7 +448,6 @@
   input:focus,
   select:focus {
     outline: none;
-    ring: 2px;
-    ring-color: rgb(6 182 212);
+    box-shadow: 0 0 0 2px rgb(6 182 212);
   }
 </style>

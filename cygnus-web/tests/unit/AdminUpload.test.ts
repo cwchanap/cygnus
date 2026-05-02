@@ -150,7 +150,7 @@ describe('AdminUpload', () => {
     expect(select).not.toBeRequired();
   });
 
-  it('shows an error and disables submit when category loading fails', async () => {
+  it('shows an error and retry button when category loading fails', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
@@ -167,7 +167,12 @@ describe('AdminUpload', () => {
         screen.getByText(/Could not load categories/i)
       ).toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: /Upload Song/i })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Upload Song/i })
+    ).not.toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Retry loading categories/i })
+    ).toBeInTheDocument();
   });
 
   it('disables submit while categories are loading', () => {

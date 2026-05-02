@@ -38,6 +38,7 @@ describe('CategoryManagement', () => {
   });
 
   it('creates a category and refreshes the list', async () => {
+    const changed = vi.fn();
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -58,7 +59,7 @@ describe('CategoryManagement', () => {
       });
     vi.stubGlobal('fetch', fetchMock);
 
-    render(CategoryManagement);
+    render(CategoryManagement, { events: { changed } });
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Drum and Bass')).toBeInTheDocument();
@@ -77,6 +78,7 @@ describe('CategoryManagement', () => {
       '/api/admin/categories',
       expect.objectContaining({ method: 'POST' })
     );
+    expect(changed).toHaveBeenCalledTimes(1);
   });
 
   it('renames a category, refreshes the list, and dispatches changed', async () => {
