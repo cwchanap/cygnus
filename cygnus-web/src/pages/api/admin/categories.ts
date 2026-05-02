@@ -40,15 +40,26 @@ function validateRuntime(request: Request, locals: App.Locals) {
 }
 
 async function parseName(request: Request) {
-  let body: { id?: unknown; name?: unknown };
+  let parsedBody: unknown;
   try {
-    body = (await request.json()) as { id?: unknown; name?: unknown };
+    parsedBody = await request.json();
   } catch {
     return {
       error: jsonResponse({ message: 'Invalid JSON body' }, 400),
     };
   }
 
+  if (
+    typeof parsedBody !== 'object' ||
+    parsedBody === null ||
+    Array.isArray(parsedBody)
+  ) {
+    return {
+      error: jsonResponse({ message: 'Invalid JSON body' }, 400),
+    };
+  }
+
+  const body = parsedBody as { id?: unknown; name?: unknown };
   const name = typeof body.name === 'string' ? body.name.trim() : '';
 
   if (!name) {

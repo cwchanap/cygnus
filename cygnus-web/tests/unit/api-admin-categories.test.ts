@@ -286,6 +286,19 @@ describe('/api/admin/categories', () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
+  it('POST returns 400 for a null JSON body', async () => {
+    const resp = await POST(
+      routeContext('/api/admin/categories', {
+        method: 'POST',
+        body: 'null',
+        headers: { 'content-type': 'application/json' },
+      })
+    );
+
+    expect(resp.status).toBe(400);
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
   it('POST rejects duplicate normalized names', async () => {
     mockGet.mockResolvedValue({ id: 1, name: 'Rock' });
 
@@ -393,6 +406,19 @@ describe('/api/admin/categories', () => {
         '/api/admin/categories',
         jsonRequest({ id: 1, name: '   ' }, 'PUT')
       )
+    );
+
+    expect(resp.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('PUT returns 400 for a null JSON body', async () => {
+    const resp = await PUT(
+      routeContext('/api/admin/categories', {
+        method: 'PUT',
+        body: 'null',
+        headers: { 'content-type': 'application/json' },
+      })
     );
 
     expect(resp.status).toBe(400);
