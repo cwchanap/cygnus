@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { createDb } from '@/lib/db';
 import { songs } from '@/lib/db/schema';
 import { isAdminAuthed } from '@/lib/auth';
+import { resolveSongCategoryId } from '@/lib/categoryValidation';
 
 export const POST: APIRoute = async (context) => {
   const { request, locals } = context;
@@ -62,6 +63,7 @@ export const POST: APIRoute = async (context) => {
       String(formData.get('is_released')) !== 'false';
     const originField = formData.get('origin') as string;
     const previewImage = formData.get('preview_image') as File | null;
+    const categoryIdValue = formData.get('categoryId');
 
     if (!songFile || !songName || !artist) {
       return new Response(
@@ -75,6 +77,10 @@ export const POST: APIRoute = async (context) => {
 
     const bucket = runtime.env.CYGNUS_BUCKET;
     const db = createDb(runtime.env.DB);
+    const resolvedCategory = await resolveSongCategoryId(db, categoryIdValue);
+    if ('response' in resolvedCategory) {
+      return resolvedCategory.response;
+    }
 
     const r2Key = `songs/${Date.now()}-${songFile.name}`;
     await bucket.put(r2Key, await songFile.arrayBuffer());
@@ -100,6 +106,7 @@ export const POST: APIRoute = async (context) => {
         created_date: new Date().toISOString(),
         r2_key: r2Key,
         preview_r2_key: previewKey,
+        category_id: resolvedCategory.categoryId,
       })
       .run();
 

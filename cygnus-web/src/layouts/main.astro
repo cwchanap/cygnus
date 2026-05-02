@@ -6,74 +6,116 @@ const { content } = Astro.props;
 ---
 
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
-		<title>{content.title}</title>
-	</head>
-	<body class="min-h-screen bg-[#060614] text-[#eeeeff] antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Hanken+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>{content.title}</title>
+  </head>
+  <body class="min-h-screen bg-[#060614] text-[#eeeeff] antialiased">
+    <!-- Subtle grid background -->
+    <div
+      class="fixed inset-0 pointer-events-none z-0"
+      style="background-image: linear-gradient(rgba(194,255,0,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(194,255,0,0.025) 1px, transparent 1px); background-size: 60px 60px;"
+    >
+    </div>
 
-		<!-- Subtle grid background -->
-		<div
-			class="fixed inset-0 pointer-events-none z-0"
-			style="background-image: linear-gradient(rgba(194,255,0,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(194,255,0,0.025) 1px, transparent 1px); background-size: 60px 60px;"
-		></div>
+    <!-- Ambient glow: volt (top-left) -->
+    <div
+      class="fixed -top-32 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none z-0"
+      style="background: radial-gradient(circle, rgba(194,255,0,0.055) 0%, transparent 70%);"
+    >
+    </div>
 
-		<!-- Ambient glow: volt (top-left) -->
-		<div class="fixed -top-32 -left-32 w-[500px] h-[500px] rounded-full pointer-events-none z-0"
-			style="background: radial-gradient(circle, rgba(194,255,0,0.055) 0%, transparent 70%);"></div>
+    <!-- Ambient glow: pink (bottom-right) -->
+    <div
+      class="fixed -bottom-32 -right-32 w-[400px] h-[400px] rounded-full pointer-events-none z-0"
+      style="background: radial-gradient(circle, rgba(255,51,133,0.045) 0%, transparent 70%);"
+    >
+    </div>
 
-		<!-- Ambient glow: pink (bottom-right) -->
-		<div class="fixed -bottom-32 -right-32 w-[400px] h-[400px] rounded-full pointer-events-none z-0"
-			style="background: radial-gradient(circle, rgba(255,51,133,0.045) 0%, transparent 70%);"></div>
+    <!-- Header -->
+    <header
+      class="relative z-20 border-b border-white/[0.06] bg-[#060614]/90 backdrop-blur-md"
+    >
+      <div class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          {
+            !content.hideHeaderTitle ? (
+              <a href="/" class="flex items-center gap-3 group">
+                <div class="w-2 h-2 rounded-full bg-[#c2ff00] pulse-dot flex-shrink-0" />
+                <div class="flex items-baseline gap-2">
+                  <span class="font-display font-black text-white text-lg tracking-wider leading-none">
+                    CYGNUS
+                  </span>
+                  <span class="hidden md:inline text-[#6060a0] font-mono text-[10px] uppercase tracking-widest">
+                    AI Music
+                  </span>
+                </div>
+              </a>
+            ) : (
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-[#c2ff00] pulse-dot flex-shrink-0" />
+                <span class="font-display font-black text-white text-lg tracking-wider leading-none">
+                  CYGNUS
+                </span>
+              </div>
+            )
+          }
 
-		<!-- Header -->
-		<header class="relative z-20 border-b border-white/[0.06] bg-[#060614]/90 backdrop-blur-md">
-			<div class="container mx-auto px-6 py-4">
-				<div class="flex items-center justify-between">
-					{!content.hideHeaderTitle ? (
-						<a href="/" class="flex items-center gap-3 group">
-							<div class="w-2 h-2 rounded-full bg-[#c2ff00] pulse-dot flex-shrink-0"></div>
-							<div class="flex items-baseline gap-2">
-								<span class="font-display font-black text-white text-lg tracking-wider leading-none">CYGNUS</span>
-								<span class="hidden md:inline text-[#6060a0] font-mono text-[10px] uppercase tracking-widest">AI Music</span>
-							</div>
-						</a>
-					) : (
-						<div class="flex items-center gap-3">
-							<div class="w-2 h-2 rounded-full bg-[#c2ff00] pulse-dot flex-shrink-0"></div>
-							<span class="font-display font-black text-white text-lg tracking-wider leading-none">CYGNUS</span>
-						</div>
-					)}
+          <nav class="hidden md:flex items-center gap-8">
+            <a
+              href="/"
+              class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150"
+              >Home</a
+            >
+            <a
+              href="/drum-transcription"
+              class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150"
+              >Transcribe</a
+            >
+            <a
+              href="/midi-preview"
+              class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150"
+              >MIDI</a
+            >
+            <a
+              href="/admin"
+              class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150"
+              >Admin</a
+            >
+          </nav>
 
-					<nav class="hidden md:flex items-center gap-8">
-						<a href="/" class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150">Home</a>
-						<a href="/drum-transcription" class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150">Transcribe</a>
-						<a href="/midi-preview" class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150">MIDI</a>
-						<a href="/admin" class="text-[#6060a0] hover:text-[#c2ff00] font-mono text-[11px] uppercase tracking-widest transition-colors duration-150">Admin</a>
-					</nav>
+          <!-- Mobile nav hint -->
+          <div class="md:hidden flex items-center gap-4">
+            <a
+              href="/drum-transcription"
+              class="text-[#6060a0] font-mono text-[10px] uppercase tracking-widest"
+              >Transcribe</a
+            >
+            <a
+              href="/admin"
+              class="text-[#6060a0] font-mono text-[10px] uppercase tracking-widest"
+              >Admin</a
+            >
+          </div>
+        </div>
+      </div>
+    </header>
 
-					<!-- Mobile nav hint -->
-					<div class="md:hidden flex items-center gap-4">
-						<a href="/drum-transcription" class="text-[#6060a0] font-mono text-[10px] uppercase tracking-widest">Transcribe</a>
-						<a href="/admin" class="text-[#6060a0] font-mono text-[10px] uppercase tracking-widest">Admin</a>
-					</div>
-				</div>
-			</div>
-		</header>
+    <!-- Main Content -->
+    <div class="relative z-10 min-h-[calc(100vh-57px)] flex flex-col">
+      <slot />
+    </div>
 
-		<!-- Main Content -->
-		<div class="relative z-10 min-h-[calc(100vh-57px)] flex flex-col">
-			<slot />
-		</div>
-
-		<!-- Global Components -->
-		<DrumMidiPreview client:load />
-		<DrumToast client:load />
-
-	</body>
+    <!-- Global Components -->
+    <DrumMidiPreview client:load />
+    <DrumToast client:load />
+  </body>
 </html>

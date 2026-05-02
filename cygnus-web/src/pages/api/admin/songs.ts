@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro';
 import { createDb } from '../../../lib/db';
-import { songs } from '../../../lib/db/schema';
-import { desc, eq, type InferSelectModel } from 'drizzle-orm';
+import { categories, songs } from '../../../lib/db/schema';
+import { desc, eq } from 'drizzle-orm';
 import { isAdminAuthed } from '../../../lib/auth';
+import { resolveSongCategoryId } from '../../../lib/categoryValidation';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
@@ -45,9 +46,22 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const totalCount = await db.$count(songs);
 
     // Get paginated songs
-    const rows: InferSelectModel<typeof songs>[] = await db
-      .select()
+    const rows = await db
+      .select({
+        id: songs.id,
+        song_name: songs.song_name,
+        artist: songs.artist,
+        bpm: songs.bpm,
+        release_date: songs.release_date,
+        is_released: songs.is_released,
+        created_date: songs.created_date,
+        origin: songs.origin,
+        r2_key: songs.r2_key,
+        categoryId: songs.category_id,
+        categoryName: categories.name,
+      })
       .from(songs)
+      .leftJoin(categories, eq(songs.category_id, categories.id))
       .orderBy(desc(songs.created_date))
       .limit(limit)
       .offset(offset)
@@ -63,6 +77,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       created_date: song.created_date,
       origin: song.origin,
       r2_key: song.r2_key,
+      categoryId: song.categoryId ?? null,
+      categoryName: song.categoryName ?? null,
     }));
 
     return new Response(
@@ -177,6 +193,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const releaseDate = formData.get('release_date');
     const isReleased = formData.get('is_released');
     const origin = formData.get('origin');
+    const categoryIdValue = formData.get('categoryId');
 
     if (!songId || !songName || !artist) {
       return new Response(
@@ -214,6 +231,10 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const db = createDb(runtime.env.DB);
+    const resolvedCategory = await resolveSongCategoryId(db, categoryIdValue);
+    if ('response' in resolvedCategory) {
+      return resolvedCategory.response;
+    }
 
     // Update the song
     await db
@@ -225,6 +246,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         release_date: releaseDate as string,
         is_released: isReleased ? isReleased === 'true' : undefined,
         origin: origin as string,
+        category_id: resolvedCategory.categoryId,
       })
       .where(eq(songs.id, parsedSongId))
       .run();

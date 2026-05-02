@@ -45,6 +45,14 @@ describe('SongDetail', () => {
     expect(screen.getByText('2023-01-01')).toBeInTheDocument();
   });
 
+  it('renders category for selected song', () => {
+    render(SongDetail, {
+      props: { song: { ...mockSong, categoryName: 'J Pop' } },
+    });
+
+    expect(screen.getByText('J Pop')).toBeInTheDocument();
+  });
+
   it('renders placeholder when no song is provided', () => {
     render(SongDetail, { props: { song: null } });
 

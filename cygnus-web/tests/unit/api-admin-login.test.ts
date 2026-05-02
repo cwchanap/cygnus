@@ -13,14 +13,17 @@ function makePostRequest(
   fields: Record<string, string> = {},
   headers: Record<string, string> = {}
 ) {
-  const fd = new FormData();
+  const body = new URLSearchParams();
   for (const [k, v] of Object.entries(fields)) {
-    fd.append(k, v);
+    body.append(k, v);
   }
   return new Request(url, {
     method: 'POST',
-    body: fd,
-    headers,
+    body,
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      ...headers,
+    },
   });
 }
 
