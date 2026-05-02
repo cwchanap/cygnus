@@ -2,13 +2,12 @@
 import MainLayout from '../layouts/main.astro';
 
 const content = {
-  title: "MIDI Preview - Cygnus Music",
-  description: "Preview and play MIDI compositions with musical notation",
+  title: 'MIDI Preview - Cygnus Music',
+  description: 'Preview and play MIDI compositions with musical notation',
 };
 ---
 
 <MainLayout content={content}>
-
   <div class="min-h-screen relative overflow-hidden">
     <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
       <div class="particle particle-1"></div>
@@ -23,25 +22,34 @@ const content = {
       <main class="flex-1 container mx-auto px-6 py-8">
         <div class="max-w-6xl mx-auto">
           <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 shadow-2xl">
-            <h2 class="text-2xl font-bold text-white mb-6">Musical Notation & Playback</h2>
+            <h2 class="text-2xl font-bold text-white mb-6">
+              Musical Notation & Playback
+            </h2>
             <div class="text-center py-12">
               <div class="text-white text-lg mb-4">
                 🎵 MIDI Preview Interface
               </div>
               <p class="text-white/80">
-                This page will display your MIDI compositions with musical notation and playback controls.
+                This page will display your MIDI compositions with musical
+                notation and playback controls.
               </p>
               <p class="text-white/60 text-sm mt-4">
-                The full MIDI preview component will be loaded here with interactive controls.
+                The full MIDI preview component will be loaded here with
+                interactive controls.
               </p>
             </div>
           </div>
         </div>
       </main>
 
-      <footer class="bg-blue-900/80 backdrop-blur-sm text-blue-100 py-6 border-t border-blue-400/30">
+      <footer
+        class="bg-blue-900/80 backdrop-blur-sm text-blue-100 py-6 border-t border-blue-400/30"
+      >
         <div class="container mx-auto px-6 text-center">
-          <p>&copy; 2024 Cygnus Music. Exploring the future of AI-generated compositions.</p>
+          <p>
+            &copy; 2024 Cygnus Music. Exploring the future of AI-generated
+            compositions.
+          </p>
         </div>
       </footer>
     </div>
@@ -52,20 +60,55 @@ const content = {
       position: absolute;
       width: 4px;
       height: 4px;
-      background: radial-gradient(circle, rgba(6, 182, 212, 0.8) 0%, rgba(59, 130, 246, 0.4) 100%);
+      background: radial-gradient(
+        circle,
+        rgba(6, 182, 212, 0.8) 0%,
+        rgba(59, 130, 246, 0.4) 100%
+      );
       border-radius: 50%;
       animation: float 6s ease-in-out infinite;
     }
 
-    .particle-1 { top: 20%; left: 10%; animation-delay: 0s; animation-duration: 8s; }
-    .particle-2 { top: 60%; left: 80%; animation-delay: 2s; animation-duration: 6s; }
-    .particle-3 { top: 80%; left: 20%; animation-delay: 4s; animation-duration: 10s; }
-    .particle-4 { top: 30%; left: 70%; animation-delay: 1s; animation-duration: 7s; }
-    .particle-5 { top: 50%; left: 30%; animation-delay: 3s; animation-duration: 9s; }
-    .particle-6 { top: 10%; left: 60%; animation-delay: 5s; animation-duration: 8s; }
+    .particle-1 {
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+      animation-duration: 8s;
+    }
+    .particle-2 {
+      top: 60%;
+      left: 80%;
+      animation-delay: 2s;
+      animation-duration: 6s;
+    }
+    .particle-3 {
+      top: 80%;
+      left: 20%;
+      animation-delay: 4s;
+      animation-duration: 10s;
+    }
+    .particle-4 {
+      top: 30%;
+      left: 70%;
+      animation-delay: 1s;
+      animation-duration: 7s;
+    }
+    .particle-5 {
+      top: 50%;
+      left: 30%;
+      animation-delay: 3s;
+      animation-duration: 9s;
+    }
+    .particle-6 {
+      top: 10%;
+      left: 60%;
+      animation-delay: 5s;
+      animation-duration: 8s;
+    }
 
     @keyframes float {
-      0%, 100% {
+      0%,
+      100% {
         transform: translateY(0px) translateX(0px) scale(1);
         opacity: 0.7;
       }
@@ -98,5 +141,4 @@ const content = {
       }
     }
   </style>
-
 </MainLayout>

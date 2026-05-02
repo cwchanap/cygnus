@@ -1,0 +1,7 @@
+dist
+coverage
+.astro
+.wrangler
+node_modules
+test-results
+public/models
