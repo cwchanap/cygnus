@@ -6,7 +6,7 @@ import {
   parseCategoryId,
 } from '../../../lib/categories';
 import { createDb } from '../../../lib/db';
-import { categories, songs } from '../../../lib/db/schema';
+import { categories } from '../../../lib/db/schema';
 
 function jsonResponse(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
@@ -36,11 +36,19 @@ function validateRuntime(request: Request, locals: App.Locals) {
     return { response: missingDbResponse() };
   }
 
-  return { db: createDb(runtime.env.DB) };
+  return { d1: runtime.env.DB, db: createDb(runtime.env.DB) };
 }
 
 async function parseName(request: Request) {
-  const body = (await request.json()) as { name?: unknown };
+  let body: { id?: unknown; name?: unknown };
+  try {
+    body = (await request.json()) as { id?: unknown; name?: unknown };
+  } catch {
+    return {
+      error: jsonResponse({ message: 'Invalid JSON body' }, 400),
+    };
+  }
+
   const name = typeof body.name === 'string' ? body.name.trim() : '';
 
   if (!name) {
@@ -54,6 +62,17 @@ async function parseName(request: Request) {
     normalizedName: normalizeCategoryName(name),
     body,
   };
+}
+
+function isUniqueConstraintError(err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    normalizedMessage.includes('unique constraint') ||
+    normalizedMessage.includes('sqlite_constraint_unique') ||
+    normalizedMessage.includes('constraint failed: categories.normalized_name')
+  );
 }
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -100,14 +119,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return jsonResponse({ message: 'Category already exists' }, 409);
     }
 
-    await runtime.db
-      .insert(categories)
-      .values({
-        name: parsed.name,
-        normalized_name: parsed.normalizedName,
-        created_date: new Date().toISOString(),
-      })
-      .run();
+    try {
+      await runtime.db
+        .insert(categories)
+        .values({
+          name: parsed.name,
+          normalized_name: parsed.normalizedName,
+          created_date: new Date().toISOString(),
+        })
+        .run();
+    } catch (err) {
+      if (isUniqueConstraintError(err)) {
+        return jsonResponse({ message: 'Category already exists' }, 409);
+      }
+
+      throw err;
+    }
 
     return jsonResponse({ message: 'Category created successfully' }, 201);
   } catch (err) {
@@ -157,14 +184,22 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       return jsonResponse({ message: 'Category already exists' }, 409);
     }
 
-    await runtime.db
-      .update(categories)
-      .set({
-        name: parsed.name,
-        normalized_name: parsed.normalizedName,
-      })
-      .where(eq(categories.id, categoryId))
-      .run();
+    try {
+      await runtime.db
+        .update(categories)
+        .set({
+          name: parsed.name,
+          normalized_name: parsed.normalizedName,
+        })
+        .where(eq(categories.id, categoryId))
+        .run();
+    } catch (err) {
+      if (isUniqueConstraintError(err)) {
+        return jsonResponse({ message: 'Category already exists' }, 409);
+      }
+
+      throw err;
+    }
 
     return jsonResponse({ message: 'Category updated successfully' }, 200);
   } catch (err) {
@@ -197,16 +232,14 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       return jsonResponse({ message: 'Category not found' }, 404);
     }
 
-    await runtime.db
-      .update(songs)
-      .set({ category_id: null })
-      .where(eq(songs.category_id, categoryId))
-      .run();
-
-    await runtime.db
-      .delete(categories)
-      .where(eq(categories.id, categoryId))
-      .run();
+    await runtime.d1.batch([
+      runtime.d1
+        .prepare('UPDATE songs SET category_id = NULL WHERE category_id = ?')
+        .bind(categoryId),
+      runtime.d1
+        .prepare('DELETE FROM categories WHERE id = ?')
+        .bind(categoryId),
+    ]);
 
     return jsonResponse({ message: 'Category deleted successfully' }, 200);
   } catch (err) {
