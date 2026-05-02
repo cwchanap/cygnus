@@ -8,20 +8,43 @@
 
   let message = '';
   let categories: Category[] = [];
+  let categoryLoading = true;
+  let categoryError = '';
+
+  async function readMessage(response: Response) {
+    try {
+      const body = await response.json();
+      return typeof body.message === 'string' ? body.message : response.statusText;
+    } catch {
+      return response.statusText;
+    }
+  }
 
   async function fetchCategories() {
     try {
+      categoryLoading = true;
+      categoryError = '';
       const response = await fetch('/api/admin/categories');
-      if (!response.ok) return;
+      if (!response.ok) {
+        throw new Error(await readMessage(response));
+      }
 
       const data = await response.json();
       categories = data.categories ?? [];
     } catch (error) {
-      console.error('Failed to load categories:', error);
+      categoryError = error instanceof Error ? error.message : 'Failed to load categories';
+      categories = [];
+    } finally {
+      categoryLoading = false;
     }
   }
 
   async function handleSubmit(event: SubmitEvent) {
+    if (categoryLoading || categoryError) {
+      message = categoryError || 'Categories are still loading. Try again in a moment.';
+      return;
+    }
+
     console.log('Form submission triggered');
     const form = event.target as HTMLFormElement;
     const formData = new FormData(form);
@@ -91,9 +114,14 @@
         id="categoryId"
         name="categoryId"
         required={categories.length > 0}
+        disabled={categoryLoading || !!categoryError}
         class="mt-1 block w-full px-3 py-2 bg-blue-900/40 border border-blue-400/30 rounded-md shadow-sm text-blue-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 sm:text-sm"
       >
-        {#if categories.length > 0}
+        {#if categoryLoading}
+          <option value="">Loading categories...</option>
+        {:else if categoryError}
+          <option value="">Categories unavailable</option>
+        {:else if categories.length > 0}
           <option value="">Select category</option>
           {#each categories as category (category.id)}
             <option value={category.id}>{category.name}</option>
@@ -102,12 +130,19 @@
           <option value="">No configured categories</option>
         {/if}
       </select>
+      {#if categoryError}
+        <p class="mt-2 text-sm text-red-300">{categoryError}</p>
+      {/if}
     </div>
     <div class="flex items-center">
       <input type="checkbox" id="is_released" name="is_released" value="true" class="h-4 w-4 text-cyan-400 bg-blue-900/40 border-blue-400/30 rounded focus:ring-cyan-400">
       <label for="is_released" class="ml-2 block text-sm text-cyan-200">Is Released?</label>
     </div>
-    <button type="submit" class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-75 transform hover:-translate-y-0.5 transition">
+    <button
+      type="submit"
+      disabled={categoryLoading || !!categoryError}
+      class="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-75 transform hover:-translate-y-0.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+    >
       Upload Song
     </button>
   </form>

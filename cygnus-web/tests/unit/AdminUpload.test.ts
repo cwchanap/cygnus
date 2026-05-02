@@ -149,4 +149,24 @@ describe('AdminUpload', () => {
     });
     expect(select).not.toBeRequired();
   });
+
+  it('shows an error and disables submit when category loading fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        statusText: 'Server Error',
+        json: () => Promise.resolve({ message: 'Could not load categories' }),
+      })
+    );
+
+    render(AdminUpload);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Could not load categories/i)
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /Upload Song/i })).toBeDisabled();
+  });
 });
