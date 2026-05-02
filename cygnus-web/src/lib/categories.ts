@@ -12,7 +12,7 @@ export function parseCategoryId(
 ): number | null {
   if (value == null) return null;
   const raw = String(value).trim();
-  if (raw === '') return null;
+  if (!/^[1-9]\d*$/.test(raw)) return null;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
