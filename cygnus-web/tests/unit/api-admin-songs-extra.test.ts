@@ -60,6 +60,7 @@ const mockOffset = vi.fn().mockReturnThis();
 const mockOrderBy = vi.fn().mockReturnThis();
 const mockSelectFn = vi.fn().mockReturnThis();
 const mockFrom = vi.fn().mockReturnThis();
+const mockLeftJoin = vi.fn().mockReturnThis();
 const mockDeleteFn = vi.fn().mockReturnThis();
 const mockWhere = vi.fn().mockReturnThis();
 const mockUpdateFn = vi.fn().mockReturnThis();
@@ -68,6 +69,7 @@ const mockSet = vi.fn().mockReturnThis();
 const mockDb = {
   select: mockSelectFn,
   from: mockFrom,
+  leftJoin: mockLeftJoin,
   orderBy: mockOrderBy,
   limit: mockLimit,
   offset: mockOffset,
@@ -90,6 +92,7 @@ function setupMockDb() {
   mockOrderBy.mockReturnThis();
   mockSelectFn.mockReturnThis();
   mockFrom.mockReturnThis();
+  mockLeftJoin.mockReturnThis();
   mockDeleteFn.mockReturnThis();
   mockWhere.mockReturnThis();
   mockUpdateFn.mockReturnThis();
