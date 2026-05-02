@@ -169,4 +169,30 @@ describe('AdminUpload', () => {
     });
     expect(screen.getByRole('button', { name: /Upload Song/i })).toBeDisabled();
   });
+
+  it('disables submit while categories are loading', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        if (url === '/api/admin/categories') {
+          return new Promise(() => {});
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ message: 'Uploaded successfully' }),
+        });
+      })
+    );
+
+    render(AdminUpload);
+
+    expect(screen.getByRole('button', { name: /Upload Song/i })).toBeDisabled();
+    expect(
+      screen.getByRole('option', { name: /Loading categories/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: /No configured categories/i })
+    ).not.toBeInTheDocument();
+  });
 });
