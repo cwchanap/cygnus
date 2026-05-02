@@ -27,8 +27,6 @@
     totalPages: number;
   }
 
-  export let refreshVersion = 0;
-
   let songs: Song[] = [];
   let categories: Category[] = [];
   let pagination: Pagination = { page: 1, limit: 10, total: 0, totalPages: 0 };
@@ -38,8 +36,6 @@
   let categoryError = '';
   let deletingId: number | null = null;
   let editingSong: Song | null = null;
-  let mounted = false;
-  let lastRefreshVersion = refreshVersion;
 
   // Form data for editing
   let editForm = {
@@ -49,7 +45,7 @@
     release_date: '',
     is_released: false,
     origin: '',
-    categoryId: ''
+    categoryId: '',
   };
 
   async function fetchCategories() {
@@ -59,7 +55,8 @@
       const response = await fetch('/api/admin/categories');
       if (!response.ok) {
         if (response.status === 401) {
-          window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+          window.location.href =
+            '/login?next=' + encodeURIComponent(window.location.pathname);
           return;
         }
         throw new Error('Failed to fetch categories');
@@ -68,7 +65,8 @@
       const data = await response.json();
       categories = data.categories ?? [];
     } catch (err) {
-      categoryError = err instanceof Error ? err.message : 'Failed to fetch categories';
+      categoryError =
+        err instanceof Error ? err.message : 'Failed to fetch categories';
       error = categoryError;
       categories = [];
       console.error('Error fetching categories:', err);
@@ -79,10 +77,13 @@
 
   async function fetchSongsData(page = 1) {
     try {
-      const response = await fetch(`/api/admin/songs?page=${page}&limit=${pagination.limit}`);
+      const response = await fetch(
+        `/api/admin/songs?page=${page}&limit=${pagination.limit}`
+      );
       if (!response.ok) {
         if (response.status === 401) {
-          window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+          window.location.href =
+            '/login?next=' + encodeURIComponent(window.location.pathname);
           return;
         }
         throw new Error('Failed to fetch songs');
@@ -112,19 +113,24 @@
   }
 
   async function deleteSong(songId: number) {
-    if (!confirm('Are you sure you want to delete this song? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this song? This action cannot be undone.'
+      )
+    ) {
       return;
     }
 
     try {
       deletingId = songId;
       const response = await fetch(`/api/admin/songs?id=${songId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+          window.location.href =
+            '/login?next=' + encodeURIComponent(window.location.pathname);
           return;
         }
         throw new Error('Failed to delete song');
@@ -151,7 +157,7 @@
       release_date: song.release_date,
       is_released: song.is_released,
       origin: song.origin,
-      categoryId: song.categoryId == null ? '' : song.categoryId.toString()
+      categoryId: song.categoryId == null ? '' : song.categoryId.toString(),
     };
   }
 
@@ -164,14 +170,15 @@
       release_date: '',
       is_released: false,
       origin: '',
-      categoryId: ''
+      categoryId: '',
     };
   }
 
   async function saveEdit() {
     if (!editingSong) return;
     if (categoryLoading || categoryError) {
-      error = categoryError || 'Categories are still loading. Try again in a moment.';
+      error =
+        categoryError || 'Categories are still loading. Try again in a moment.';
       return;
     }
 
@@ -184,16 +191,20 @@
       formData.append('release_date', editForm.release_date);
       formData.append('is_released', editForm.is_released.toString());
       formData.append('origin', editForm.origin);
-      formData.append('categoryId', categories.length > 0 ? editForm.categoryId : '');
+      formData.append(
+        'categoryId',
+        categories.length > 0 ? editForm.categoryId : ''
+      );
 
       const response = await fetch('/api/admin/songs', {
         method: 'PUT',
-        body: formData
+        body: formData,
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          window.location.href = '/login?next=' + encodeURIComponent(window.location.pathname);
+          window.location.href =
+            '/login?next=' + encodeURIComponent(window.location.pathname);
           return;
         }
         throw new Error('Failed to update song');
@@ -213,24 +224,20 @@
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
   onMount(() => {
-    mounted = true;
     loadData();
   });
-
-  $: if (mounted && refreshVersion !== lastRefreshVersion) {
-    lastRefreshVersion = refreshVersion;
-    loadData(pagination.page);
-  }
 </script>
 
 <div class="song-management">
   {#if error}
-    <div class="bg-red-500/20 border border-red-400/50 text-red-300 px-4 py-3 rounded-lg mb-6">
+    <div
+      class="bg-red-500/20 border border-red-400/50 text-red-300 px-4 py-3 rounded-lg mb-6"
+    >
       {error}
     </div>
   {/if}
@@ -238,7 +245,9 @@
   {#if loading}
     <div class="text-center py-12">
       <div class="text-white text-lg mb-4">Loading songs...</div>
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"></div>
+      <div
+        class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto"
+      ></div>
     </div>
   {:else}
     <!-- Songs Table -->
@@ -258,7 +267,9 @@
         </thead>
         <tbody>
           {#each songs as song (song.id)}
-            <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
+            <tr
+              class="border-b border-white/10 hover:bg-white/5 transition-colors"
+            >
               <td class="py-3 px-4">
                 {#if editingSong?.id === song.id}
                   <input
@@ -294,7 +305,9 @@
               </td>
               <td class="py-3 px-4">
                 {#if editingSong?.id === song.id}
-                  <label class="sr-only" for={`song-category-${song.id}`}>Category</label>
+                  <label class="sr-only" for={`song-category-${song.id}`}
+                    >Category</label
+                  >
                   <select
                     id={`song-category-${song.id}`}
                     name="categoryId"
@@ -304,7 +317,9 @@
                     {#if categories.length > 0}
                       <option value="">Uncategorized</option>
                       {#each categories as category (category.id)}
-                        <option value={category.id.toString()}>{category.name}</option>
+                        <option value={category.id.toString()}
+                          >{category.name}</option
+                        >
                       {/each}
                     {:else}
                       <option value="">Uncategorized</option>
@@ -333,7 +348,11 @@
                     class="rounded border-white/30"
                   />
                 {:else}
-                  <span class="px-2 py-1 rounded text-xs {song.is_released ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}">
+                  <span
+                    class="px-2 py-1 rounded text-xs {song.is_released
+                      ? 'bg-green-500/20 text-green-300'
+                      : 'bg-yellow-500/20 text-yellow-300'}"
+                  >
                     {song.is_released ? 'Released' : 'Draft'}
                   </span>
                 {/if}
@@ -395,7 +414,8 @@
         </button>
 
         <span class="text-white">
-          Page {pagination.page} of {pagination.totalPages} ({pagination.total} total songs)
+          Page {pagination.page} of {pagination.totalPages} ({pagination.total} total
+          songs)
         </span>
 
         <button
@@ -421,11 +441,12 @@
     min-height: 400px;
   }
 
-  input[type="checkbox"] {
+  input[type='checkbox'] {
     accent-color: rgb(6 182 212);
   }
 
-  input:focus, select:focus {
+  input:focus,
+  select:focus {
     outline: none;
     ring: 2px;
     ring-color: rgb(6 182 212);

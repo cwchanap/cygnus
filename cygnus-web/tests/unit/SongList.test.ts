@@ -10,6 +10,8 @@ type Song = {
   releaseDate: string;
   previewUrl?: string;
   previewImage?: string;
+  categoryId?: string | null;
+  categoryName?: string | null;
 };
 
 function makeSongs(count: number): Song[] {
@@ -78,6 +80,25 @@ describe('SongList', () => {
     });
     // CSS `uppercase` is a visual transform; DOM text content is the raw value
     expect(screen.getByText('Human')).toBeInTheDocument();
+  });
+
+  it('renders category label for each song', () => {
+    render(SongList, {
+      props: {
+        songs: [
+          {
+            id: '1',
+            title: 'Beat',
+            origin: 'AI',
+            bpm: 140,
+            releaseDate: '2024-01-01',
+            categoryId: '7',
+            categoryName: 'Metal',
+          },
+        ],
+      },
+    });
+    expect(screen.getByText('Metal')).toBeInTheDocument();
   });
 
   it('pads track indices with leading zero (01, 02, ...)', () => {
