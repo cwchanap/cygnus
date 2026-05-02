@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import AdminSongCategories from '../../src/components/AdminSongCategories.svelte';
 
 const mockSongs = [
   {
@@ -266,5 +267,116 @@ describe('SongManagement', () => {
     expect(select.name).toBe('categoryId');
     expect(select.value).toBe('1');
     expect(screen.getByRole('option', { name: 'House' })).toBeInTheDocument();
+  });
+
+  it('keeps edit controls unavailable while categories are loading', async () => {
+    const categoryPromise = new Promise(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string, options?: RequestInit) => {
+        if (url === '/api/admin/categories') {
+          return categoryPromise;
+        }
+
+        if (url.startsWith('/api/admin/songs') && !options?.method) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(paginatedResponse),
+          });
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        });
+      })
+    );
+
+    render(SongManagement);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.getByText(/Loading songs/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /edit/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('refetches songs and categories when category management changes categories', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockImplementation((url: string, options?: RequestInit) => {
+        if (url === '/api/admin/categories' && options?.method === 'POST') {
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({ message: 'Category created successfully' }),
+          });
+        }
+
+        if (url === '/api/admin/categories') {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ categories: mockCategories }),
+          });
+        }
+
+        if (url.startsWith('/api/admin/songs') && !options?.method) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(paginatedResponse),
+          });
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        });
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(AdminSongCategories);
+
+    await waitFor(() => {
+      expect(screen.getByText('Drum Beat')).toBeInTheDocument();
+    });
+
+    const initialSongFetchCount = fetchMock.mock.calls.filter(
+      ([url, options]) =>
+        typeof url === 'string' &&
+        url.startsWith('/api/admin/songs') &&
+        !(options as RequestInit | undefined)?.method
+    ).length;
+    const initialCategoryFetchCount = fetchMock.mock.calls.filter(
+      ([url, options]) =>
+        url === '/api/admin/categories' &&
+        !(options as RequestInit | undefined)?.method
+    ).length;
+
+    await fireEvent.input(screen.getByLabelText(/New category/i), {
+      target: { value: 'Techno' },
+    });
+    await fireEvent.click(
+      screen.getByRole('button', { name: /Create Category/i })
+    );
+
+    await waitFor(() => {
+      const songFetchCount = fetchMock.mock.calls.filter(
+        ([url, options]) =>
+          typeof url === 'string' &&
+          url.startsWith('/api/admin/songs') &&
+          !(options as RequestInit | undefined)?.method
+      ).length;
+      const categoryFetchCount = fetchMock.mock.calls.filter(
+        ([url, options]) =>
+          url === '/api/admin/categories' &&
+          !(options as RequestInit | undefined)?.method
+      ).length;
+
+      expect(songFetchCount).toBeGreaterThan(initialSongFetchCount);
+      expect(categoryFetchCount).toBeGreaterThan(initialCategoryFetchCount);
+    });
   });
 });

@@ -1,7 +1,6 @@
 ---
 import MainLayout from '../../layouts/main.astro';
-import CategoryManagement from '../../components/CategoryManagement.svelte';
-import SongManagement from '../../components/SongManagement.svelte';
+import AdminSongCategories from '../../components/AdminSongCategories.svelte';
 import { isAdminAuthed } from '../../lib/auth';
 
 // If not authenticated, redirect to login with next param
@@ -71,11 +70,7 @@ if (!isAdminAuthed(Astro.request)) {
                 </a>
               </div>
 
-              <!-- Category management component -->
-              <CategoryManagement client:load />
-
-              <!-- Song management component -->
-              <SongManagement client:load />
+              <AdminSongCategories client:load />
             </div>
           </div>
         </div>

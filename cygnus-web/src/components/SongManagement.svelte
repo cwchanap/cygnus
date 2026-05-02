@@ -27,13 +27,19 @@
     totalPages: number;
   }
 
+  export let refreshVersion = 0;
+
   let songs: Song[] = [];
   let categories: Category[] = [];
   let pagination: Pagination = { page: 1, limit: 10, total: 0, totalPages: 0 };
   let loading = true;
   let error = '';
+  let categoryLoading = true;
+  let categoryError = '';
   let deletingId: number | null = null;
   let editingSong: Song | null = null;
+  let mounted = false;
+  let lastRefreshVersion = refreshVersion;
 
   // Form data for editing
   let editForm = {
@@ -48,6 +54,8 @@
 
   async function fetchCategories() {
     try {
+      categoryLoading = true;
+      categoryError = '';
       const response = await fetch('/api/admin/categories');
       if (!response.ok) {
         if (response.status === 401) {
@@ -60,16 +68,17 @@
       const data = await response.json();
       categories = data.categories ?? [];
     } catch (err) {
-      error = err instanceof Error ? err.message : 'Failed to fetch categories';
+      categoryError = err instanceof Error ? err.message : 'Failed to fetch categories';
+      error = categoryError;
+      categories = [];
       console.error('Error fetching categories:', err);
+    } finally {
+      categoryLoading = false;
     }
   }
 
-  async function fetchSongs(page = 1) {
+  async function fetchSongsData(page = 1) {
     try {
-      loading = true;
-      error = '';
-
       const response = await fetch(`/api/admin/songs?page=${page}&limit=${pagination.limit}`);
       if (!response.ok) {
         if (response.status === 401) {
@@ -85,9 +94,21 @@
     } catch (err) {
       error = err instanceof Error ? err.message : 'An error occurred';
       console.error('Error fetching songs:', err);
-    } finally {
-      loading = false;
     }
+  }
+
+  async function loadData(page = 1) {
+    loading = true;
+    error = '';
+    await Promise.all([fetchCategories(), fetchSongsData(page)]);
+    loading = false;
+  }
+
+  async function fetchSongs(page = 1) {
+    loading = true;
+    error = categoryError;
+    await fetchSongsData(page);
+    loading = false;
   }
 
   async function deleteSong(songId: number) {
@@ -120,6 +141,8 @@
   }
 
   function startEdit(song: Song) {
+    if (categoryLoading || categoryError) return;
+
     editingSong = song;
     editForm = {
       song_name: song.song_name,
@@ -147,6 +170,10 @@
 
   async function saveEdit() {
     if (!editingSong) return;
+    if (categoryLoading || categoryError) {
+      error = categoryError || 'Categories are still loading. Try again in a moment.';
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -191,9 +218,14 @@
   }
 
   onMount(() => {
-    fetchCategories();
-    fetchSongs();
+    mounted = true;
+    loadData();
   });
+
+  $: if (mounted && refreshVersion !== lastRefreshVersion) {
+    lastRefreshVersion = refreshVersion;
+    loadData(pagination.page);
+  }
 </script>
 
 <div class="song-management">
@@ -314,7 +346,8 @@
                   <div class="flex gap-2">
                     <button
                       on:click={saveEdit}
-                      class="px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm transition-colors"
+                      disabled={categoryLoading || !!categoryError}
+                      class="px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded text-sm transition-colors disabled:opacity-50"
                     >
                       Save
                     </button>
@@ -329,7 +362,8 @@
                   <div class="flex gap-2">
                     <button
                       on:click={() => startEdit(song)}
-                      class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm transition-colors"
+                      disabled={categoryLoading || !!categoryError}
+                      class="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm transition-colors disabled:opacity-50"
                     >
                       Edit
                     </button>
