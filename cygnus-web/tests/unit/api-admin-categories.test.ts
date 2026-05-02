@@ -46,6 +46,7 @@ const mockD1 = {
 };
 
 const authedLocals = { runtime: { env: { DB: mockD1 } } };
+const noDbLocals = { runtime: { env: {} } };
 
 function makeRequest(
   path = '/api/admin/categories',
@@ -67,6 +68,28 @@ function routeContext(
   return {
     request: makeRequest(path, options),
     locals: authedLocals,
+    url: new URL(`http://localhost${path}`),
+  } as any;
+}
+
+function unauthedRouteContext(
+  path = '/api/admin/categories',
+  options: RequestInit = {}
+) {
+  return {
+    request: new Request(`http://localhost${path}`, options),
+    locals: authedLocals,
+    url: new URL(`http://localhost${path}`),
+  } as any;
+}
+
+function noDbRouteContext(
+  path = '/api/admin/categories',
+  options: RequestInit = {}
+) {
+  return {
+    request: makeRequest(path, options),
+    locals: noDbLocals,
     url: new URL(`http://localhost${path}`),
   } as any;
 }
@@ -118,6 +141,92 @@ describe('/api/admin/categories', () => {
 
     expect(resp.status).toBe(401);
     await expect(resp.json()).resolves.toEqual({ message: 'Unauthorized' });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('POST requires admin auth', async () => {
+    const resp = await POST(
+      unauthedRouteContext(
+        '/api/admin/categories',
+        jsonRequest({ name: 'Rock' }, 'POST')
+      )
+    );
+
+    expect(resp.status).toBe(401);
+    await expect(resp.json()).resolves.toEqual({ message: 'Unauthorized' });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('PUT requires admin auth', async () => {
+    const resp = await PUT(
+      unauthedRouteContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 1, name: 'Rock' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(401);
+    await expect(resp.json()).resolves.toEqual({ message: 'Unauthorized' });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('DELETE requires admin auth', async () => {
+    const resp = await DELETE(
+      unauthedRouteContext('/api/admin/categories?id=1')
+    );
+
+    expect(resp.status).toBe(401);
+    await expect(resp.json()).resolves.toEqual({ message: 'Unauthorized' });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('GET returns 500 JSON when D1 binding is missing', async () => {
+    const resp = await GET(noDbRouteContext());
+
+    expect(resp.status).toBe(500);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Server configuration error: D1 binding missing.',
+    });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('POST returns 500 JSON when D1 binding is missing', async () => {
+    const resp = await POST(
+      noDbRouteContext(
+        '/api/admin/categories',
+        jsonRequest({ name: 'Rock' }, 'POST')
+      )
+    );
+
+    expect(resp.status).toBe(500);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Server configuration error: D1 binding missing.',
+    });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('PUT returns 500 JSON when D1 binding is missing', async () => {
+    const resp = await PUT(
+      noDbRouteContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 1, name: 'Rock' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(500);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Server configuration error: D1 binding missing.',
+    });
+    expect(createDb).not.toHaveBeenCalled();
+  });
+
+  it('DELETE returns 500 JSON when D1 binding is missing', async () => {
+    const resp = await DELETE(noDbRouteContext('/api/admin/categories?id=1'));
+
+    expect(resp.status).toBe(500);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Server configuration error: D1 binding missing.',
+    });
     expect(createDb).not.toHaveBeenCalled();
   });
 
@@ -254,6 +363,61 @@ describe('/api/admin/categories', () => {
     });
   });
 
+  it('PUT returns 400 for invalid category ID', async () => {
+    const resp = await PUT(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 'abc', name: 'Rock' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('PUT returns 400 for non-positive category ID', async () => {
+    const resp = await PUT(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 0, name: 'Rock' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('PUT returns 400 for empty trimmed name', async () => {
+    const resp = await PUT(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 1, name: '   ' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(400);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('PUT rejects duplicate normalized names from a different category', async () => {
+    mockGet
+      .mockResolvedValueOnce({ id: 3, name: 'Rock' })
+      .mockResolvedValueOnce({ id: 4, name: 'Metal' });
+
+    const resp = await PUT(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 3, name: '  metal  ' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(409);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Category already exists',
+    });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
   it('PUT returns 404 for missing category ID', async () => {
     mockGet.mockResolvedValue(undefined);
 
@@ -266,6 +430,18 @@ describe('/api/admin/categories', () => {
 
     expect(resp.status).toBe(404);
     expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('DELETE returns 404 when valid category ID does not exist', async () => {
+    mockGet.mockResolvedValue(undefined);
+
+    const resp = await DELETE(routeContext('/api/admin/categories?id=404'));
+
+    expect(resp.status).toBe(404);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Category not found',
+    });
+    expect(mockBatch).not.toHaveBeenCalled();
   });
 
   it('DELETE deletes a category and uncategorizes songs first', async () => {
