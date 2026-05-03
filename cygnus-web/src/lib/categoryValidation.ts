@@ -8,8 +8,11 @@ export async function resolveSongCategoryId(
   value: FormDataEntryValue | null
 ): Promise<{ categoryId: number | null } | { response: Response }> {
   const categoryCount = await db.$count(categories);
-  const hasValue = value != null;
-  const categoryId = parseCategoryId(value);
+  // Forms submit categoryId="" for uncategorized; treat blank as missing
+  const normalized =
+    value != null && String(value).trim() !== '' ? value : null;
+  const hasValue = normalized != null;
+  const categoryId = parseCategoryId(normalized);
 
   if (!hasValue && categoryCount > 0) {
     return {
