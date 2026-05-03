@@ -237,4 +237,78 @@ describe('MusicHome', () => {
     });
     expect(screen.getAllByText('Pop Song').length).toBeGreaterThan(0);
   });
+
+  it('reselects first song after filtering to empty category then back to all', async () => {
+    const songsResponse = {
+      songs: [
+        {
+          id: '1',
+          title: 'Metal Song',
+          origin: 'AI',
+          bpm: 120,
+          releaseDate: '2024-01-01',
+          categoryId: '1',
+          categoryName: 'Metal',
+        },
+        {
+          id: '2',
+          title: 'Pop Song',
+          origin: 'AI',
+          bpm: 130,
+          releaseDate: '2024-01-02',
+          categoryId: '2',
+          categoryName: 'J Pop',
+        },
+      ],
+      pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
+    };
+    const categoriesResponse = {
+      categories: [
+        { id: 1, name: 'Metal' },
+        { id: 2, name: 'J Pop' },
+      ],
+    };
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url === '/api/categories') {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(categoriesResponse),
+          });
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(songsResponse),
+        });
+      })
+    );
+
+    render(MusicHome);
+
+    // Wait for initial load — first song should be selected
+    await waitFor(() => {
+      expect(screen.getAllByText('Metal Song').length).toBeGreaterThan(0);
+    });
+
+    // Filter to "uncategorized" — empty result, selectedSong becomes null
+    await fireEvent.change(screen.getByLabelText('Category filter'), {
+      target: { value: 'uncategorized' },
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Metal Song')).not.toBeInTheDocument();
+      expect(screen.queryByText('Pop Song')).not.toBeInTheDocument();
+    });
+
+    // Switch back to "All" — should auto-select the first song again
+    await fireEvent.change(screen.getByLabelText('Category filter'), {
+      target: { value: 'all' },
+    });
+    await waitFor(() => {
+      expect(screen.getAllByText('Metal Song').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Pop Song').length).toBeGreaterThan(0);
+    });
+  });
 });
