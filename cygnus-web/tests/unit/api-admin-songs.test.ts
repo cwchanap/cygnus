@@ -405,4 +405,40 @@ describe('PUT /api/admin/songs - category validation', () => {
       expect.objectContaining({ category_id: null })
     );
   });
+
+  it('treats blank-string categoryId as missing when no categories exist', async () => {
+    mockCount.mockResolvedValue(0);
+
+    const resp = await PUT({
+      request: makeAuthedRequest('/api/admin/songs', {
+        method: 'PUT',
+        body: makeSongForm({ categoryId: '' }),
+      }),
+      locals: { runtime: { env: { DB: {} } } },
+      url: new URL('http://localhost/api/admin/songs'),
+    } as any);
+
+    expect(resp.status).toBe(200);
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ category_id: null })
+    );
+  });
+
+  it('treats blank-string categoryId as missing when categories exist', async () => {
+    mockCount.mockResolvedValue(1);
+
+    const resp = await PUT({
+      request: makeAuthedRequest('/api/admin/songs', {
+        method: 'PUT',
+        body: makeSongForm({ categoryId: '' }),
+      }),
+      locals: { runtime: { env: { DB: {} } } },
+      url: new URL('http://localhost/api/admin/songs'),
+    } as any);
+
+    expect(resp.status).toBe(400);
+    const body = await resp.json();
+    expect(body.message).toMatch(/category/i);
+    expect(mockSet).not.toHaveBeenCalled();
+  });
 });
