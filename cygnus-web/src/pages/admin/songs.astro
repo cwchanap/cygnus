@@ -8,11 +8,7 @@ const authed = isAdminAuthed(Astro.request);
 // If not authenticated, redirect to login with next param
 if (!authed) {
   const next = Astro.url.pathname + (Astro.url.search ?? '');
-  Astro.response.status = 303;
-  Astro.response.headers.set(
-    'Location',
-    `/login?next=${encodeURIComponent(next)}`
-  );
+  return Astro.redirect(`/login?next=${encodeURIComponent(next)}`);
 }
 ---
 
