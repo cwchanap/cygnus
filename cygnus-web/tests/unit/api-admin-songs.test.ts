@@ -332,7 +332,7 @@ describe('PUT /api/admin/songs - category validation', () => {
     mockSet.mockReturnThis();
   });
 
-  it('requires categoryId when categories exist', async () => {
+  it('allows missing categoryId when categories exist (uncategorized)', async () => {
     mockCount.mockResolvedValue(1);
 
     const resp = await PUT({
@@ -344,10 +344,10 @@ describe('PUT /api/admin/songs - category validation', () => {
       url: new URL('http://localhost/api/admin/songs'),
     } as any);
 
-    expect(resp.status).toBe(400);
-    const body = await resp.json();
-    expect(body.message).toMatch(/category/i);
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(resp.status).toBe(200);
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ category_id: null })
+    );
   });
 
   it('updates category_id when categoryId is valid', async () => {
@@ -424,7 +424,7 @@ describe('PUT /api/admin/songs - category validation', () => {
     );
   });
 
-  it('treats blank-string categoryId as missing when categories exist', async () => {
+  it('allows blank-string categoryId when categories exist (uncategorized)', async () => {
     mockCount.mockResolvedValue(1);
 
     const resp = await PUT({
@@ -436,9 +436,9 @@ describe('PUT /api/admin/songs - category validation', () => {
       url: new URL('http://localhost/api/admin/songs'),
     } as any);
 
-    expect(resp.status).toBe(400);
-    const body = await resp.json();
-    expect(body.message).toMatch(/category/i);
-    expect(mockSet).not.toHaveBeenCalled();
+    expect(resp.status).toBe(200);
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ category_id: null })
+    );
   });
 });

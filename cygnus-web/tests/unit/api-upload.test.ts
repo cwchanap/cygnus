@@ -337,7 +337,7 @@ describe('POST /api/upload - category validation', () => {
     mockWhere.mockReturnThis();
   });
 
-  it('requires categoryId when categories exist', async () => {
+  it('allows missing categoryId when categories exist (uncategorized)', async () => {
     mockCount.mockResolvedValue(1);
     const req = makeRequest({ form: makeFullForm({ passkey: 'secret' }) });
 
@@ -346,10 +346,10 @@ describe('POST /api/upload - category validation', () => {
       locals: { runtime: mockRuntime },
     } as any);
 
-    expect(resp.status).toBe(400);
-    const body = await resp.json();
-    expect(body.message).toMatch(/category/i);
-    expect(mockInsertValues).not.toHaveBeenCalled();
+    expect(resp.status).toBe(200);
+    expect(mockInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ category_id: null })
+    );
   });
 
   it('stores category_id when categoryId is valid', async () => {
