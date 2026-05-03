@@ -22,6 +22,7 @@
   let categories: Category[] = [];
   let selectedCategory = 'all';
   let visibleSongs: Song[] = [];
+  let fetchGeneration = 0;
 
   let selectedSong: Song | null = null;
 
@@ -39,12 +40,64 @@
     };
   };
 
-  $: visibleSongs =
-    selectedCategory === 'all'
-      ? songs
-      : selectedCategory === 'uncategorized'
-        ? songs.filter((song) => !song.categoryId)
-        : songs.filter((song) => song.categoryId === selectedCategory);
+  async function fetchSongsByCategory(category: string, generation: number) {
+    try {
+      const limit = 20;
+      const MAX_CLIENT_PAGES = 50;
+      let url = `/api/songs?page=1&limit=${limit}`;
+      if (category !== 'all') {
+        url += `&category=${encodeURIComponent(category)}`;
+      }
+
+      const firstRes = await fetch(url);
+      if (!firstRes.ok)
+        throw new Error(`Failed to load songs: ${firstRes.status}`);
+      const firstData: PaginatedResponse = await firstRes.json();
+      // If a newer fetch was triggered, discard these results
+      if (generation !== fetchGeneration) return;
+      let fetchedSongs: Song[] = firstData.songs;
+
+      const totalPages = Math.min(
+        firstData.pagination.totalPages,
+        MAX_CLIENT_PAGES
+      );
+      if (totalPages > 1) {
+        const promises = [];
+        for (let page = 2; page <= totalPages; page++) {
+          let pageUrl = `/api/songs?page=${page}&limit=${limit}`;
+          if (category !== 'all') {
+            pageUrl += `&category=${encodeURIComponent(category)}`;
+          }
+          promises.push(fetch(pageUrl));
+        }
+        const responses = await Promise.all(promises);
+        const dataArr = await Promise.all(
+          responses.map((r, index) => {
+            if (!r.ok) {
+              throw new Error(
+                `Failed to load songs page ${index + 2}: ${r.status}`
+              );
+            }
+            return r.json() as Promise<PaginatedResponse>;
+          })
+        );
+        // Check again after async work
+        if (generation !== fetchGeneration) return;
+        fetchedSongs = [...fetchedSongs, ...dataArr.flatMap((d) => d.songs)];
+      }
+      songs = fetchedSongs;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // When category changes, fetch filtered songs from the server
+  $: if (selectedCategory) {
+    const gen = ++fetchGeneration;
+    fetchSongsByCategory(selectedCategory, gen);
+  }
+
+  $: visibleSongs = songs;
 
   $: if (
     selectedSong &&
@@ -61,50 +114,16 @@
 
   onMount(async () => {
     try {
-      const limit = 20;
-      const MAX_CLIENT_PAGES = 50;
-
       const categoriesRes = await fetch('/api/categories');
       if (categoriesRes.ok) {
         const categoriesData = await categoriesRes.json();
         categories = categoriesData.categories ?? [];
       }
-
-      const firstRes = await fetch(`/api/songs?page=1&limit=${limit}`);
-      if (!firstRes.ok)
-        throw new Error(`Failed to load songs: ${firstRes.status}`);
-      const firstData: PaginatedResponse = await firstRes.json();
-      songs = firstData.songs;
-
-      const totalPages = Math.min(
-        firstData.pagination.totalPages,
-        MAX_CLIENT_PAGES
-      );
-      if (totalPages > 1) {
-        const promises = [];
-        for (let page = 2; page <= totalPages; page++) {
-          promises.push(fetch(`/api/songs?page=${page}&limit=${limit}`));
-        }
-        const responses = await Promise.all(promises);
-        const dataArr = await Promise.all(
-          responses.map((r, index) => {
-            if (!r.ok) {
-              throw new Error(
-                `Failed to load songs page ${index + 2}: ${r.status}`
-              );
-            }
-            return r.json() as Promise<PaginatedResponse>;
-          })
-        );
-        songs = [...songs, ...dataArr.flatMap((d) => d.songs)];
-      }
-
-      if (!selectedSong && songs.length > 0) {
-        selectedSong = songs[0];
-      }
     } catch (err) {
       console.error(err);
     }
+    // Initial song fetch is triggered by the reactive statement above
+    // when selectedCategory initializes to 'all'.
   });
 </script>
 

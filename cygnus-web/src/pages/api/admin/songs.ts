@@ -231,23 +231,41 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const db = createDb(runtime.env.DB);
-    const resolvedCategory = await resolveSongCategoryId(db, categoryIdValue);
-    if ('response' in resolvedCategory) {
-      return resolvedCategory.response;
+
+    // Only resolve and update category_id when the field was explicitly present
+    // in the form data. This preserves the existing category when clients omit
+    // the field, while still allowing an explicit blank value to mean uncategorized.
+    const hasCategoryField = formData.has('categoryId');
+    let resolvedCategory:
+      | { categoryId: number | null }
+      | { response: Response }
+      | null = null;
+
+    if (hasCategoryField) {
+      resolvedCategory = await resolveSongCategoryId(db, categoryIdValue);
+      if ('response' in resolvedCategory) {
+        return resolvedCategory.response;
+      }
+    }
+
+    // Build update set, only including category_id when explicitly provided
+    const updateData: Record<string, unknown> = {
+      song_name: songName as string,
+      artist: artist as string,
+      bpm: parsedBpm,
+      release_date: releaseDate as string,
+      is_released: isReleased ? isReleased === 'true' : undefined,
+      origin: origin as string,
+    };
+
+    if (resolvedCategory) {
+      updateData.category_id = resolvedCategory.categoryId;
     }
 
     // Update the song
     await db
       .update(songs)
-      .set({
-        song_name: songName as string,
-        artist: artist as string,
-        bpm: parsedBpm,
-        release_date: releaseDate as string,
-        is_released: isReleased ? isReleased === 'true' : undefined,
-        origin: origin as string,
-        category_id: resolvedCategory.categoryId,
-      })
+      .set(updateData)
       .where(eq(songs.id, parsedSongId))
       .run();
 
