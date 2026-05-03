@@ -332,7 +332,7 @@ describe('PUT /api/admin/songs - category validation', () => {
     mockSet.mockReturnThis();
   });
 
-  it('allows missing categoryId when categories exist (uncategorized)', async () => {
+  it('preserves existing category when categoryId field is omitted from form', async () => {
     mockCount.mockResolvedValue(1);
 
     const resp = await PUT({
@@ -345,8 +345,10 @@ describe('PUT /api/admin/songs - category validation', () => {
     } as any);
 
     expect(resp.status).toBe(200);
+    // When categoryId field is not present in FormData, category_id should
+    // NOT be included in the update set (preserving existing value).
     expect(mockSet).toHaveBeenCalledWith(
-      expect.objectContaining({ category_id: null })
+      expect.not.objectContaining({ category_id: expect.anything() })
     );
   });
 
@@ -388,7 +390,7 @@ describe('PUT /api/admin/songs - category validation', () => {
     expect(mockSet).not.toHaveBeenCalled();
   });
 
-  it('allows missing categoryId when no categories exist and updates category_id null', async () => {
+  it('preserves existing category when no categories exist and field is omitted', async () => {
     mockCount.mockResolvedValue(0);
 
     const resp = await PUT({
@@ -401,8 +403,9 @@ describe('PUT /api/admin/songs - category validation', () => {
     } as any);
 
     expect(resp.status).toBe(200);
+    // categoryId field omitted → category_id not in update set
     expect(mockSet).toHaveBeenCalledWith(
-      expect.objectContaining({ category_id: null })
+      expect.not.objectContaining({ category_id: expect.anything() })
     );
   });
 

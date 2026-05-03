@@ -175,8 +175,8 @@ describe('MusicHome', () => {
     );
   });
 
-  it('filters songs by selected category', async () => {
-    const songsResponse = {
+  it('filters songs by selected category via server-side fetch', async () => {
+    const allSongsResponse = {
       songs: [
         {
           id: '1',
@@ -199,6 +199,20 @@ describe('MusicHome', () => {
       ],
       pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
     };
+    const filteredSongsResponse = {
+      songs: [
+        {
+          id: '2',
+          title: 'Pop Song',
+          origin: 'AI',
+          bpm: 130,
+          releaseDate: '2024-01-02',
+          categoryId: '2',
+          categoryName: 'J Pop',
+        },
+      ],
+      pagination: { page: 1, limit: 20, total: 1, totalPages: 1 },
+    };
     const categoriesResponse = {
       categories: [
         { id: 1, name: 'Metal' },
@@ -216,9 +230,17 @@ describe('MusicHome', () => {
           });
         }
 
+        // Server-side filtered request
+        if (url.includes('category=2')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(filteredSongsResponse),
+          });
+        }
+
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(songsResponse),
+          json: () => Promise.resolve(allSongsResponse),
         });
       })
     );
@@ -239,7 +261,7 @@ describe('MusicHome', () => {
   });
 
   it('reselects first song after filtering to empty category then back to all', async () => {
-    const songsResponse = {
+    const allSongsResponse = {
       songs: [
         {
           id: '1',
@@ -262,6 +284,10 @@ describe('MusicHome', () => {
       ],
       pagination: { page: 1, limit: 20, total: 2, totalPages: 1 },
     };
+    const emptySongsResponse = {
+      songs: [],
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
+    };
     const categoriesResponse = {
       categories: [
         { id: 1, name: 'Metal' },
@@ -279,9 +305,17 @@ describe('MusicHome', () => {
           });
         }
 
+        // Uncategorized filter returns empty
+        if (url.includes('category=uncategorized')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(emptySongsResponse),
+          });
+        }
+
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(songsResponse),
+          json: () => Promise.resolve(allSongsResponse),
         });
       })
     );
