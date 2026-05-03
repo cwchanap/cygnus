@@ -53,6 +53,12 @@
     selectedSong = visibleSongs[0] ?? null;
   }
 
+  // Auto-select the first song when selectedSong was null (e.g. after filtering
+  // to an empty category) and the user switches back to a non-empty list.
+  $: if (!selectedSong && visibleSongs.length > 0) {
+    selectedSong = visibleSongs[0];
+  }
+
   onMount(async () => {
     try {
       const limit = 20;
