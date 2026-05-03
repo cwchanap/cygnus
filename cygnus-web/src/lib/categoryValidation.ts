@@ -7,23 +7,13 @@ export async function resolveSongCategoryId(
   db: ReturnType<typeof createDb>,
   value: FormDataEntryValue | null
 ): Promise<{ categoryId: number | null } | { response: Response }> {
-  const categoryCount = await db.$count(categories);
   // Forms submit categoryId="" for uncategorized; treat blank as missing
   const normalized =
     value != null && String(value).trim() !== '' ? value : null;
   const hasValue = normalized != null;
   const categoryId = parseCategoryId(normalized);
 
-  if (!hasValue && categoryCount > 0) {
-    return {
-      response: new Response(
-        JSON.stringify({ message: 'Category ID is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      ),
-    };
-  }
-
-  if (!hasValue && categoryCount === 0) {
+  if (!hasValue) {
     return { categoryId: null };
   }
 
