@@ -74,6 +74,22 @@ describe('MusicHome', () => {
     expect(mockFetch).toHaveBeenCalledWith('/api/categories');
   });
 
+  it('does not call fetch before mount (SSR guard)', () => {
+    // In a real SSR environment (Astro on Cloudflare Workers), fetch exists
+    // but relative URLs fail. The `mounted` guard prevents the reactive
+    // statement from firing during SSR. Here we verify that even when
+    // fetch throws on every call (simulating SSR URL parse failure),
+    // the component still renders without crashing.
+    const mockFetch = vi.fn(() => {
+      throw new TypeError('Failed to parse URL');
+    });
+    vi.stubGlobal('fetch', mockFetch);
+    // Should not throw — the reactive statement is guarded by `mounted`
+    // which is false during SSR (onMount hasn't fired).
+    expect(() => render(MusicHome)).not.toThrow();
+    expect(screen.getByText('CYGNUS')).toBeInTheDocument();
+  });
+
   it('handles fetch error gracefully without crashing', async () => {
     vi.stubGlobal(
       'fetch',

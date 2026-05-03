@@ -23,6 +23,7 @@
   let selectedCategory = 'all';
   let visibleSongs: Song[] = [];
   let fetchGeneration = 0;
+  let mounted = false;
 
   let selectedSong: Song | null = null;
 
@@ -91,8 +92,10 @@
     }
   }
 
-  // When category changes, fetch filtered songs from the server
-  $: if (selectedCategory) {
+  // When category changes, fetch filtered songs from the server.
+  // Guard with `mounted` so this does not fire during SSR (relative URLs
+  // are invalid on the server and would throw "Failed to parse URL").
+  $: if (mounted && selectedCategory) {
     const gen = ++fetchGeneration;
     fetchSongsByCategory(selectedCategory, gen);
   }
@@ -113,6 +116,9 @@
   }
 
   onMount(async () => {
+    // Setting mounted = true triggers the reactive statement above,
+    // which fetches songs for the initial category.
+    mounted = true;
     try {
       const categoriesRes = await fetch('/api/categories');
       if (categoriesRes.ok) {
@@ -122,8 +128,6 @@
     } catch (err) {
       console.error(err);
     }
-    // Initial song fetch is triggered by the reactive statement above
-    // when selectedCategory initializes to 'all'.
   });
 </script>
 
