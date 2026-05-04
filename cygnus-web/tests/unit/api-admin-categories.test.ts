@@ -270,6 +270,22 @@ describe('/api/admin/categories', () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
+  it('POST rejects names exceeding 100 characters', async () => {
+    const longName = 'A'.repeat(101);
+    const resp = await POST(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ name: longName }, 'POST')
+      )
+    );
+
+    expect(resp.status).toBe(400);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Category name must be at most 100 characters',
+    });
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
   it('POST returns 400 for malformed JSON', async () => {
     const resp = await POST(
       routeContext('/api/admin/categories', {
@@ -503,5 +519,40 @@ describe('/api/admin/categories', () => {
 
     expect(resp.status).toBe(400);
     expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it('DELETE returns 500 when db.batch rejects', async () => {
+    mockGet.mockResolvedValue({ id: 5, name: 'Metal' });
+    mockBatch.mockRejectedValue(new Error('batch failed'));
+
+    const resp = await DELETE(routeContext('/api/admin/categories?id=5'));
+
+    expect(resp.status).toBe(500);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Internal Server Error',
+    });
+  });
+
+  it('PUT maps update unique constraint races to 409', async () => {
+    mockGet
+      .mockResolvedValueOnce({ id: 3, name: 'Rock' }) // existing category
+      .mockResolvedValueOnce(undefined); // no duplicate found
+    mockRun.mockRejectedValue(
+      new Error(
+        'D1_ERROR: UNIQUE constraint failed: categories.normalized_name'
+      )
+    );
+
+    const resp = await PUT(
+      routeContext(
+        '/api/admin/categories',
+        jsonRequest({ id: 3, name: 'Metal' }, 'PUT')
+      )
+    );
+
+    expect(resp.status).toBe(409);
+    await expect(resp.json()).resolves.toEqual({
+      message: 'Category already exists',
+    });
   });
 });

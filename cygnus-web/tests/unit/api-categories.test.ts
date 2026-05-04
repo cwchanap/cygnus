@@ -76,4 +76,17 @@ describe('GET /api/categories', () => {
       message: 'Server configuration error: D1 binding missing.',
     });
   });
+
+  it('succeeds without admin auth cookie (public endpoint)', async () => {
+    mockAll.mockResolvedValue([]);
+
+    const resp = await GET({
+      locals: { runtime: { env: { DB: {} } } },
+      request: new Request('http://localhost/api/categories'),
+    } as any);
+
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(body.categories).toEqual([]);
+  });
 });

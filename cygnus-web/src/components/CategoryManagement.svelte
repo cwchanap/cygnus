@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
+  import { SvelteMap } from 'svelte/reactivity';
 
   interface Category {
     id: number;
@@ -9,6 +10,7 @@
   const dispatch = createEventDispatcher<{ changed: void }>();
 
   let categories: Category[] = [];
+  let drafts: SvelteMap<number, string> = new SvelteMap();
   let newCategory = '';
   let loading = true;
   let error = '';
@@ -37,7 +39,15 @@
       }
 
       const data = await response.json();
-      categories = data.categories ?? [];
+      const fresh: Category[] = data.categories ?? [];
+      // Preserve drafts for categories that still exist after refetch
+      const nextDrafts = new SvelteMap<number, string>();
+      for (const cat of fresh) {
+        const existing = drafts.get(cat.id);
+        nextDrafts.set(cat.id, existing ?? cat.name);
+      }
+      categories = fresh;
+      drafts = nextDrafts;
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to fetch categories';
     } finally {
@@ -70,7 +80,7 @@
   }
 
   async function renameCategory(category: Category) {
-    const name = category.name.trim();
+    const name = (drafts.get(category.id) ?? category.name).trim();
     if (!name) {
       error = 'Category name is required';
       return;
@@ -90,6 +100,8 @@
       }
 
       await fetchCategories();
+      // Clear draft so the input shows the server-returned name
+      drafts.delete(category.id);
       dispatch('changed');
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to rename category';
@@ -101,7 +113,7 @@
   async function deleteCategory(category: Category) {
     if (
       !confirm(
-        `Delete category "${category.name}"? Songs in this category will become uncategorized.`
+        `Delete category "${drafts.get(category.id) ?? category.name}"? Songs in this category will become uncategorized.`
       )
     ) {
       return;
@@ -119,6 +131,7 @@
       }
 
       await fetchCategories();
+      drafts.delete(category.id);
       dispatch('changed');
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to delete category';
@@ -184,7 +197,8 @@
           <input
             aria-label={`Category ${category.id}`}
             type="text"
-            bind:value={category.name}
+            value={drafts.get(category.id) ?? category.name}
+            on:input={(e) => drafts.set(category.id, e.currentTarget.value)}
             class="min-w-0 flex-1 rounded-md border border-white/30 bg-white/15 px-3 py-2 text-white placeholder-white/60 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
           />
           <div class="flex gap-2">

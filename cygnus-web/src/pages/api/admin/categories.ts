@@ -68,6 +68,15 @@ async function parseName(request: Request) {
     };
   }
 
+  if (name.length > 100) {
+    return {
+      error: jsonResponse(
+        { message: 'Category name must be at most 100 characters' },
+        400
+      ),
+    };
+  }
+
   return {
     name,
     normalizedName: normalizeCategoryName(name),
@@ -75,15 +84,28 @@ async function parseName(request: Request) {
   };
 }
 
-function isUniqueConstraintError(err: unknown) {
+// D1 does not expose structured error codes, so we match known substrings.
+// If the driver changes error message format, this heuristic may misclassify —
+// the log below provides visibility when it fires.
+const UNIQUE_CONSTRAINT_PATTERNS = [
+  'unique constraint',
+  'sqlite_constraint_unique',
+  'constraint failed: categories.normalized_name',
+];
+
+function isUniqueConstraintError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err);
   const normalizedMessage = message.toLowerCase();
-
-  return (
-    normalizedMessage.includes('unique constraint') ||
-    normalizedMessage.includes('sqlite_constraint_unique') ||
-    normalizedMessage.includes('constraint failed: categories.normalized_name')
+  const matched = UNIQUE_CONSTRAINT_PATTERNS.some((p) =>
+    normalizedMessage.includes(p)
   );
+  if (matched) {
+    console.warn(
+      '[categories] isUniqueConstraintError heuristic matched:',
+      message
+    );
+  }
+  return matched;
 }
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -162,7 +184,8 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const parsed = await parseName(request);
     if ('error' in parsed) return parsed.error;
 
-    const categoryId = parseCategoryId(parsed.body.id as string | null);
+    const rawId = 'id' in parsed.body ? String(parsed.body.id ?? '') : '';
+    const categoryId = parseCategoryId(rawId || null);
     if (!categoryId) {
       return jsonResponse(
         { message: 'Category ID must be a positive integer' },
@@ -254,7 +277,10 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
     return jsonResponse({ message: 'Category deleted successfully' }, 200);
   } catch (err) {
-    console.error('DELETE /api/admin/categories error', err);
+    console.error('DELETE /api/admin/categories error', {
+      categoryId: new URL(request.url).searchParams.get('id'),
+      error: err instanceof Error ? err.message : err,
+    });
     return jsonResponse({ message: 'Internal Server Error' }, 500);
   }
 };

@@ -1,6 +1,7 @@
 <script lang="ts">
   import SongDetail from './SongDetail.svelte';
   import SongList from './SongList.svelte';
+  import { toastStore } from '../stores/toast';
   import { onMount } from 'svelte';
   type Song = {
     id: string;
@@ -89,6 +90,7 @@
       songs = fetchedSongs;
     } catch (err) {
       console.error(err);
+      toastStore.show('Failed to load songs. Please try again.', 'error');
     }
   }
 
@@ -127,6 +129,7 @@
       }
     } catch (err) {
       console.error(err);
+      toastStore.show('Failed to load categories.', 'error');
     }
   });
 </script>
