@@ -93,6 +93,11 @@ test.describe('Admin Song Management', () => {
     await expect(
       page.getByRole('heading', { name: 'Categories' })
     ).toBeVisible();
+    // Wait for the Svelte island to hydrate and finish fetching categories.
+    // Without this, typing into the SSR input before hydration causes
+    // bind:value to reset the DOM value to the reactive variable (''),
+    // and createCategory() returns early with an empty name.
+    await expect(page.getByText('Loading categories...')).not.toBeVisible();
     const newCategoryInput = page.getByLabel('New category');
     await newCategoryInput.click();
     await newCategoryInput.pressSequentially(categoryName);
