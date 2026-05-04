@@ -94,21 +94,35 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    await db
-      .insert(songs)
-      .values({
-        song_name: songName,
-        artist: artist,
-        bpm: parseInt(bpm, 10),
-        release_date: releaseDate,
-        is_released: isReleased,
-        origin: originField,
-        created_date: new Date().toISOString(),
-        r2_key: r2Key,
-        preview_r2_key: previewKey,
-        category_id: resolvedCategory.categoryId,
-      })
-      .run();
+    try {
+      await db
+        .insert(songs)
+        .values({
+          song_name: songName,
+          artist: artist,
+          bpm: parseInt(bpm, 10),
+          release_date: releaseDate,
+          is_released: isReleased,
+          origin: originField,
+          created_date: new Date().toISOString(),
+          r2_key: r2Key,
+          preview_r2_key: previewKey,
+          category_id: resolvedCategory.categoryId,
+        })
+        .run();
+    } catch (dbError) {
+      // DB insert failed — attempt to clean up orphaned R2 objects
+      const keysToClean = [r2Key, previewKey].filter(
+        (k): k is string => k !== null
+      );
+      console.error(
+        'Upload DB insert failed. Orphaned R2 keys:',
+        keysToClean,
+        dbError
+      );
+      await Promise.allSettled(keysToClean.map((key) => bucket.delete(key)));
+      throw dbError;
+    }
 
     return new Response(
       JSON.stringify({ message: 'Song uploaded successfully' }),

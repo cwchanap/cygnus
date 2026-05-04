@@ -12,6 +12,7 @@ const mockRun = vi.fn().mockResolvedValue({});
 const mockInsertValues = vi.fn().mockReturnValue({ run: mockRun });
 const mockInsert = vi.fn().mockReturnValue({ values: mockInsertValues });
 const mockPut = vi.fn().mockResolvedValue(undefined);
+const mockDelete = vi.fn().mockResolvedValue(undefined);
 const mockCount = vi.fn().mockResolvedValue(0);
 const mockSelect = vi.fn().mockReturnThis();
 const mockFrom = vi.fn().mockReturnThis();
@@ -31,7 +32,7 @@ const mockRuntime = {
   env: {
     DB: {},
     PASSKEY: 'secret',
-    CYGNUS_BUCKET: { put: mockPut },
+    CYGNUS_BUCKET: { put: mockPut, delete: mockDelete },
   },
 };
 
@@ -405,6 +406,19 @@ describe('POST /api/upload - category validation', () => {
 });
 
 describe('POST /api/upload - error handling', () => {
+  beforeEach(() => {
+    vi.mocked(createDb).mockReturnValue(mockDb as any);
+    vi.clearAllMocks();
+    mockPut.mockResolvedValue(undefined);
+    mockDelete.mockResolvedValue(undefined);
+    mockGet.mockResolvedValue(undefined);
+    mockInsert.mockReturnValue({ values: mockInsertValues });
+    mockInsertValues.mockReturnValue({ run: mockRun });
+    mockSelect.mockReturnThis();
+    mockFrom.mockReturnThis();
+    mockWhere.mockReturnThis();
+  });
+
   it('returns 500 when bucket.put throws', async () => {
     const failingRuntime = {
       env: {
@@ -412,10 +426,10 @@ describe('POST /api/upload - error handling', () => {
         PASSKEY: 'secret',
         CYGNUS_BUCKET: {
           put: vi.fn().mockRejectedValue(new Error('R2 unavailable')),
+          delete: vi.fn(),
         },
       },
     };
-    vi.mocked(createDb).mockReturnValue(mockDb as any);
     const req = makeRequest({ form: makeFullForm({ passkey: 'secret' }) });
     const resp = await POST({
       request: req,
@@ -424,5 +438,19 @@ describe('POST /api/upload - error handling', () => {
     expect(resp.status).toBe(500);
     const body = await resp.json();
     expect(body.message).toMatch(/Upload failed/i);
+  });
+
+  it('cleans up R2 objects when DB insert fails', async () => {
+    mockRun.mockRejectedValue(new Error('DB insert failed'));
+    const req = makeRequest({ form: makeFullForm({ passkey: 'secret' }) });
+    const resp = await POST({
+      request: req,
+      locals: { runtime: mockRuntime },
+    } as any);
+    expect(resp.status).toBe(500);
+    // R2 put was called for the song file
+    expect(mockPut).toHaveBeenCalled();
+    // R2 delete should be called to clean up the orphaned object
+    expect(mockDelete).toHaveBeenCalled();
   });
 });

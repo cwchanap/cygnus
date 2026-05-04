@@ -65,6 +65,7 @@ const mockDeleteFn = vi.fn().mockReturnThis();
 const mockWhere = vi.fn().mockReturnThis();
 const mockUpdateFn = vi.fn().mockReturnThis();
 const mockSet = vi.fn().mockReturnThis();
+const mockGet = vi.fn().mockResolvedValue(undefined);
 
 const mockDb = {
   select: mockSelectFn,
@@ -80,6 +81,7 @@ const mockDb = {
   run: mockRun,
   update: mockUpdateFn,
   set: mockSet,
+  get: mockGet,
 };
 
 function setupMockDb() {
@@ -87,6 +89,7 @@ function setupMockDb() {
   mockAll.mockResolvedValue([]);
   mockCount.mockResolvedValue(0);
   mockRun.mockResolvedValue({});
+  mockGet.mockResolvedValue(undefined);
   mockLimit.mockReturnThis();
   mockOffset.mockReturnThis();
   mockOrderBy.mockReturnThis();
@@ -179,6 +182,7 @@ describe('DELETE /api/admin/songs - success', () => {
   });
 
   it('returns 200 after successful deletion', async () => {
+    mockGet.mockResolvedValue({ id: 5 });
     const resp = await DELETE({
       request: authedRequest('/api/admin/songs?id=5'),
       locals: authedLocals,
@@ -187,6 +191,18 @@ describe('DELETE /api/admin/songs - success', () => {
     expect(resp.status).toBe(200);
     const body = await resp.json();
     expect(body.message).toContain('deleted successfully');
+  });
+
+  it('returns 404 when song does not exist', async () => {
+    mockGet.mockResolvedValue(undefined);
+    const resp = await DELETE({
+      request: authedRequest('/api/admin/songs?id=999'),
+      locals: authedLocals,
+      url: new URL('http://localhost/api/admin/songs?id=999'),
+    } as any);
+    expect(resp.status).toBe(404);
+    const body = await resp.json();
+    expect(body.message).toContain('not found');
   });
 
   it('returns 400 for id=0 (not a positive integer)', async () => {
@@ -199,6 +215,7 @@ describe('DELETE /api/admin/songs - success', () => {
   });
 
   it('returns 500 when DB throws during deletion', async () => {
+    mockGet.mockResolvedValue({ id: 1 });
     mockWhere.mockReturnThis();
     mockRun.mockRejectedValue(new Error('DB error'));
     const resp = await DELETE({
@@ -265,6 +282,7 @@ describe('PUT /api/admin/songs - success', () => {
   });
 
   it('returns 200 after successful update', async () => {
+    mockGet.mockResolvedValue({ id: 1 });
     const fd = new FormData();
     fd.append('id', '1');
     fd.append('song_name', 'Updated Song');
@@ -285,6 +303,7 @@ describe('PUT /api/admin/songs - success', () => {
   });
 
   it('returns 200 when bpm field is absent (optional)', async () => {
+    mockGet.mockResolvedValue({ id: 2 });
     const fd = new FormData();
     fd.append('id', '2');
     fd.append('song_name', 'No BPM Song');
@@ -299,6 +318,7 @@ describe('PUT /api/admin/songs - success', () => {
   });
 
   it('returns 500 when DB throws during update', async () => {
+    mockGet.mockResolvedValue({ id: 1 });
     mockRun.mockRejectedValue(new Error('DB write error'));
     const fd = new FormData();
     fd.append('id', '1');
@@ -311,5 +331,22 @@ describe('PUT /api/admin/songs - success', () => {
       url: new URL('http://localhost/api/admin/songs'),
     } as any);
     expect(resp.status).toBe(500);
+  });
+
+  it('returns 404 when song does not exist', async () => {
+    mockGet.mockResolvedValue(undefined);
+    const fd = new FormData();
+    fd.append('id', '999');
+    fd.append('song_name', 'Test');
+    fd.append('artist', 'Artist');
+
+    const resp = await PUT({
+      request: authedRequest('/api/admin/songs', { method: 'PUT', body: fd }),
+      locals: authedLocals,
+      url: new URL('http://localhost/api/admin/songs'),
+    } as any);
+    expect(resp.status).toBe(404);
+    const body = await resp.json();
+    expect(body.message).toContain('not found');
   });
 });

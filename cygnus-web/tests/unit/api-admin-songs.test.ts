@@ -324,7 +324,8 @@ describe('PUT /api/admin/songs - category validation', () => {
     vi.clearAllMocks();
     mockRun.mockResolvedValue({});
     mockCount.mockResolvedValue(0);
-    mockGet.mockResolvedValue(undefined);
+    // Default: song exists; individual tests override for category lookups
+    mockGet.mockResolvedValue({ id: 1 });
     mockSelectFn.mockReturnThis();
     mockFrom.mockReturnThis();
     mockWhere.mockReturnThis();
@@ -334,6 +335,7 @@ describe('PUT /api/admin/songs - category validation', () => {
 
   it('preserves existing category when categoryId field is omitted from form', async () => {
     mockCount.mockResolvedValue(1);
+    mockGet.mockResolvedValue({ id: 1 });
 
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {
@@ -354,7 +356,9 @@ describe('PUT /api/admin/songs - category validation', () => {
 
   it('updates category_id when categoryId is valid', async () => {
     mockCount.mockResolvedValue(1);
-    mockGet.mockResolvedValue({ id: 3 });
+    mockGet
+      .mockResolvedValueOnce({ id: 1 }) // song exists
+      .mockResolvedValueOnce({ id: 3 }); // category exists
 
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {
@@ -373,7 +377,9 @@ describe('PUT /api/admin/songs - category validation', () => {
 
   it('rejects invalid or nonexistent categoryId', async () => {
     mockCount.mockResolvedValue(1);
-    mockGet.mockResolvedValue(undefined);
+    mockGet
+      .mockResolvedValueOnce({ id: 1 }) // song exists
+      .mockResolvedValueOnce(undefined); // category not found
 
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {
@@ -392,6 +398,7 @@ describe('PUT /api/admin/songs - category validation', () => {
 
   it('preserves existing category when no categories exist and field is omitted', async () => {
     mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue({ id: 1 }); // song exists
 
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {
@@ -411,6 +418,7 @@ describe('PUT /api/admin/songs - category validation', () => {
 
   it('treats blank-string categoryId as missing when no categories exist', async () => {
     mockCount.mockResolvedValue(0);
+    mockGet.mockResolvedValue({ id: 1 }); // song exists
 
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {
@@ -429,6 +437,7 @@ describe('PUT /api/admin/songs - category validation', () => {
 
   it('allows blank-string categoryId when categories exist (uncategorized)', async () => {
     mockCount.mockResolvedValue(1);
+    mockGet.mockResolvedValue({ id: 1 }); // song exists
 
     const resp = await PUT({
       request: makeAuthedRequest('/api/admin/songs', {

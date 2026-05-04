@@ -146,7 +146,20 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 
     const db = createDb(runtime.env.DB);
 
-    // Delete the song
+    // Verify the song exists before deleting
+    const existing = await db
+      .select({ id: songs.id })
+      .from(songs)
+      .where(eq(songs.id, parsedId))
+      .get();
+
+    if (!existing) {
+      return new Response(JSON.stringify({ message: 'Song not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     await db.delete(songs).where(eq(songs.id, parsedId)).run();
 
     return new Response(
@@ -232,6 +245,20 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
     const db = createDb(runtime.env.DB);
 
+    // Verify the song exists before updating
+    const existing = await db
+      .select({ id: songs.id })
+      .from(songs)
+      .where(eq(songs.id, parsedSongId))
+      .get();
+
+    if (!existing) {
+      return new Response(JSON.stringify({ message: 'Song not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     // Only resolve and update category_id when the field was explicitly present
     // in the form data. This preserves the existing category when clients omit
     // the field, while still allowing an explicit blank value to mean uncategorized.
@@ -262,7 +289,6 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       updateData.category_id = resolvedCategory.categoryId;
     }
 
-    // Update the song
     await db
       .update(songs)
       .set(updateData)
