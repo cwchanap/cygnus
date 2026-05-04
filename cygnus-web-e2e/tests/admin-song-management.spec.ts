@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Admin Song Management', () => {
+  let createdCategoryId: number | null = null;
+
   test.beforeEach(async ({ page }) => {
     // Set admin authentication cookie
     await page.context().addCookies([
@@ -14,6 +16,21 @@ test.describe('Admin Song Management', () => {
         sameSite: 'Strict',
       },
     ]);
+  });
+
+  test.afterEach(async ({ page }) => {
+    if (createdCategoryId !== null) {
+      const response = await page.request.delete(
+        `/api/admin/categories?id=${createdCategoryId}`
+      );
+      // Best-effort cleanup — don't fail the test if deletion errors
+      if (!response.ok()) {
+        console.warn(
+          `Cleanup: failed to delete category ${createdCategoryId} (${response.status()})`
+        );
+      }
+      createdCategoryId = null;
+    }
   });
 
   test('should load admin page and show navigation', async ({ page }) => {
@@ -88,6 +105,16 @@ test.describe('Admin Song Management', () => {
     );
     await page.getByRole('button', { name: 'Create Category' }).click();
     await expect((await createResponse).status()).toBe(201);
+
+    // Fetch the new category's ID so afterEach can clean it up
+    const listResponse = await page.request.get('/api/admin/categories');
+    const listBody = await listResponse.json();
+    const match = (listBody.categories ?? []).find(
+      (c: { id: number; name: string }) => c.name === categoryName
+    );
+    if (match) {
+      createdCategoryId = match.id;
+    }
 
     await page.goto('/admin');
 
