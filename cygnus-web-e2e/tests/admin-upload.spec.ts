@@ -45,19 +45,18 @@ test('admin can upload a song with optional preview image', async ({
   await page.fill('input#origin', 'playwright');
   await page.locator('input#is_released').check();
 
-  // Select category if the field is required (i.e. categories exist)
+  // Wait for categories to load before checking/selecting
   const categorySelect = page.locator('select#categoryId');
-  const isCategoryRequired = await categorySelect.getAttribute('required');
-  if (isCategoryRequired !== null) {
-    // Pick the first available category option that has a numeric value
-    const options = categorySelect.locator('option');
-    const count = await options.count();
-    for (let i = 0; i < count; i++) {
-      const val = await options.nth(i).getAttribute('value');
-      if (val && /^\d+$/.test(val)) {
-        await categorySelect.selectOption(val);
-        break;
-      }
+  await expect(categorySelect).toBeEnabled({ timeout: 10000 });
+
+  // Select a category if any valid options exist
+  const options = categorySelect.locator('option');
+  const count = await options.count();
+  for (let i = 0; i < count; i++) {
+    const val = await options.nth(i).getAttribute('value');
+    if (val && /^\d+$/.test(val)) {
+      await categorySelect.selectOption(val);
+      break;
     }
   }
 
