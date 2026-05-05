@@ -1,0 +1,20 @@
+name = "cygnus"
+main = "./cygnus-web/dist/_worker.js/index.js"
+compatibility_date = "2025-08-15"
+
+[assets]
+directory = "./cygnus-web/dist"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cygnus"
+database_id = "5578820f-a197-4b0f-b8b1-cd539e134fd3"
+preview_database_id = "5578820f-a197-4b0f-b8b1-cd539e134fd3"
+
+[[r2_buckets]]
+binding = "CYGNUS_BUCKET"
+bucket_name = "cygnus"
+
+[vars]
+PASSKEY = "devpass"
