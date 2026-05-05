@@ -275,7 +275,7 @@
                   <input
                     type="text"
                     bind:value={editForm.song_name}
-                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white placeholder-white/60 w-full"
+                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white placeholder-white/60 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   />
                 {:else}
                   {song.song_name}
@@ -286,7 +286,7 @@
                   <input
                     type="text"
                     bind:value={editForm.artist}
-                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white placeholder-white/60 w-full"
+                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white placeholder-white/60 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   />
                 {:else}
                   {song.artist}
@@ -297,7 +297,7 @@
                   <input
                     type="number"
                     bind:value={editForm.bpm}
-                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white placeholder-white/60 w-20"
+                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white placeholder-white/60 w-20 focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   />
                 {:else}
                   {song.bpm}
@@ -312,7 +312,7 @@
                     id={`song-category-${song.id}`}
                     name="categoryId"
                     bind:value={editForm.categoryId}
-                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white w-40"
+                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white w-40 focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   >
                     {#if categories.length > 0}
                       <option value="">Uncategorized</option>
@@ -334,7 +334,7 @@
                   <input
                     type="date"
                     bind:value={editForm.release_date}
-                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white w-36"
+                    class="bg-white/20 border border-white/30 rounded px-2 py-1 text-white w-36 focus:outline-none focus:ring-2 focus:ring-cyan-400"
                   />
                 {:else}
                   {formatDate(song.release_date)}
@@ -345,7 +345,7 @@
                   <input
                     type="checkbox"
                     bind:checked={editForm.is_released}
-                    class="rounded border-white/30"
+                    class="rounded border-white/30 accent-cyan-400"
                   />
                 {:else}
                   <span
@@ -439,15 +439,5 @@
 <style>
   .song-management {
     min-height: 400px;
-  }
-
-  input[type='checkbox'] {
-    accent-color: rgb(6 182 212);
-  }
-
-  input:focus,
-  select:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgb(6 182 212);
   }
 </style>

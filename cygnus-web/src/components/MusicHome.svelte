@@ -123,13 +123,14 @@
     mounted = true;
     try {
       const categoriesRes = await fetch('/api/categories');
-      if (categoriesRes.ok) {
-        const categoriesData = await categoriesRes.json();
-        categories = categoriesData.categories ?? [];
+      if (!categoriesRes.ok) {
+        throw new Error(`Failed to load categories: ${categoriesRes.status}`);
       }
+      const categoriesData = await categoriesRes.json();
+      categories = categoriesData.categories ?? [];
     } catch (err) {
       console.error(err);
-      toastStore.show('Failed to load categories.', 'error');
+      toastStore.show('Failed to load categories. Please try again.', 'error');
     }
   });
 </script>

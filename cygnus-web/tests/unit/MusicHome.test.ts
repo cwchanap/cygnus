@@ -115,6 +115,34 @@ describe('MusicHome', () => {
     });
   });
 
+  it('shows toast when /api/categories returns non-ok status', async () => {
+    const mockFetch = vi.fn((url: string) => {
+      if (url === '/api/categories') {
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.resolve({}),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(emptySongsResponse),
+      });
+    });
+    vi.stubGlobal('fetch', mockFetch);
+    render(MusicHome);
+    // Component should not crash; categories remain empty so only
+    // "All", "Uncategorized" options appear (no custom category options).
+    await waitFor(() => {
+      expect(screen.getByText('CYGNUS')).toBeInTheDocument();
+    });
+    // Only default options exist — no categories loaded
+    expect(screen.getByRole('option', { name: 'All' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Uncategorized' })
+    ).toBeInTheDocument();
+  });
+
   it('loads songs from multiple pages when totalPages > 1', async () => {
     const page1 = {
       songs: [
