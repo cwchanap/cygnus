@@ -84,7 +84,13 @@
   class="max-w-2xl mx-auto p-8 bg-gradient-to-br from-blue-900/90 via-blue-800/85 to-cyan-900/90 backdrop-blur-sm rounded-xl shadow-2xl border border-blue-400/30 text-blue-50"
 >
   <h1 class="text-3xl font-bold mb-6 text-white">Admin Song Upload</h1>
-  <form on:submit|preventDefault={handleSubmit} class="space-y-4">
+  <form
+    onsubmit={(e) => {
+      e.preventDefault();
+      handleSubmit(e as unknown as SubmitEvent);
+    }}
+    class="space-y-4"
+  >
     <div>
       <label for="song" class="block text-sm font-medium text-cyan-200"
         >Song File</label
@@ -198,7 +204,7 @@
         <p class="mt-2 text-sm text-red-300">{categoryError}</p>
         <button
           type="button"
-          on:click={fetchCategories}
+          onclick={fetchCategories}
           class="mt-1 text-sm text-cyan-400 underline hover:text-cyan-300"
         >
           Retry loading categories
